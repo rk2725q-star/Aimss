@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CBSE Courses | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="CBSE board courses Class 6 to 12 with free YouTube video lectures, progress tracking and AI support."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <style>
+    :root{--cbse-blue:#2563eb;--cbse-light:#dbeafe;--cbse-grad:linear-gradient(135deg,#1e3a8a,#2563eb,#7c3aed);}
+    .cbse-hero{background:var(--cbse-grad);padding:80px 0 60px;position:relative;overflow:hidden;}
+    .cbse-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+    .cbse-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.25);border-radius:999px;padding:8px 20px;font-size:.85rem;font-weight:600;color:#fff;margin-bottom:24px;}
+    .cbse-hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;color:#fff;line-height:1.15;margin-bottom:16px;}
+    .cbse-hero p{color:rgba(255,255,255,0.85);font-size:1.1rem;max-width:600px;margin-bottom:32px;}
+    .cbse-hero-stats{display:flex;gap:24px;flex-wrap:wrap;}
+    .cbse-stat{background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.2);border-radius:14px;padding:16px 24px;text-align:center;}
+    .cbse-stat h3{font-size:1.8rem;font-weight:800;color:#fff;margin:0;}
+    .cbse-stat p{font-size:.8rem;color:rgba(255,255,255,0.8);margin:4px 0 0;}
+
+    .class-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:32px 0 24px;padding:0;}
+    .class-tab{padding:8px 20px;border-radius:999px;border:2px solid rgba(255,255,255,0.12);background:transparent;color:var(--muted);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .25s;}
+    .class-tab.active,.class-tab:hover{background:var(--cbse-blue);border-color:var(--cbse-blue);color:#fff;}
+
+    .courses-section{padding:48px 0;}
+    .class-section{margin-bottom:56px;}
+    .class-section-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+    .class-label{background:var(--cbse-grad);color:#fff;font-size:.8rem;font-weight:700;padding:6px 16px;border-radius:999px;letter-spacing:.05em;}
+    .class-section-header h2{font-size:1.4rem;font-weight:700;color:var(--fg);margin:0;}
+
+    .yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+    .yt-card{background:var(--glass-bg);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s;position:relative;}
+    .yt-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,.3);}
+    .yt-thumb{position:relative;padding-top:56.25%;overflow:hidden;}
+    .yt-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+    .yt-card:hover .yt-thumb img{transform:scale(1.06);}
+    .yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;transition:opacity .25s;}
+    .yt-card:hover .yt-play{opacity:1;}
+    .yt-play svg{filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
+    .subject-tag{position:absolute;top:10px;left:10px;background:var(--cbse-blue);color:#fff;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;}
+    .yt-body{padding:14px 16px;}
+    .yt-title{font-size:.95rem;font-weight:700;color:var(--fg);margin:0 0 8px;line-height:1.35;}
+    .yt-meta{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .yt-rating{color:#f59e0b;font-weight:700;}
+
+    .progress-wrap{padding:10px 16px 14px;}
+    .progress-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:6px;}
+    .progress-bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--cbse-blue),#7c3aed);border-radius:999px;width:0;transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+
+    .board-tabs{display:flex;gap:12px;margin-bottom:32px;}
+    .board-tab{padding:12px 32px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--muted);font-size:1rem;font-weight:700;cursor:pointer;transition:all .25s;}
+    .board-tab.active{background:var(--cbse-grad);border-color:transparent;color:#fff;box-shadow:0 8px 24px rgba(37,99,235,.35);}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+    .fade-up{animation:fadeUp .5s ease both;}
+    .yt-card:nth-child(2){animation-delay:.08s;}
+    .yt-card:nth-child(3){animation-delay:.16s;}
+    .yt-card:nth-child(4){animation-delay:.24s;}
+  </style>
+</head>
+<body>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo"/><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="matric.html">Stateboard</a>
+        <a href="cbse.html" style="color:var(--accent)">CBSE</a>
+        <a href="lectures.html">All Courses</a>
+        <a href="login.html">Login</a>
+      </nav>
+      <div class="nav-tools"><a class="btn" href="index.html#admission">Apply</a></div>
+    </div>
+  </header>
+
+  <section class="cbse-hero">
+    <div class="container">
+      <div class="reveal">
+        <div class="cbse-badge">🎓 CBSE Board Excellence</div>
+        <h1>CBSE Courses<br>Class 6 to Class 12</h1>
+        <p>NCERT-aligned video lectures, concept mastery, and board-pattern practice. Free for all students preparing for CBSE board examinations.</p>
+        <div class="cbse-hero-stats">
+          <div class="cbse-stat"><h3 id="cbseLecCount">84+</h3><p>CBSE Lectures</p></div>
+          <div class="cbse-stat"><h3>7</h3><p>Class Levels</p></div>
+          <div class="cbse-stat"><h3>99%</h3><p>Pass Rate</p></div>
+          <div class="cbse-stat"><h3>Free</h3><p>All Content</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="courses-section">
+      <div class="container">
+
+        <div class="class-tabs" id="classTabs">
+          <button class="class-tab active" data-cls="all">All Classes</button>
+          <button class="class-tab" data-cls="6">Class 6</button>
+          <button class="class-tab" data-cls="7">Class 7</button>
+          <button class="class-tab" data-cls="8">Class 8</button>
+          <button class="class-tab" data-cls="9">Class 9</button>
+          <button class="class-tab" data-cls="10">Class 10</button>
+          <button class="class-tab" data-cls="11">Class 11</button>
+          <button class="class-tab" data-cls="12">Class 12</button>
+        </div>
+
+        <div id="cbseCourseContainer"></div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">CBSE Courses | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
+
+  <button id="chatToggle" class="float-chat-btn" aria-label="Open AI Chat"><img src="assets/images/ai-bot.png" alt="AI Chat" class="chat-bot-icon"/></button>
+  <div id="chatPanel" class="chat-pop" aria-live="polite">
+    <div class="chat-head"><span>AI Assistant</span><button id="chatClose" class="btn btn-soft" type="button">Close</button></div>
+    <div id="chatLog" class="chat-log"><div class="msg bot">Ask me anything about CBSE curriculum, NCERT chapters, or exam strategy.</div></div>
+    <div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question"/><button id="chatSend" type="button">Send</button></div>
+  </div>
+
+  <script src="assets/js/main.js?v=5"></script>
+  <script>
+  const CBSE_COURSES = [
+    // CLASS 6
+    { cls:6, subject:'Science', title:'Light, Shadows & Reflections', videoId:'KA7yzONQiok', rating:4.6, learners:'3.2k', progress:72 },
+    { cls:6, subject:'Mathematics', title:'Introduction to Algebra & Variables', videoId:'NybHckSEQBI', rating:4.5, learners:'2.8k', progress:60 },
+    { cls:6, subject:'Science', title:'Living & Non-Living Things', videoId:'CX5nWCvOH_E', rating:4.4, learners:'2.1k', progress:85 },
+    { cls:6, subject:'Mathematics', title:'Fractions & Decimals Basics', videoId:'nqNSXPMxbF0', rating:4.3, learners:'1.9k', progress:55 },
+    // CLASS 7
+    { cls:7, subject:'Science', title:'Nutrition in Plants & Animals', videoId:'0fKg7e37bQE', rating:4.7, learners:'4.1k', progress:68 },
+    { cls:7, subject:'Mathematics', title:'Integers & Rational Numbers', videoId:'X2jVap1YgwI', rating:4.5, learners:'3.5k', progress:50 },
+    { cls:7, subject:'Science', title:'Heat & Temperature Concepts', videoId:'bX9-HFaJPGk', rating:4.4, learners:'2.7k', progress:40 },
+    { cls:7, subject:'Mathematics', title:'Geometry – Lines & Angles', videoId:'7GEUgRcnfVE', rating:4.6, learners:'3.0k', progress:78 },
+    // CLASS 8
+    { cls:8, subject:'Science', title:'Cell Structure & Functions', videoId:'8IlzKri08kU', rating:4.8, learners:'5.2k', progress:90 },
+    { cls:8, subject:'Mathematics', title:'Linear Equations in One Variable', videoId:'Bq9bGNVMDuM', rating:4.7, learners:'4.8k', progress:62 },
+    { cls:8, subject:'Science', title:'Force & Pressure – NCERT Ch 11', videoId:'MQjgd5MfyFI', rating:4.5, learners:'3.9k', progress:45 },
+    { cls:8, subject:'Mathematics', title:'Algebraic Expressions & Identities', videoId:'NybHckSEQBI', rating:4.4, learners:'3.2k', progress:33 },
+    // CLASS 9
+    { cls:9, subject:'Physics', title:'Motion – Distance, Speed & Velocity', videoId:'ZM8ECpBuQYE', rating:4.8, learners:'7.1k', progress:80 },
+    { cls:9, subject:'Biology', title:'Cell Biology – The Fundamental Unit', videoId:'8IlzKri08kU', rating:4.7, learners:'6.4k', progress:70 },
+    { cls:9, subject:'Chemistry', title:'Matter in Our Surroundings', videoId:'K4_MGKH4pXU', rating:4.6, learners:'5.8k', progress:55 },
+    { cls:9, subject:'Mathematics', title:'Number Systems & Polynomials', videoId:'NybHckSEQBI', rating:4.5, learners:'5.2k', progress:40 },
+    // CLASS 10
+    { cls:10, subject:'Physics', title:'Electricity & Magnetic Effects', videoId:'X3nRHaJPCmk', rating:4.9, learners:'12.4k', progress:88 },
+    { cls:10, subject:'Biology', title:'Life Processes & Control', videoId:'TpGMlhJtcSI', rating:4.8, learners:'10.8k', progress:74 },
+    { cls:10, subject:'Chemistry', title:'Chemical Reactions & Acids Bases', videoId:'K4_MGKH4pXU', rating:4.7, learners:'9.6k', progress:65 },
+    { cls:10, subject:'Mathematics', title:'Real Numbers, Polynomials & Quadratics', videoId:'Bq9bGNVMDuM', rating:4.8, learners:'11.2k', progress:50 },
+    // CLASS 11
+    { cls:11, subject:'Physics', title:'Laws of Motion & Work Energy', videoId:'ZM8ECpBuQYE', rating:4.9, learners:'15.3k', progress:82 },
+    { cls:11, subject:'Chemistry', title:'Organic Chemistry Fundamentals', videoId:'bX9-HFaJPGk', rating:4.8, learners:'13.7k', progress:71 },
+    { cls:11, subject:'Biology', title:'Biological Classification & Plant Kingdom', videoId:'0fKg7e37bQE', rating:4.7, learners:'11.2k', progress:60 },
+    { cls:11, subject:'Mathematics', title:'Sets, Relations & Functions', videoId:'X2jVap1YgwI', rating:4.6, learners:'10.1k', progress:45 },
+    // CLASS 12
+    { cls:12, subject:'Physics', title:'Electrostatics & Current Electricity', videoId:'X3nRHaJPCmk', rating:4.9, learners:'20.5k', progress:92 },
+    { cls:12, subject:'Chemistry', title:'Solid State & Solutions', videoId:'K4_MGKH4pXU', rating:4.8, learners:'18.2k', progress:78 },
+    { cls:12, subject:'Biology', title:'Human Anatomy & Physiology', videoId:'TpGMlhJtcSI', rating:4.9, learners:'22.1k', progress:86 },
+    { cls:12, subject:'Mathematics', title:'Calculus – Differentiation & Integration', videoId:'WUvTyaaNkzM', rating:4.8, learners:'17.4k', progress:67 },
+  ];
+
+  const subjectColors = {
+    Physics:'#2563eb', Chemistry:'#7c3aed', Biology:'#059669', Mathematics:'#d97706', Science:'#0891b2'
+  };
+
+  function renderCourses(filter) {
+    const container = document.getElementById('cbseCourseContainer');
+    container.innerHTML = '';
+    const classes = filter === 'all' ? [6,7,8,9,10,11,12] : [parseInt(filter)];
+    classes.forEach(cls => {
+      const courses = CBSE_COURSES.filter(c => c.cls === cls);
+      if (!courses.length) return;
+      const section = document.createElement('div');
+      section.className = 'class-section reveal';
+      section.innerHTML = `
+        <div class="class-section-header">
+          <span class="class-label">CLASS ${cls}</span>
+          <h2>${courses.length} courses available</h2>
+        </div>
+        <div class="yt-grid" id="grid-${cls}"></div>
+      `;
+      container.appendChild(section);
+      const grid = section.querySelector(`#grid-${cls}`);
+      courses.forEach((c, i) => {
+        const card = document.createElement('div');
+        card.className = 'yt-card fade-up';
+        card.style.animationDelay = (i * 0.09) + 's';
+        const color = subjectColors[c.subject] || '#2563eb';
+        card.innerHTML = `
+          <div class="yt-thumb">
+            <img src="https://img.youtube.com/vi/${c.videoId}/mqdefault.jpg" alt="${c.title}" loading="lazy"/>
+            <div class="yt-play"><svg width="52" height="52" viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="26" fill="rgba(255,255,255,0.9)"/><polygon points="21,18 37,26 21,34" fill="#1e3a8a"/></svg></div>
+            <span class="subject-tag" style="background:${color}">${c.subject}</span>
+          </div>
+          <div class="yt-body">
+            <div class="yt-title">${c.title}</div>
+            <div class="yt-meta">
+              <span class="yt-rating">★ ${c.rating}</span>
+              <span>• ${c.learners}+ learners</span>
+              <span>• Free</span>
+            </div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Course Progress</span><span class="pct-label">0%</span></div>
+            <div class="progress-bar"><div class="progress-fill" data-pct="${c.progress}"></div></div>
+          </div>
+        `;
+        card.addEventListener('click', () => window.open('https://www.youtube.com/watch?v=' + c.videoId, '_blank'));
+        grid.appendChild(card);
+      });
+    });
+
+    // Animate progress bars
+    setTimeout(() => {
+      document.querySelectorAll('.progress-fill').forEach(bar => {
+        const pct = bar.dataset.pct;
+        bar.style.width = pct + '%';
+        const label = bar.closest('.progress-wrap').querySelector('.pct-label');
+        let n = 0;
+        const step = Math.ceil(pct / 40);
+        const t = setInterval(() => {
+          n = Math.min(n + step, pct);
+          label.textContent = n + '%';
+          if (n >= pct) clearInterval(t);
+        }, 35);
+      });
+      // Re-run reveal
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('show'));
+    }, 100);
+  }
+
+  // Tab switching
+  document.querySelectorAll('.class-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderCourses(tab.dataset.cls);
+    });
+  });
+
+  renderCourses('all');
+  </script>
+</body>
+</html>

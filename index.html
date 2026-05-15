@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dr.AIMSS EDUCATIONAL ACADEMY | NEET Coaching Excellence</title>
+  <meta name="description" content="Dr.AIMSS Educational Academy – 25+ years of legacy, 1500+ future doctors mentored, 99% pass rate. World-class NEET coaching for Class 6 to 12."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <style>
+    /* ── Legacy Stats Ring ── */
+    .stats-ring-wrap{position:relative;width:120px;height:120px;}
+    .stats-ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg);}
+    .ring-bg{fill:none;stroke:var(--line);stroke-width:8;}
+    .ring-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1);}
+    .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .ring-label span{font-size:1.4rem;font-weight:800;color:var(--fg);}
+    .ring-label small{font-size:.72rem;color:var(--muted);}
+
+    .legacy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px;margin:24px 0 48px;}
+    .legacy-card{background:var(--glass-bg);border:1px solid var(--line);border-radius:20px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden;}
+    .legacy-card::before{content:'';position:absolute;inset:0;background:var(--accent-grad,linear-gradient(135deg,rgba(139,92,246,.08),rgba(245,158,11,.04)));opacity:0;transition:opacity .3s;}
+    .legacy-card:hover::before{opacity:1;}
+    .legacy-card:hover{transform:translateY(-8px);box-shadow:0 24px 48px rgba(0,0,0,.25);}
+    .legacy-card p{margin:0;font-size:.9rem;color:var(--muted);font-weight:500;}
+
+    /* ── Metric cards ── */
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:32px;}
+    .metric-card{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px;padding:20px 16px;text-align:center;position:relative;overflow:hidden;}
+    .metric-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#f59e0b);transform:scaleX(0);transform-origin:left;transition:transform .6s ease;}
+    .metric-card.show::after{transform:scaleX(1);}
+    .metric-card h3{font-size:2rem;font-weight:800;margin:0 0 4px;background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .metric-card p{margin:0;font-size:.82rem;color:var(--muted);}
+
+    /* ── Board course quick links ── */
+    .board-links{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:32px 0;}
+    .board-link-card{border-radius:20px;padding:36px 28px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:transform .3s,box-shadow .3s;text-decoration:none;position:relative;overflow:hidden;}
+    .board-link-card:hover{transform:translateY(-6px);}
+    .board-link-card.cbse{background:linear-gradient(135deg,#1e3a8a,#2563eb,#7c3aed);}
+    .board-link-card.sb{background:linear-gradient(135deg,#064e3b,#059669,#0891b2);}
+    .board-link-card h3{color:#fff;font-size:1.4rem;font-weight:800;margin:0;}
+    .board-link-card p{color:rgba(255,255,255,.8);margin:0;font-size:.92rem;}
+    .board-link-card .board-classes{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .cls-pill{background:rgba(255,255,255,.18);color:#fff;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px;}
+    .board-arrow{position:absolute;right:24px;top:50%;transform:translateY(-50%);font-size:2rem;opacity:.4;}
+    @media(max-width:640px){.board-links{grid-template-columns:1fr;}}
+
+    /* ── Trending course cards ── */
+    .course-carousel{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
+    .gfg-card{background:var(--glass-bg);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s;}
+    .gfg-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,.3);}
+    .gfg-card-thumb{height:160px;background-size:cover;background-position:center;position:relative;}
+    .gfg-card-badge{position:absolute;top:10px;left:10px;background:#f59e0b;color:#000;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;text-transform:uppercase;}
+    .gfg-card-badge.free{background:linear-gradient(135deg,#10b981,#0891b2);}
+    .gfg-card-body{padding:14px 16px;}
+    .gfg-card-level{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;}
+    .gfg-card-title{font-size:.95rem;font-weight:700;color:var(--fg);margin:6px 0 10px;line-height:1.3;}
+    .gfg-card-stats{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);}
+    .gfg-rating{display:flex;align-items:center;gap:4px;color:#f59e0b;font-weight:700;}
+    .gfg-rating svg{width:14px;height:14px;fill:#f59e0b;}
+    .gfg-card-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 14px;border-top:1px solid var(--line);}
+    .gfg-price{font-weight:700;color:#10b981;}
+    .gfg-btn{display:flex;align-items:center;gap:4px;color:var(--accent);font-size:.85rem;font-weight:600;}
+
+    /* Float pulse on AI btn */
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.6);}50%{box-shadow:0 0 0 12px rgba(139,92,246,0);}}
+    .float-chat-btn{animation:pulse 2.8s infinite;}
+  </style>
+</head>
+<body>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo"/><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a>
+      <nav class="nav-links">
+        <a href="#programs">Programs</a>
+        <a href="matric.html">Stateboard</a>
+        <a href="cbse.html">CBSE</a>
+        <a href="lectures.html">Lectures</a>
+        <a href="login.html">Command Center</a>
+        <a href="login.html">Login</a>
+      </nav>
+      <div class="nav-tools"><a class="btn" href="#admission">Apply</a></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── HERO ── -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="reveal">
+          <span class="eyebrow">Excellence in Education</span>
+          <h1>Empowering the Next Generation of Medical Professionals</h1>
+          <p>Dr.AIMSS EDUCATIONAL ACADEMY provides world-class NEET coaching, combining expert faculty, rigorous testing, and comprehensive study materials from Class 6 to 12.</p>
+          <div class="hero-actions">
+            <a class="btn" href="#programs">Explore Programs</a>
+            <a class="btn btn-soft" href="login.html">Student &amp; Teacher Portal</a>
+          </div>
+        </div>
+        <aside class="glass hero-panel reveal">
+          <h3>Upcoming Assessments</h3>
+          <div class="panel-item"><span>NEET Mock Exam</span><strong>Saturday</strong></div>
+          <div class="panel-item"><span>Class 12 Physics Test</span><strong>Monday</strong></div>
+          <div class="panel-item"><span>Biology Revision</span><strong>Wednesday</strong></div>
+          <div class="panel-item"><span>Doubt Clearing</span><strong>Daily</strong></div>
+        </aside>
+      </div>
+
+      <!-- Metric counters -->
+      <div class="container metric-grid reveal">
+        <div class="metric-card"><h3 data-count="1500" data-suffix="+">0</h3><p>Future Doctors Mentored</p></div>
+        <div class="metric-card"><h3 data-count="99" data-suffix="%">0</h3><p>Pass Rate</p></div>
+        <div class="metric-card"><h3 data-count="300" data-suffix="+">0</h3><p>Top Percentile Rankers</p></div>
+        <div class="metric-card"><h3 data-count="24" data-suffix="/7">0</h3><p>Academic Support</p></div>
+      </div>
+    </section>
+
+    <!-- ── LEGACY ANIMATED RINGS ── -->
+    <section style="padding:60px 0 40px;">
+      <div class="container">
+        <div class="section-title reveal" style="text-align:center;margin-bottom:40px;">
+          <h2>Our Legacy of Excellence</h2>
+          <p>Decades of academic leadership that speaks for itself.</p>
+        </div>
+        <div class="legacy-grid reveal">
+          <!-- 25+ Years -->
+          <div class="legacy-card">
+            <div class="stats-ring-wrap">
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ring0" cx="60" cy="60" r="52" stroke="#8b5cf6"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div class="ring-label">
+                <span id="cnt0">0</span>
+                <small>Years</small>
+              </div>
+            </div>
+            <p>Years of Legacy</p>
+          </div>
+          <!-- 50+ Educators -->
+          <div class="legacy-card">
+            <div class="stats-ring-wrap">
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ring1" cx="60" cy="60" r="52" stroke="#f59e0b"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div class="ring-label">
+                <span id="cnt1">0</span>
+                <small>Educators</small>
+              </div>
+            </div>
+            <p>Expert Educators</p>
+          </div>
+          <!-- 10K+ Alumni -->
+          <div class="legacy-card">
+            <div class="stats-ring-wrap">
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ring2" cx="60" cy="60" r="52" stroke="#10b981"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div class="ring-label">
+                <span id="cnt2">0</span>
+                <small>Alumni</small>
+              </div>
+            </div>
+            <p>Alumni Network</p>
+          </div>
+          <!-- 1500+ Doctors -->
+          <div class="legacy-card">
+            <div class="stats-ring-wrap">
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ring3" cx="60" cy="60" r="52" stroke="#2563eb"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div class="ring-label">
+                <span id="cnt3">0</span>
+                <small>Mentored</small>
+              </div>
+            </div>
+            <p>Future Doctors</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BOARD COURSE QUICK LINKS ── -->
+    <section style="padding:20px 0 56px;">
+      <div class="container">
+        <div class="section-title reveal" style="margin-bottom:28px;">
+          <h2>Choose Your Board</h2>
+          <p>Separate, dedicated courses for CBSE and Tamil Nadu Stateboard students.</p>
+        </div>
+        <div class="board-links reveal">
+          <a class="board-link-card cbse" href="cbse.html">
+            <h3>🎓 CBSE Board</h3>
+            <p>NCERT-aligned, competency-based courses with board-pattern practice.</p>
+            <div class="board-classes">
+              <span class="cls-pill">Class 6</span><span class="cls-pill">Class 7</span>
+              <span class="cls-pill">Class 8</span><span class="cls-pill">Class 9</span>
+              <span class="cls-pill">Class 10</span><span class="cls-pill">Class 11</span>
+              <span class="cls-pill">Class 12</span>
+            </div>
+            <span class="board-arrow">→</span>
+          </a>
+          <a class="board-link-card sb" href="matric.html">
+            <h3>📚 Stateboard</h3>
+            <p>Samacheer Kalvi syllabus with TN board exam focused preparation.</p>
+            <div class="board-classes">
+              <span class="cls-pill">Class 6</span><span class="cls-pill">Class 7</span>
+              <span class="cls-pill">Class 8</span><span class="cls-pill">Class 9</span>
+              <span class="cls-pill">Class 10</span><span class="cls-pill">Class 11</span>
+              <span class="cls-pill">Class 12</span>
+            </div>
+            <span class="board-arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TRENDING COURSES ── -->
+    <section>
+      <div class="container">
+        <div class="section-title reveal" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;">
+          <div>
+            <h2>Trending Courses</h2>
+            <p>Explore our most popular test prep and academic courses.</p>
+          </div>
+          <a class="btn btn-soft" href="lectures.html">View All Courses</a>
+        </div>
+        <div class="course-carousel reveal">
+          <article class="gfg-card" onclick="window.location.href='lectures.html'">
+            <div class="gfg-card-thumb" style="background-image:url('https://img.youtube.com/vi/M7lc1UVf-VE/mqdefault.jpg')">
+              <span class="gfg-card-badge">Bestseller</span>
+            </div>
+            <div class="gfg-card-body">
+              <span class="gfg-card-level">Class 12 / NEET</span>
+              <h3 class="gfg-card-title">Complete NEET Physics Mastery 2026</h3>
+              <div class="gfg-card-stats"><span class="gfg-rating"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>4.9</span><span>• 12k+ learners</span></div>
+            </div>
+            <div class="gfg-card-footer"><span class="gfg-price">Free</span><span class="gfg-btn">Explore <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+          </article>
+          <article class="gfg-card" onclick="window.location.href='cbse.html'">
+            <div class="gfg-card-thumb" style="background-image:url('https://img.youtube.com/vi/bX9-HFaJPGk/mqdefault.jpg')">
+              <span class="gfg-card-badge free">CBSE</span>
+            </div>
+            <div class="gfg-card-body">
+              <span class="gfg-card-level">Class 11 / CBSE</span>
+              <h3 class="gfg-card-title">Organic Chemistry Fundamentals</h3>
+              <div class="gfg-card-stats"><span class="gfg-rating"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>4.8</span><span>• 8k+ learners</span></div>
+            </div>
+            <div class="gfg-card-footer"><span class="gfg-price">Free</span><span class="gfg-btn">Explore <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+          </article>
+          <article class="gfg-card" onclick="window.location.href='matric.html'">
+            <div class="gfg-card-thumb" style="background-image:url('https://img.youtube.com/vi/X3nRHaJPCmk/mqdefault.jpg')">
+              <span class="gfg-card-badge free">Stateboard</span>
+            </div>
+            <div class="gfg-card-body">
+              <span class="gfg-card-level">Class 10 / Stateboard</span>
+              <h3 class="gfg-card-title">Electricity & Circuits – Samacheer</h3>
+              <div class="gfg-card-stats"><span class="gfg-rating"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>4.7</span><span>• 15k+ learners</span></div>
+            </div>
+            <div class="gfg-card-footer"><span class="gfg-price">Free</span><span class="gfg-btn">Explore <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+          </article>
+          <article class="gfg-card" onclick="window.location.href='lectures.html'">
+            <div class="gfg-card-thumb" style="background-image:url('https://img.youtube.com/vi/TpGMlhJtcSI/mqdefault.jpg')">
+            </div>
+            <div class="gfg-card-body">
+              <span class="gfg-card-level">Class 12 / NEET</span>
+              <h3 class="gfg-card-title">Human Anatomy &amp; Physiology</h3>
+              <div class="gfg-card-stats"><span class="gfg-rating"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>4.9</span><span>• 20k+ learners</span></div>
+            </div>
+            <div class="gfg-card-footer"><span class="gfg-price">Free</span><span class="gfg-btn">Explore <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ACADEMIC TRACKS ── -->
+    <section id="programs" style="padding:56px 0;">
+      <div class="container">
+        <div class="section-title reveal">
+          <h2>Comprehensive Academic Tracks</h2>
+          <p>We build a strong foundation starting from middle school all the way to rigorous NEET preparation.</p>
+        </div>
+        <div class="cards-3" style="margin-bottom:24px;">
+          <article class="card reveal" style="border-top:4px solid var(--accent);">
+            <h3>Foundation (Class 6-8)</h3>
+            <p>Building strong fundamentals in Science and Mathematics to prepare young minds for future competitive exams.</p>
+          </article>
+          <article class="card reveal" style="border-top:4px solid var(--accent);">
+            <h3>Intermediate (Class 9-10)</h3>
+            <p>Advanced conceptual clarity aligned with Matric and CBSE boards, focusing on core analytical skills.</p>
+          </article>
+          <article class="card reveal" style="border-top:4px solid var(--accent);">
+            <h3>NEET Intensive (Class 11-12)</h3>
+            <p>Rigorous physics, chemistry, and biology training with personalized doubt solving and weekly mock tests.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DIGITAL PORTALS ── -->
+    <section>
+      <div class="container">
+        <div class="section-title reveal">
+          <h2>Interactive Digital Learning</h2>
+          <p>Access our specialized portals for a complete academic experience.</p>
+        </div>
+        <div class="page-nav">
+          <a class="page-link reveal" href="login.html"><span>Student Portal &amp; MCQs</span><span>Enter</span></a>
+          <a class="page-link reveal" href="login.html"><span>Teacher Command Center</span><span>Enter</span></a>
+          <a class="page-link reveal" href="lectures.html"><span>Video Lectures Hub</span><span>Watch</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ADMISSION CTA ── -->
+    <section id="admission" style="padding:56px 0;">
+      <div class="container">
+        <div class="glass card reveal" style="text-align:center;">
+          <h3 style="margin-bottom:12px;">Admissions Open For 2026-27</h3>
+          <p style="margin-top:0;color:var(--muted);max-width:600px;margin-left:auto;margin-right:auto;margin-bottom:24px;">Join Dr.AIMSS EDUCATIONAL ACADEMY today and start your journey towards academic excellence and medical success.</p>
+          <a class="btn" href="#">Enroll Now</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">Dr.AIMSS EDUCATIONAL ACADEMY | NEET, Stateboard, CBSE Academic Excellence</div></footer>
+
+  <button id="chatToggle" class="float-chat-btn" aria-label="Open AI Chat"><img src="assets/images/ai-bot.png" alt="AI Chat" class="chat-bot-icon"/></button>
+  <div id="chatPanel" class="chat-pop" aria-live="polite">
+    <div class="chat-head"><span>AI Assistant</span><button id="chatClose" class="btn btn-soft" type="button">Close</button></div>
+    <div id="chatLog" class="chat-log"><div class="msg bot">Hi, ask anything about NEET, Stateboard, CBSE, admission, or study strategy.</div></div>
+    <div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question"/><button id="chatSend" type="button">Send</button></div>
+  </div>
+
+  <script src="assets/js/main.js?v=5"></script>
+  <script>
+  // ── Animated SVG ring counters ──
+  const RINGS = [
+    { id:'ring0', cnt:'cnt0', target:25, suffix:'+', circumference:326.7 },
+    { id:'ring1', cnt:'cnt1', target:50, suffix:'+', circumference:326.7 },
+    { id:'ring2', cnt:'cnt2', target:10, suffix:'K+', circumference:326.7 },
+    { id:'ring3', cnt:'cnt3', target:1500, suffix:'+', circumference:326.7 },
+  ];
+
+  // percentage of ring to fill (visual — 25 years = ~80%, 50 edu = ~90%, etc.)
+  const FILL_PCT = [0.80, 0.90, 0.85, 0.95];
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        RINGS.forEach((r, i) => {
+          const ring = document.getElementById(r.id);
+          const cnt = document.getElementById(r.cnt);
+          if (!ring || !cnt || cnt.dataset.done) return;
+          cnt.dataset.done = '1';
+          // Animate ring
+          const offset = r.circumference * (1 - FILL_PCT[i]);
+          ring.style.strokeDashoffset = String(offset);
+          // Animate counter
+          let n = 0;
+          const target = r.target;
+          const step = Math.max(1, Math.ceil(target / 60));
+          const t = setInterval(() => {
+            n = Math.min(n + step, target);
+            cnt.textContent = n + r.suffix;
+            if (n >= target) clearInterval(t);
+          }, 28);
+        });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const legacySection = document.querySelector('.legacy-grid');
+  if (legacySection) obs.observe(legacySection);
+
+  // ── Add underline to metric cards after reveal ──
+  document.querySelectorAll('.metric-card').forEach(card => {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { card.classList.add('show'); io.disconnect(); } });
+    }, { threshold: 0.4 });
+    io.observe(card);
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courses | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Browse NEET, Matric, and CBSE courses from Class 6 to 12 at Dr.AIMSS EDUCATIONAL ACADEMY. Free video lectures for Physics, Chemistry, Biology, and Mathematics." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a>
+      <nav class="nav-links"><a href="index.html">Home</a><a href="matric.html">Matric</a><a href="cbse.html">CBSE</a><a href="login.html">Login</a></nav>
+      <div class="nav-tools"><a class="btn" href="index.html#admission">Apply</a></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Course Catalog Hero -->
+    <section class="courses-hero">
+      <div class="container">
+        <div class="courses-hero-inner reveal">
+          <div>
+            <span class="eyebrow">📚 Course Catalog</span>
+            <h1>Explore Our Courses</h1>
+            <p>Structured video lectures for NEET, Matric & CBSE — Class 6 to 12. Learn from top educators, completely free.</p>
+          </div>
+          <div class="courses-hero-stats">
+            <div class="metric-card"><h3>120+</h3><p>Lectures</p></div>
+            <div class="metric-card"><h3>24</h3><p>Trainers</p></div>
+            <div class="metric-card"><h3>7</h3><p>Classes</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GfG-Style Catalog Layout -->
+    <section style="padding: 0 0 54px;">
+      <div class="container">
+        <div class="catalog-layout">
+          
+          <!-- Left Sidebar: Category Filters -->
+          <aside class="catalog-sidebar glass reveal">
+            <h3 class="catalog-sidebar-title">Browse by Class</h3>
+            <button class="catalog-filter active" data-filter="all">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+              All Courses
+              <span class="catalog-filter-count" id="countAll">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-6">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 6
+              <span class="catalog-filter-count" id="countClass6">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-7">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 7
+              <span class="catalog-filter-count" id="countClass7">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-8">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 8
+              <span class="catalog-filter-count" id="countClass8">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-9">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 9
+              <span class="catalog-filter-count" id="countClass9">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-10">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 10
+              <span class="catalog-filter-count" id="countClass10">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-11">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 11
+              <span class="catalog-filter-count" id="countClass11">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="class-12">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              Class 12
+              <span class="catalog-filter-count" id="countClass12">0</span>
+            </button>
+            <button class="catalog-filter" data-filter="neet">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+              NEET Prep
+              <span class="catalog-filter-count" id="countNeet">0</span>
+            </button>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line);">
+              <h3 class="catalog-sidebar-title">Browse by Subject</h3>
+              <button class="catalog-filter" data-subject="physics">🔬 Physics</button>
+              <button class="catalog-filter" data-subject="chemistry">⚗️ Chemistry</button>
+              <button class="catalog-filter" data-subject="biology">🧬 Biology</button>
+              <button class="catalog-filter" data-subject="mathematics">📐 Mathematics</button>
+            </div>
+          </aside>
+
+          <!-- Right Side: Course Grid -->
+          <div class="catalog-main">
+            <div class="catalog-toolbar reveal">
+              <div class="catalog-result-info">
+                <h2 id="catalogTitle" style="margin:0;">All Courses</h2>
+                <span id="catalogCount" style="color: var(--muted); font-size: 0.92rem;">Showing 0 courses</span>
+              </div>
+              <input class="field" id="courseSearch" type="text" placeholder="Search courses..." style="max-width: 280px; margin: 0;" />
+            </div>
+            
+            <div id="catalogGrid" class="catalog-grid reveal">
+              <!-- Courses injected by JS -->
+            </div>
+
+            <p id="catalogEmpty" style="color:var(--muted); text-align:center; padding: 60px 0; display:none;">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--muted)" stroke-width="1.5" style="display:block; margin: 0 auto 16px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              No courses found. Try a different filter or search term.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">Courses | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
+
+  <button id="chatToggle" class="float-chat-btn" aria-label="Open AI Chat"><img src="assets/images/ai-bot.png" alt="AI Chat" class="chat-bot-icon" /></button>
+  <div id="chatPanel" class="chat-pop" aria-live="polite">
+    <div class="chat-head"><span>AI Assistant</span><button id="chatClose" class="btn btn-soft" type="button">Close</button></div>
+    <div id="chatLog" class="chat-log"><div class="msg bot">Hi, ask anything about NEET, Matric, CBSE, admission, or study strategy.</div></div>
+    <div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question" /><button id="chatSend" type="button">Send</button></div>
+  </div>
+
+  <script src="assets/js/main.js?v=4"></script>
+  <script src="assets/js/courses.js?v=1"></script>
+</body>
+</html>

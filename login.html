@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Login | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a>
+      <nav class="nav-links"><a href="index.html">Home</a><a href="lectures.html">Lectures</a><a href="matric.html">Matric</a><a href="cbse.html">CBSE</a></nav>
+      <div class="nav-tools"><a class="btn" href="index.html#admission">Apply</a></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container" style="max-width:860px;">
+        <div class="glass card reveal">
+          <h2 style="margin-bottom:10px;">Login First</h2>
+          <p style="margin-top:0; color:var(--muted);">Select your role to continue to the main command center.</p>
+          <div class="split-2" style="margin-top:14px;">
+            <a class="card" href="student-login.html">
+              <h3>Student Login</h3>
+              <p>Access tests, AI tools, and study workflows.</p>
+            </a>
+            <a class="card" href="teacher-login.html">
+              <h3>Teacher Login</h3>
+              <p>Track student progress and manage reports.</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">Login Portal | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
+
+  <button id="chatToggle" class="float-chat-btn" aria-label="Open AI Chat"><img src="assets/images/ai-bot.png" alt="AI Chat" class="chat-bot-icon" /></button>
+  <div id="chatPanel" class="chat-pop"><div class="chat-head"><span>AI Assistant</span><button id="chatClose" class="btn btn-soft" type="button">Close</button></div><div id="chatLog" class="chat-log"><div class="msg bot">Need help logging in or choosing a program?</div></div><div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question" /><button id="chatSend" type="button">Send</button></div></div>
+
+  <script src="assets/js/main.js?v=3"></script>
+</body>
+</html>

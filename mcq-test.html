@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCQ Test | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="student-dashboard.html">Main Page</a></nav></div></header>
+  <main class="portal-shell">
+    <div class="portal-side-overlay" id="sidebarOverlay"></div>
+    <aside class="portal-side" id="portalSidebar">
+      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width:36px; height:36px; background:#5b58ed; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">DA</div>
+          <span style="font-size: 1.1rem; font-weight: 800; font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
+        </div>
+        <button id="sidebarCloseBtn" class="btn btn-soft" style="padding: 4px 8px; border: none; display: none;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div style="margin-bottom: 24px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span style="font-size: 0.9rem; font-weight:600;">Personal Workspace</span>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+
+      <div class="portal-title">MAIN</div>
+      <a class="portal-link" href="student-dashboard.html">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Student Profile
+      </a>
+
+      <div class="portal-title">CONTENT STUDIO</div>
+      <a class="portal-link" href="study-materials.html">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        Study Materials
+      </a>
+      <a class="portal-link" href="ai-pdf-generator.html">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        ePDF Generator
+      </a>
+
+      <div class="portal-title">ASSESSMENT</div>
+      <a class="portal-link active" href="mcq-test.html">
+        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        MCQ Test
+      </a>
+
+      <div class="sidebar-footer" style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span id="sidePointsText">0 pts</span>
+          </span>
+        </div>
+        <div style="width:100%; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;">
+          <div id="sidePointsBar" style="width:0%; height:100%; background:#38a169; border-radius:4px;"></div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--muted); margin-top:6px;">Free Plan</div>
+      </div>
+    </aside>
+    <section class="portal-main">
+      <div class="glass card"><h2>MCQ Test</h2><p id="mcqScore" class="status">Score: 0/4</p><div id="mcqBox"></div><div style="margin-top:14px;"><button id="mcqNext" class="btn" type="button">Next Question</button></div></div>
+    </section>
+  </main>
+  <script src="assets/js/main.js?v=3"></script>
+</body>
+</html>

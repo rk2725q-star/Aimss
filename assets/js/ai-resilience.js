@@ -36,10 +36,11 @@ const AI_PROVIDERS = {
 
 // CORS proxy chain (tried in order)
 const CORS_PROXIES = [
-  (url) => url,                                                                  // 1. Direct
-  (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),                  // 2. corsproxy.io
-  (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),     // 3. allorigins
-  (url) => 'https://thingproxy.freeboard.io/fetch/' + url,                      // 4. thingproxy
+  (url) => '/api/ai',                                                            // 1. Local backend proxy (100% CORS-safe)
+  (url) => url,                                                                  // 2. Direct
+  (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),                  // 3. corsproxy.io
+  (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),     // 4. allorigins
+  (url) => 'https://thingproxy.freeboard.io/fetch/' + url,                      // 5. thingproxy
 ];
 
 

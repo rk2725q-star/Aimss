@@ -2,16 +2,284 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Teacher Login | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Teacher Portal | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Teacher login and registration for Dr.AIMSS Educational Academy." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body { min-height:100dvh; display:flex; flex-direction:column; }
+    .login-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+
+    .login-card {
+      width:min(460px,100%);
+      background:linear-gradient(160deg,rgba(15,23,60,0.97) 0%,rgba(15,23,42,0.98) 100%);
+      border:1px solid rgba(245,158,11,0.25); border-radius:28px;
+      padding:40px 36px 36px;
+      box-shadow:0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter:blur(24px); position:relative; overflow:hidden;
+    }
+    .login-card::before {
+      content:''; position:absolute; top:-80px; right:-80px;
+      width:200px; height:200px;
+      background:radial-gradient(circle,rgba(245,158,11,0.15),transparent 70%);
+      pointer-events:none;
+    }
+
+    .login-role-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(37,99,235,0.1));
+      border:1px solid rgba(245,158,11,0.3); border-radius:999px;
+      padding:6px 16px; font-size:.78rem; font-weight:700; color:#fbbf24;
+      letter-spacing:.04em; text-transform:uppercase; margin-bottom:20px;
+    }
+    .role-dot { width:7px; height:7px; background:#fbbf24; border-radius:50%; animation:blink 1.8s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Tabs */
+    .auth-tabs {
+      display:flex; gap:4px; background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08); border-radius:14px;
+      padding:4px; margin-bottom:28px;
+    }
+    .auth-tab {
+      flex:1; padding:10px; border:none; border-radius:10px;
+      background:transparent; color:#64748b; font-family:inherit;
+      font-size:.9rem; font-weight:700; cursor:pointer; transition:all .2s;
+    }
+    .auth-tab.active {
+      background:linear-gradient(135deg,rgba(180,83,9,0.7),rgba(245,158,11,0.4));
+      color:#fff; box-shadow:0 4px 16px rgba(180,83,9,0.3);
+    }
+
+    .auth-form { display:none; }
+    .auth-form.active { display:block; }
+
+    .login-field-label {
+      display:block; font-size:.78rem; font-weight:700; color:#94a3b8;
+      margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase;
+    }
+    .login-field-wrap { position:relative; margin-bottom:14px; }
+    .login-field {
+      width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+      border-radius:12px; padding:13px 14px 13px 44px; color:#fff;
+      font-family:inherit; font-size:.92rem; font-weight:500; outline:none;
+      transition:border-color .2s, background .2s, box-shadow .2s; box-sizing:border-box;
+    }
+    .login-field:focus {
+      border-color:rgba(245,158,11,0.6); background:rgba(245,158,11,0.06);
+      box-shadow:0 0 0 3px rgba(245,158,11,0.12);
+    }
+    .login-field::placeholder { color:#475569; }
+    .f-icon {
+      position:absolute; left:13px; top:50%; transform:translateY(-50%);
+      width:18px; height:18px; color:#475569; pointer-events:none;
+    }
+
+    .login-btn {
+      width:100%;
+      background:linear-gradient(135deg,#b45309,#f59e0b 50%,#2563eb);
+      background-size:200% auto; color:#fff; border:none; border-radius:12px;
+      padding:14px; font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:800;
+      cursor:pointer; margin-top:6px; transition:background-position .4s, transform .2s, box-shadow .2s;
+      box-shadow:0 8px 24px rgba(180,83,9,0.4);
+    }
+    .login-btn:hover:not(:disabled) { background-position:right center; transform:translateY(-2px); }
+    .login-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .btn-spinner {
+      display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,0.4);
+      border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .login-btn.loading .btn-text { display:none; }
+    .login-btn.loading .btn-spinner { display:block; }
+
+    .login-status {
+      margin-top:12px; padding:11px 14px; border-radius:10px;
+      font-size:.85rem; font-weight:600; display:none; text-align:center; line-height:1.4;
+    }
+    .login-status.error   { display:block; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; }
+    .login-status.success { display:block; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); color:#4ade80; }
+    .login-status.info    { display:block; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
+
+    /* Teacher code field — special highlight */
+    .teacher-code-field { border-color:rgba(245,158,11,0.3) !important; }
+    .teacher-code-note {
+      font-size:.75rem; color:#64748b; margin-top:4px; display:block;
+    }
+
+    .switch-portal { text-align:center; margin-top:20px; font-size:.82rem; color:#475569; }
+    .switch-portal a { color:#fbbf24; font-weight:700; }
+    .security-badge {
+      display:flex; align-items:center; justify-content:center;
+      gap:6px; margin-top:18px; font-size:.72rem; color:#334155;
+    }
+    .security-badge svg { color:#22c55e; }
+  </style>
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Command Center</a></nav></div></header>
-  <main><section class="hero"><div class="container" style="max-width:560px;"><div class="glass card"><h2>Teacher Login</h2><p style="color:var(--muted);">Teacher portal authentication.</p><form id="roleLoginForm"><input id="roleType" type="hidden" value="teacher" /><div style="display:grid;gap:10px;margin-top:12px;"><input id="roleEmail" class="field" type="email" placeholder="Teacher Email" required /><input id="rolePassword" class="field" type="password" placeholder="Password" required /><button class="btn" type="submit">Login as Teacher</button><p id="roleLoginStatus" class="status"></p></div></form></div></div></section></main>
-  <script src="assets/js/main.js?v=3"></script>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" />
+        <span>Dr.AIMSS EDUCATIONAL ACADEMY</span>
+      </a>
+      <div class="nav-tools"><a class="btn btn-soft" href="login.html">← Back</a></div>
+    </div>
+  </header>
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-role-badge"><span class="role-dot"></span>Teacher Portal</div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register</button>
+      </div>
+
+      <!-- ── LOGIN FORM ── -->
+      <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
+        <div class="login-field-wrap">
+          <label for="loginEmail" class="login-field-label">Teacher Email</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input id="loginEmail" class="login-field" type="email" placeholder="teacher@draimss.edu" autocomplete="email" required />
+          </div>
+        </div>
+        <div class="login-field-wrap">
+          <label for="loginPassword" class="login-field-label">Password</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="loginPassword" class="login-field" type="password" placeholder="Your password" autocomplete="current-password" required />
+          </div>
+        </div>
+        <button id="loginBtn" class="login-btn" type="submit">
+          <span class="btn-text">Sign In as Teacher →</span><span class="btn-spinner"></span>
+        </button>
+        <div id="loginStatus" class="login-status" role="alert"></div>
+      </form>
+
+      <!-- ── SIGNUP FORM ── -->
+      <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
+        <div class="login-field-wrap">
+          <label for="signupEmail" class="login-field-label">Email</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input id="signupEmail" class="login-field" type="email" placeholder="teacher@draimss.edu" required />
+          </div>
+        </div>
+        <div class="login-field-wrap">
+          <label for="signupPassword" class="login-field-label">Password</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="signupPassword" class="login-field" type="password" placeholder="Min. 8 characters" required />
+          </div>
+        </div>
+        <div class="login-field-wrap">
+          <label for="signupConfirm" class="login-field-label">Confirm Password</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <input id="signupConfirm" class="login-field" type="password" placeholder="Repeat password" required />
+          </div>
+        </div>
+        <!-- Teacher registration code -->
+        <div class="login-field-wrap">
+          <label for="teacherCode" class="login-field-label">🔑 Teacher Registration Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            <input id="teacherCode" class="login-field teacher-code-field" type="text" placeholder="Enter the code given by academy" required />
+          </div>
+          <span class="teacher-code-note">Contact Dr.AIMSS administration to get your teacher registration code.</span>
+        </div>
+        <button id="signupBtn" class="login-btn" type="submit">
+          <span class="btn-text">Register as Teacher →</span><span class="btn-spinner"></span>
+        </button>
+        <div id="signupStatus" class="login-status" role="alert"></div>
+      </form>
+
+      <div class="switch-portal">Student? <a href="student-login.html">Student Login →</a></div>
+      <div class="security-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Secured · Code-protected teacher registration
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script>
+    function switchTab(tab) {
+      document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+      document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+      document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+      document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
+      clearAll();
+    }
+    function setStatus(id, msg, type) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.className = 'login-status ' + type;
+    }
+    function clearStatus(id) { const el = document.getElementById(id); el.textContent = ''; el.className = 'login-status'; }
+    function clearAll() { clearStatus('loginStatus'); clearStatus('signupStatus'); }
+
+    /* ── LOGIN ── */
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus('loginStatus');
+      const btn   = document.getElementById('loginBtn');
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPassword').value;
+      if (!email || !pass) { setStatus('loginStatus', 'Enter your email and password.', 'error'); return; }
+
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const r = await DrAuth.signIn(email, pass, 'teacher');
+        if (!r.success) { setStatus('loginStatus', r.error, 'error'); }
+        else {
+          setStatus('loginStatus', '✓ Welcome! Redirecting to Command Center...', 'success');
+          setTimeout(() => { window.location.href = 'command-center.html'; }, 900);
+        }
+      } catch { setStatus('loginStatus', 'Network error. Please try again.', 'error'); }
+      finally { btn.classList.remove('loading'); btn.disabled = false; }
+    });
+
+    /* ── SIGN UP ── */
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus('signupStatus');
+      const btn     = document.getElementById('signupBtn');
+      const email   = document.getElementById('signupEmail').value.trim();
+      const pass    = document.getElementById('signupPassword').value;
+      const confirm = document.getElementById('signupConfirm').value;
+      const code    = document.getElementById('teacherCode').value.trim();
+
+      if (!email || !pass || !code) { setStatus('signupStatus', 'Please fill in all fields including the registration code.', 'error'); return; }
+      if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
+      if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
+
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const r = await DrAuth.signUp(email, pass, 'teacher', code);
+        if (!r.success) { setStatus('signupStatus', r.error, 'error'); }
+        else if (r.needsConfirmation) {
+          setStatus('signupStatus', '📧 ' + r.message, 'info');
+        } else {
+          setStatus('signupStatus', '✓ Teacher account created! Redirecting...', 'success');
+          setTimeout(() => { window.location.href = 'command-center.html'; }, 1000);
+        }
+      } catch { setStatus('signupStatus', 'Network error. Please try again.', 'error'); }
+      finally { btn.classList.remove('loading'); btn.disabled = false; }
+    });
+
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', clearAll);
+    });
+  </script>
 </body>
 </html>

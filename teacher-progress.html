@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Teacher Progress Tracker | Dr.AIMSS EDUCATIONAL ACADEMY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Main Page</a></nav></div></header>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Main Page</a><a href="#" data-logout>Logout</a></nav></div></header>
   <main class="portal-shell">
     <div class="portal-side-overlay" id="sidebarOverlay"></div>
     <aside class="portal-side" id="portalSidebar">
@@ -114,6 +114,14 @@
       </div>
     </section>
   </main>
-  <script src="assets/js/main.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script>
+    // Guard this page — teacher role required
+    DrAuth.guardPage('teacher');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/main.js?v=5"></script>
 </body>
 </html>

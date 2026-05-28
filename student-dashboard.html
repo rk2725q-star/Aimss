@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Student Dashboard | Dr.AIMSS EDUCATIONAL ACADEMY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="login.html">Logout</a></nav></div></header>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="#" data-logout id="navLogout">Logout</a></nav></div></header>
   <main class="portal-shell">
     <div class="portal-side-overlay" id="sidebarOverlay"></div>
     <aside class="portal-side" id="portalSidebar">
@@ -68,7 +68,7 @@
     <section class="portal-main">
       <div class="gamification-badges" style="margin-bottom: 24px; padding: 20px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);">
         <div>
-          <h2 style="font-size: 1.6rem; margin: 0;">Welcome back! <span id="studentEmailBadge" style="font-size: 1.1rem; color: var(--muted); font-weight: 500;"></span></h2>
+          <h2 style="font-size: 1.6rem; margin: 0;">Welcome back! <span id="studentEmailBadge" data-auth-email style="font-size: 1.1rem; color: var(--muted); font-weight: 500;"></span></h2>
           <p style="color: var(--muted); margin: 4px 0 0; font-size: 1rem;">Continue your learning journey today.</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
@@ -114,6 +114,14 @@
       </div>
     </div>
   </div>
-  <script src="assets/js/main.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script>
+    // Guard this page — student role required
+    DrAuth.guardPage('student');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/main.js?v=5"></script>
 </body>
 </html>

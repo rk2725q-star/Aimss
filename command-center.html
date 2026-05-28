@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Command Center | Dr.AIMSS EDUCATIONAL ACADEMY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="login.html">Switch Account</a></nav><div class="nav-tools"></div></div></header>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="#" data-logout id="navLogout">Logout</a></nav><div class="nav-tools"><span data-auth-email style="font-size:.82rem;color:var(--muted);"></span></div></div></header>
   <main class="portal-shell">
     <div class="portal-side-overlay" id="sidebarOverlay"></div>
     <aside class="portal-side" id="portalSidebar">
@@ -57,6 +57,14 @@
       <div class="glass card"><h2>Main Page</h2><p style="color:var(--muted);">Login completed. Use the sidebar to open each option page.</p><div class="split-2"><a class="card" href="ai-pdf-generator.html"><h3>AI PDF Generator</h3><p>Create chapter notes and save as PDF.</p></a><a class="card" href="mcq-test.html"><h3>MCQ Test</h3><p>Practice questions with instant score.</p></a><a class="card" href="teacher-progress.html"><h3>Teacher Progress Tracker</h3><p>Track and export student performance.</p></a></div></div>
     </section>
   </main>
-  <script src="assets/js/main.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script>
+    // Guard this page — teacher role required
+    DrAuth.guardPage('teacher');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/main.js?v=5"></script>
 </body>
 </html>

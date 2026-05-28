@@ -2,12 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Portal Login | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Select your role to login to Dr.AIMSS portal — Student or Teacher." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body { min-height: 100dvh; display: flex; flex-direction: column; }
+    .portal-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .portal-selector {
+      width: min(780px, 100%);
+      text-align: center;
+    }
+    .portal-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.25);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: .8rem;
+      font-weight: 700;
+      color: #a78bfa;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .portal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 12px;
+      line-height: 1.1;
+    }
+    .portal-title span {
+      background: linear-gradient(135deg, #a78bfa, #fb923c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .portal-subtitle {
+      color: #64748b;
+      font-size: 1rem;
+      margin: 0 0 48px;
+    }
+
+    /* Role cards */
+    .role-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) { .role-cards { grid-template-columns: 1fr; } }
+
+    .role-card {
+      position: relative;
+      padding: 36px 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      overflow: hidden;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s, border-color .3s;
+    }
+    .role-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .role-card:hover {
+      transform: translateY(-6px);
+    }
+    .role-card:hover::before { opacity: 1; }
+
+    /* Student card */
+    .role-card.student {
+      background: linear-gradient(160deg, rgba(109,40,217,0.2) 0%, rgba(30,27,75,0.5) 100%);
+    }
+    .role-card.student::before {
+      background: linear-gradient(160deg, rgba(109,40,217,0.35), rgba(167,139,250,0.1));
+    }
+    .role-card.student { border-color: rgba(139,92,246,0.25); }
+    .role-card.student:hover {
+      border-color: rgba(139,92,246,0.6);
+      box-shadow: 0 24px 60px rgba(109,40,217,0.3);
+    }
+
+    /* Teacher card */
+    .role-card.teacher {
+      background: linear-gradient(160deg, rgba(120,53,15,0.2) 0%, rgba(15,23,42,0.5) 100%);
+    }
+    .role-card.teacher::before {
+      background: linear-gradient(160deg, rgba(180,83,9,0.3), rgba(245,158,11,0.08));
+    }
+    .role-card.teacher { border-color: rgba(245,158,11,0.2); }
+    .role-card.teacher:hover {
+      border-color: rgba(245,158,11,0.5);
+      box-shadow: 0 24px 60px rgba(180,83,9,0.25);
+    }
+
+    .role-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      position: relative;
+      z-index: 1;
+    }
+    .student .role-icon { background: rgba(139,92,246,0.2); }
+    .teacher .role-icon { background: rgba(245,158,11,0.15); }
+
+    .role-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .role-desc {
+      font-size: .88rem;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.5;
+      position: relative;
+      z-index: 1;
+    }
+    .role-perks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+    .role-perk {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .student .role-perk { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+    .teacher .role-perk { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+
+    .role-arrow {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+      transition: gap .2s;
+    }
+    .student .role-arrow { color: #a78bfa; }
+    .teacher .role-arrow { color: #fbbf24; }
+    .role-card:hover .role-arrow { gap: 10px; }
+
+    .portal-footer {
+      margin-top: 36px;
+      color: #334155;
+      font-size: .82rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .portal-footer svg { color: #22c55e; }
+  </style>
 </head>
 <body>
   <div class="grid-noise"></div>
@@ -15,38 +197,99 @@
 
   <header class="topbar">
     <div class="container nav">
-      <a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a>
-      <nav class="nav-links"><a href="index.html">Home</a><a href="lectures.html">Lectures</a><a href="matric.html">Matric</a><a href="cbse.html">CBSE</a></nav>
-      <div class="nav-tools"><a class="btn" href="index.html#admission">Apply</a></div>
+      <a class="brand" href="index.html">
+        <img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" />
+        <span>Dr.AIMSS EDUCATIONAL ACADEMY</span>
+      </a>
+      <div class="nav-tools">
+        <a class="btn btn-soft" href="index.html">← Home</a>
+      </div>
     </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <div class="container" style="max-width:860px;">
-        <div class="glass card reveal">
-          <h2 style="margin-bottom:10px;">Login First</h2>
-          <p style="margin-top:0; color:var(--muted);">Select your role to continue to the main command center.</p>
-          <div class="split-2" style="margin-top:14px;">
-            <a class="card" href="student-login.html">
-              <h3>Student Login</h3>
-              <p>Access tests, AI tools, and study workflows.</p>
-            </a>
-            <a class="card" href="teacher-login.html">
-              <h3>Teacher Login</h3>
-              <p>Track student progress and manage reports.</p>
-            </a>
+  <div class="portal-wrap">
+    <div class="portal-selector">
+      <div class="portal-eyebrow">🔐 Secure Portal Access</div>
+      <h1 class="portal-title">Sign In to <span>Dr.AIMSS</span></h1>
+      <p class="portal-subtitle">Choose your role to access your dedicated learning or teaching dashboard.</p>
+
+      <div class="role-cards">
+        <!-- Student Card -->
+        <a class="role-card student" href="student-login.html" id="studentRoleCard">
+          <div class="role-icon">🎓</div>
+          <p class="role-name">Student</p>
+          <p class="role-desc">Access MCQ tests, AI study tools, eBook generator, and your personal learning dashboard.</p>
+          <div class="role-perks">
+            <span class="role-perk">MCQ Tests</span>
+            <span class="role-perk">AI eBooks</span>
+            <span class="role-perk">Study Materials</span>
+            <span class="role-perk">Rewards</span>
           </div>
-        </div>
+          <div class="role-arrow">
+            Enter Student Portal
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Teacher Card -->
+        <a class="role-card teacher" href="teacher-login.html" id="teacherRoleCard">
+          <div class="role-icon">📚</div>
+          <p class="role-name">Teacher</p>
+          <p class="role-desc">Access the command center to track student progress, manage assessments, and upload lecture videos.</p>
+          <div class="role-perks">
+            <span class="role-perk">Progress Tracker</span>
+            <span class="role-perk">MCQ Manager</span>
+            <span class="role-perk">Video Upload</span>
+            <span class="role-perk">Reports</span>
+          </div>
+          <div class="role-arrow">
+            Enter Teacher Portal
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </a>
       </div>
-    </section>
-  </main>
 
-  <footer class="footer"><div class="container">Login Portal | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
+      <div class="portal-footer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        All logins are secured and role-verified via Supabase Auth
+      </div>
+    </div>
+  </div>
 
-  <button id="chatToggle" class="float-chat-btn" aria-label="Open AI Chat"><img src="assets/images/ai-bot.png" alt="AI Chat" class="chat-bot-icon" /></button>
-  <div id="chatPanel" class="chat-pop"><div class="chat-head"><span>AI Assistant</span><button id="chatClose" class="btn btn-soft" type="button">Close</button></div><div id="chatLog" class="chat-log"><div class="msg bot">Need help logging in or choosing a program?</div></div><div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question" /><button id="chatSend" type="button">Send</button></div></div>
+  <footer class="footer"><div class="container">Portal Login | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
 
-  <script src="assets/js/main.js?v=3"></script>
+  <!-- Supabase CDN + Auth module (for auto-redirect if already logged in) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script>
+    // If user is already logged in, redirect to their portal
+    (async () => {
+      try {
+        const supabase = window.__supabaseClient ||
+          window.supabase.createClient(
+            'https://pgrjzsqylhchmelmwhkv.supabase.co',
+            'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh'
+          );
+        window.__supabaseClient = supabase;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return; // Not logged in — show role selector
+
+        // Fetch role and redirect
+        const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (data?.role === 'student') window.location.href = 'student-dashboard.html';
+        else if (data?.role === 'teacher') window.location.href = 'command-center.html';
+      } catch (_) {
+        // Silent fail — just show role selector
+      }
+    })();
+  </script>
+  <script src="assets/js/main.js?v=5"></script>
 </body>
 </html>

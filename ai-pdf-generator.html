@@ -2,74 +2,892 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI PDF Generator | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AI eBook Generator | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Generate AI-powered educational eBooks and chapter notes with Dr.AIMSS AI." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ══════════════════════════════════════════════
+       AI eBOOK GENERATOR — Premium UI
+    ══════════════════════════════════════════════ */
+
+    .ebook-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 0;
+      height: calc(100dvh - 64px);
+      overflow: hidden;
+      /* toggle button overlays from outside grid on mobile */
+    }
+
+    /* ── Left config panel ── */
+    .ebook-config {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    .ebook-config-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ebook-config-title .ai-badge {
+      font-size: .65rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #7c3aed, #fb923c);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: .04em;
+    }
+    .ebook-field-label {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .ebook-field {
+      width: 100%;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 500;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      box-sizing: border-box;
+    }
+    .ebook-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+    }
+    .ebook-field::placeholder { color: var(--muted); }
+    select.ebook-field { cursor: pointer; }
+
+    /* Quick topic chips */
+    .quick-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .quick-topic {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .quick-topic:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(139,92,246,0.08);
+    }
+
+    /* Generate button */
+    .ebook-gen-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa 50%, #fb923c);
+      background-size: 200% auto;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-position .4s, transform .2s, box-shadow .2s;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.35);
+      margin-top: auto;
+    }
+    .ebook-gen-btn:hover:not(:disabled) {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(124,58,237,0.45);
+    }
+    .ebook-gen-btn:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+    .ebook-gen-btn .btn-spinner {
+      display: none; width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ebook-gen-btn.loading .btn-gen-text { display: none; }
+    .ebook-gen-btn.loading .btn-spinner { display: block; }
+
+    /* ── Right chat/output area ── */
+    .ebook-main {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .ebook-header {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+    .ebook-header-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(251,146,60,0.1));
+      border: 1px solid rgba(139,92,246,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .ebook-header-info h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin: 0 0 2px;
+      color: var(--ink);
+    }
+    .ebook-header-info p {
+      font-size: .82rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    .ebook-dl-btn {
+      margin-left: auto;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #059669, #34d399);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: .88rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(5,150,105,0.35);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .ebook-dl-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(5,150,105,0.4); }
+    .ebook-dl-btn.visible { display: flex; }
+
+    /* Chat log */
+    .ebook-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ebook-log::-webkit-scrollbar { width: 6px; }
+    .ebook-log::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+    /* Messages */
+    .ebook-msg {
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: .9rem;
+      line-height: 1.6;
+      animation: msgIn .25s ease;
+    }
+    @keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .ebook-msg.bot {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      color: var(--ink);
+    }
+    .ebook-msg.user {
+      background: linear-gradient(135deg, rgba(109,40,217,0.25), rgba(139,92,246,0.15));
+      border: 1px solid rgba(139,92,246,0.3);
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+      color: var(--ink);
+    }
+
+    /* Progress card */
+    .ebook-progress-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      align-self: flex-start;
+      width: min(480px, 100%);
+      animation: msgIn .25s ease;
+    }
+    .ebook-progress-label {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ebook-progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-2);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .ebook-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa, #fb923c);
+      background-size: 200%;
+      border-radius: 8px;
+      transition: width .5s ease;
+      animation: shimmer 2s linear infinite;
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+    .ebook-progress-pct {
+      font-size: .78rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-align: right;
+    }
+    .ebook-chapter-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ebook-chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .82rem;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+    .ebook-chapter-item.done { color: #4ade80; }
+    .ebook-chapter-item.active { color: var(--ink); font-weight: 600; }
+    .ch-icon { font-size: .8rem; }
+
+    /* Success card */
+    .ebook-success-card {
+      background: linear-gradient(135deg, rgba(5,150,105,0.12), rgba(52,211,153,0.06));
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 16px;
+      padding: 24px;
+      align-self: flex-start;
+      animation: msgIn .25s ease;
+    }
+    .ebook-success-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #4ade80;
+      margin: 0 0 6px;
+    }
+    .ebook-success-card p { font-size: .88rem; color: var(--muted); margin: 0; }
+
+    /* Welcome state */
+    .ebook-welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+      padding: 40px;
+      color: var(--muted);
+    }
+    .ebook-welcome-icon { font-size: 3.5rem; }
+    .ebook-welcome h3 { font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:800; color:var(--ink); margin:0; }
+    .ebook-welcome p { font-size:.9rem; max-width:400px; margin:0; line-height:1.6; }
+
+    /* Divider */
+    .config-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 4px 0;
+    }
+
+    /* ── Mobile config toggle button ── */
+    .ebook-config-toggle {
+      display: none;
+      width: 100%;
+      background: var(--surface);
+      border: none;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .ebook-config-toggle svg { transition: transform .3s; }
+    .ebook-config-toggle.open svg { transform: rotate(180deg); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      /* Full-screen layout stacked */
+      .ebook-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: calc(100dvh - 56px - 52px); /* minus topbar and toggle */
+        overflow: hidden;
+      }
+
+      /* Config panel: hidden by default on mobile */
+      .ebook-config {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 16px;
+        gap: 12px;
+        transition: max-height .35s ease, padding .35s ease;
+      }
+      .ebook-config.mobile-open {
+        max-height: 600px;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      /* Show toggle button */
+      .ebook-config-toggle { display: flex; }
+
+      /* Quick topics: horizontal scroll on mobile */
+      .quick-topics {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .quick-topics::-webkit-scrollbar { display: none; }
+      .quick-topic { white-space: nowrap; flex-shrink: 0; }
+
+      /* Output panel fills remaining height */
+      .ebook-main {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Compact header on mobile */
+      .ebook-header {
+        padding: 12px 16px;
+        gap: 10px;
+      }
+      .ebook-header-icon {
+        width: 38px; height: 38px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+      }
+      .ebook-header-info h2 { font-size: 1rem; }
+      .ebook-header-info p { display: none; } /* hide subtitle on mobile */
+
+      /* Download button: icon only on small screens */
+      .ebook-dl-btn .dl-label { display: none; }
+      .ebook-dl-btn { padding: 9px 12px; }
+
+      /* Log padding tighter */
+      .ebook-log { padding: 14px 14px; gap: 10px; }
+
+      /* Messages wider on mobile */
+      .ebook-msg { max-width: 95%; }
+
+      /* Progress card full width */
+      .ebook-progress-card { width: 100%; }
+
+      /* Welcome state compact */
+      .ebook-welcome { padding: 24px 16px; gap: 10px; }
+      .ebook-welcome-icon { font-size: 2.5rem; }
+      .ebook-welcome h3 { font-size: 1.1rem; }
+      .ebook-welcome p { font-size: .85rem; }
+
+      /* Generate button always sticky at bottom of config */
+      .ebook-gen-btn { margin-top: 8px; }
+    }
+
+    @media (max-width: 400px) {
+      .ebook-header-info h2 { font-size: .9rem; }
+    }
+  </style>
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="student-dashboard.html">Main Page</a></nav></div></header>
-  <main class="portal-shell">
-    <div class="portal-side-overlay" id="sidebarOverlay"></div>
-    <aside class="portal-side" id="portalSidebar">
-      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width:36px; height:36px; background:#5b58ed; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">DA</div>
-          <span style="font-size: 1.1rem; font-weight: 800; font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
+  <div class="grid-noise"></div>
+  <div class="orb one"></div><div class="orb two"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" />
+        <span>Dr.AIMSS EDUCATIONAL ACADEMY</span>
+      </a>
+      <nav class="nav-links">
+        <a href="student-dashboard.html" id="studentNavLink">Dashboard</a>
+        <a href="#" data-logout>Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="ebook-shell">
+
+    <!-- ── MOBILE CONFIG TOGGLE ── -->
+    <button class="ebook-config-toggle" id="configToggle" onclick="toggleConfig()" aria-expanded="false">
+      <span>⚙️ Configure eBook Settings</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+
+    <!-- ── LEFT CONFIG PANEL ── -->
+    <div class="ebook-config">
+      <div class="ebook-config-title">
+        📚 eBook Generator
+        <span class="ai-badge">AI</span>
+      </div>
+
+      <div>
+        <label class="ebook-field-label" for="ebookTopic">Topic / Subject</label>
+        <input
+          id="ebookTopic"
+          class="ebook-field"
+          type="text"
+          placeholder="e.g. Cell Biology, Photosynthesis..."
+        />
+      </div>
+
+      <div>
+        <label class="ebook-field-label">Quick Topics</label>
+        <div class="quick-topics" id="quickTopics">
+          <span class="quick-topic" data-topic="Cell Biology for NEET">🔬 Cell Biology</span>
+          <span class="quick-topic" data-topic="Laws of Motion Physics CBSE">⚡ Laws of Motion</span>
+          <span class="quick-topic" data-topic="Organic Chemistry Reactions">🧪 Organic Chemistry</span>
+          <span class="quick-topic" data-topic="Human Digestive System">🫁 Digestive System</span>
+          <span class="quick-topic" data-topic="Trigonometry Class 10">📐 Trigonometry</span>
+          <span class="quick-topic" data-topic="Indian History Modern Era">🏛️ Indian History</span>
+          <span class="quick-topic" data-topic="Stock Market Investing Basics">📈 Stock Market</span>
+          <span class="quick-topic" data-topic="Python Programming Basics">💻 Python</span>
         </div>
-        <button id="sidebarCloseBtn" class="btn btn-soft" style="padding: 4px 8px; border: none; display: none;">
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </div>
+
+      <div class="config-divider"></div>
+
+      <div>
+        <label class="ebook-field-label" for="ebookGrade">Class / Grade Level</label>
+        <select id="ebookGrade" class="ebook-field">
+          <option value="">Select Class</option>
+          <option value="Class 6">Class 6</option>
+          <option value="Class 7">Class 7</option>
+          <option value="Class 8">Class 8</option>
+          <option value="Class 9 (CBSE)">Class 9 – CBSE</option>
+          <option value="Class 10 (CBSE)">Class 10 – CBSE</option>
+          <option value="Class 11 (NEET/JEE)">Class 11 – NEET/JEE</option>
+          <option value="Class 12 (NEET/JEE)">Class 12 – NEET/JEE</option>
+          <option value="Stateboard">Stateboard</option>
+          <option value="General">General / All Levels</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="ebook-field-label" for="ebookDepth">Depth</label>
+        <select id="ebookDepth" class="ebook-field">
+          <option value="comprehensive">Comprehensive (8–12 chapters)</option>
+          <option value="concise">Concise (5–7 chapters)</option>
+          <option value="quick">Quick Guide (3–5 chapters)</option>
+        </select>
+      </div>
+
+      <div class="config-divider"></div>
+
+      <button id="ebookGenBtn" class="ebook-gen-btn" onclick="startEbookGeneration()">
+        <span class="btn-gen-text">✨ Generate eBook</span>
+        <span class="btn-spinner"></span>
+      </button>
+    </div>
+
+    <!-- ── RIGHT CHAT/OUTPUT PANEL ── -->
+    <div class="ebook-main">
+      <!-- Header -->
+      <div class="ebook-header">
+        <div class="ebook-header-icon">📖</div>
+        <div class="ebook-header-info">
+          <h2>AI eBook Assistant</h2>
+          <p>Generates full educational eBooks — 8 to 12 chapters — as downloadable PDF</p>
+        </div>
+        <button id="ebookDownloadBtn" class="ebook-dl-btn" onclick="downloadEbook()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span class="dl-label">Download PDF</span>
         </button>
       </div>
-      <div style="margin-bottom: 24px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span style="font-size: 0.9rem; font-weight:600;">Personal Workspace</span>
+
+      <!-- Log area -->
+      <div class="ebook-log" id="ebookLog">
+        <!-- Welcome state -->
+        <div class="ebook-welcome" id="ebookWelcome">
+          <div class="ebook-welcome-icon">✨</div>
+          <h3>Generate Your eBook</h3>
+          <p>Enter a topic on the left, select your class level and depth, then click <strong>Generate eBook</strong>. The AI will write a full multi-chapter educational book and download it as PDF.</p>
         </div>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
+    </div>
+  </div>
 
-      <div class="portal-title">MAIN</div>
-      <a class="portal-link" href="student-dashboard.html">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        Student Profile
-      </a>
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/main.js?v=5"></script>
 
-      <div class="portal-title">CONTENT STUDIO</div>
-      <a class="portal-link" href="study-materials.html">
-        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-        Study Materials
-      </a>
-      <a class="portal-link active" href="ai-pdf-generator.html">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        ePDF Generator
-      </a>
+  <script>
+    /* ── Auth: allow both student and teacher ── */
+    (async () => {
+      const supabase = window.__supabaseClient ||
+        window.supabase.createClient(
+          'https://pgrjzsqylhchmelmwhkv.supabase.co',
+          'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh'
+        );
+      window.__supabaseClient = supabase;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = 'login.html'; return; }
 
-      <div class="portal-title">ASSESSMENT</div>
-      <a class="portal-link" href="mcq-test.html">
-        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-        MCQ Test
-      </a>
+      const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+      const role = data?.role;
+      if (!role) { window.location.href = 'login.html'; return; }
 
-      <div class="sidebar-footer" style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span id="sidePointsText">0 pts</span>
-          </span>
+      // Update nav link based on role
+      const navLink = document.getElementById('studentNavLink');
+      if (role === 'teacher') {
+        navLink.href = 'command-center.html';
+        navLink.textContent = 'Command Center';
+      }
+    })();
+
+    /* ── Quick topic chips ── */
+    document.querySelectorAll('.quick-topic').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.getElementById('ebookTopic').value = chip.dataset.topic;
+        // On mobile: auto-close config after picking topic
+        if (window.innerWidth <= 768) {
+          document.getElementById('ebookConfig')?.classList.remove('mobile-open');
+          document.getElementById('configToggle')?.classList.remove('open');
+        }
+      });
+    });
+
+    /* ── Mobile config toggle ── */
+    function toggleConfig() {
+      const config = document.querySelector('.ebook-config');
+      const btn    = document.getElementById('configToggle');
+      const isOpen = config.classList.toggle('mobile-open');
+      btn.classList.toggle('open', isOpen);
+      btn.setAttribute('aria-expanded', isOpen);
+    }
+
+    // Auto-close config when generation starts on mobile
+    function closeMobileConfig() {
+      if (window.innerWidth <= 768) {
+        document.querySelector('.ebook-config')?.classList.remove('mobile-open');
+        document.getElementById('configToggle')?.classList.remove('open');
+      }
+    }
+
+    /* ── State ── */
+    let generatedDoc = null;
+    let generatedTitle = '';
+
+    /* ── Log helpers ── */
+    const log = document.getElementById('ebookLog');
+    const welcome = document.getElementById('ebookWelcome');
+
+    function hideWelcome() {
+      if (welcome) welcome.style.display = 'none';
+    }
+
+    function addMsg(text, type = 'bot') {
+      const el = document.createElement('div');
+      el.className = 'ebook-msg ' + type;
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    /* Progress card */
+    let progressCard = null;
+    let chapterListEl = null;
+    let progressFill = null;
+    let progressLabel = null;
+    let progressPct = null;
+
+    function createProgressCard() {
+      progressCard = document.createElement('div');
+      progressCard.className = 'ebook-progress-card';
+      progressCard.innerHTML = `
+        <div class="ebook-progress-label" id="progLabel">⚙️ Initializing…</div>
+        <div class="ebook-progress-bar-wrap">
+          <div class="ebook-progress-fill" id="progFill" style="width:0%"></div>
         </div>
-        <div style="width:100%; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;">
-          <div id="sidePointsBar" style="width:0%; height:100%; background:#38a169; border-radius:4px;"></div>
-        </div>
-        <div style="font-size:0.8rem; color:var(--muted); margin-top:6px;">Free Plan</div>
-      </div>
-    </aside>
-    <section class="portal-main">
-      <div class="glass card"><h2>AI PDF Generator</h2><p style="color:var(--muted);">Generate chapter notes with AI and print as PDF.</p><form id="pdfGenForm" class="list-inline"><input id="pdfTopic" class="field" style="max-width:300px;" placeholder="Topic (e.g., Cell Biology)" required /><input id="pdfGrade" class="field" style="max-width:220px;" placeholder="Class/Grade" /><button class="btn" type="submit">Generate</button><button class="btn btn-soft" id="printPdfBtn" type="button">Print / Save PDF</button></form><p id="pdfStatus" class="status"></p><textarea id="pdfOutput" class="field" style="min-height:320px;margin-top:10px;"></textarea></div>
-    </section>
-  </main>
-  <script src="assets/js/main.js?v=3"></script>
+        <div class="ebook-progress-pct" id="progPct">0%</div>
+        <div class="ebook-chapter-list" id="progChapterList"></div>
+      `;
+      log.appendChild(progressCard);
+      progressLabel = document.getElementById('progLabel');
+      progressFill  = document.getElementById('progFill');
+      progressPct   = document.getElementById('progPct');
+      chapterListEl = document.getElementById('progChapterList');
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function setProgress(text, pct) {
+      if (!progressCard) createProgressCard();
+      progressLabel.textContent = text;
+      progressFill.style.width  = pct + '%';
+      progressPct.textContent   = Math.round(pct) + '%';
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function addChapterItem(title, state) { // state: 'pending'|'active'|'done'
+      const icons = { pending: '⏳', active: '✍️', done: '✅' };
+      const el = document.createElement('div');
+      el.className = `ebook-chapter-item ${state}`;
+      el.id = 'ch-' + title.replace(/\W/g,'_');
+      el.innerHTML = `<span class="ch-icon">${icons[state]}</span><span>${title}</span>`;
+      chapterListEl.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    function updateChapterItem(title, state) {
+      const id = 'ch-' + title.replace(/\W/g,'_');
+      const el = document.getElementById(id);
+      if (!el) return;
+      const icons = { active: '✍️', done: '✅' };
+      el.className = `ebook-chapter-item ${state}`;
+      el.querySelector('.ch-icon').textContent = icons[state] || '⏳';
+    }
+
+    function showSuccess(title, chapCount) {
+      if (progressCard) progressCard.remove();
+      const card = document.createElement('div');
+      card.className = 'ebook-success-card';
+      card.innerHTML = `
+        <h3>🎉 eBook Ready!</h3>
+        <p><strong>"${title}"</strong> — ${chapCount} chapters generated successfully.</p>
+        <p style="margin-top:6px;">Click <strong>Download PDF</strong> in the top right corner.</p>
+      `;
+      log.appendChild(card);
+      log.scrollTop = log.scrollHeight;
+      document.getElementById('ebookDownloadBtn').classList.add('visible');
+    }
+
+    /* ── MAIN GENERATION FUNCTION ── */
+    async function startEbookGeneration() {
+      const topicEl = document.getElementById('ebookTopic');
+      const gradeEl = document.getElementById('ebookGrade');
+      const depthEl = document.getElementById('ebookDepth');
+      const btn     = document.getElementById('ebookGenBtn');
+
+      const topic = topicEl.value.trim();
+      const grade = gradeEl.value || 'General';
+      const depth = depthEl.value || 'comprehensive';
+
+      if (!topic) {
+        topicEl.focus();
+        topicEl.style.borderColor = '#ef4444';
+        topicEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+        setTimeout(() => {
+          topicEl.style.borderColor = '';
+          topicEl.style.boxShadow = '';
+        }, 2000);
+        return;
+      }
+
+      hideWelcome();
+      generatedDoc = null;
+      generatedTitle = '';
+      progressCard = null;
+      closeMobileConfig(); // dismiss config on mobile so user sees output
+      if (document.getElementById('ebookDownloadBtn').classList.contains('visible')) {
+        document.getElementById('ebookDownloadBtn').classList.remove('visible');
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const chapterCount = depth === 'quick' ? '3 to 5' : depth === 'concise' ? '5 to 7' : '8 to 12';
+      addMsg(`Generate: "${topic}" for ${grade} — ${depth} depth`, 'user');
+
+      setProgress('💻 Planning your eBook structure…', 3);
+
+      // Step 1: Generate outline
+      const outlinePrompt = `You are an expert educational eBook author for NEET/CBSE/Stateboard students.
+Create a detailed eBook outline for: "${topic}" targeting ${grade} students.
+Depth: ${chapterCount} chapters.
+Respond with ONLY a valid JSON object — no extra text:
+{
+  "title": "Full Book Title Here",
+  "subtitle": "A descriptive subtitle",
+  "chapters": [
+    {"number": 1, "title": "Chapter Title", "description": "Brief description"},
+    ... (${chapterCount} chapters total)
+  ]
+}`;
+
+      let outline = { title: topic, subtitle: 'A Comprehensive Guide', chapters: [] };
+      try {
+        const r = await callAIWithFallback([{role:'user', content:outlinePrompt}], 1200);
+        if (r) {
+          const jsonMatch = r.text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) outline = JSON.parse(jsonMatch[0]);
+        }
+      } catch(_) {}
+
+      if (!outline.chapters || outline.chapters.length === 0) {
+        const defaults = ['Introduction', 'Core Concepts', 'Key Principles', 'Detailed Analysis',
+          'Practical Applications', 'Important Examples', 'Advanced Topics', 'Summary & Revision'];
+        outline.title = topic;
+        outline.subtitle = 'A Comprehensive Educational Guide';
+        outline.chapters = defaults.slice(0, depth === 'quick' ? 4 : depth === 'concise' ? 6 : 8)
+          .map((t,i) => ({number:i+1, title:t, description:''}));
+      }
+
+      setProgress(`📚 Outline ready — ${outline.chapters.length} chapters planned`, 8);
+
+      // Show chapter list
+      outline.chapters.forEach(ch => addChapterItem(ch.title, 'pending'));
+
+      // Step 2: Generate each chapter
+      const chapters = [];
+      for (let i = 0; i < outline.chapters.length; i++) {
+        const ch = outline.chapters[i];
+        const pct = 10 + (i / outline.chapters.length) * 80;
+        setProgress(`✍️ Writing Chapter ${i+1}/${outline.chapters.length}: ${ch.title}…`, pct);
+        updateChapterItem(ch.title, 'active');
+
+        const chPrompt = `Write Chapter ${ch.number}: "${ch.title}" for the eBook titled "${outline.title}".
+Audience: ${grade} students (NEET, CBSE, Stateboard).
+Requirements:
+- Write 600-900 words of detailed, accurate educational content
+- Use CAPS for section headings (e.g. INTRODUCTION, KEY CONCEPTS, EXAMPLES)
+- Write in clear flowing paragraphs, no bullet symbols, no markdown
+- Include key definitions, examples, and important exam points
+- Plain text only — no **, *, #, ~~, or backticks`;
+
+        try {
+          const r = await callAIWithFallback([{role:'user', content:chPrompt}], 2500);
+          const cleaned = r ? cleanAIText(r.text) : `[Content for ${ch.title} unavailable. Please retry.]`;
+          chapters.push({...ch, content: cleaned});
+        } catch(_) {
+          chapters.push({...ch, content: `[Content for ${ch.title} could not be generated.]`});
+        }
+
+        updateChapterItem(ch.title, 'done');
+        await new Promise(res => setTimeout(res, 300));
+      }
+
+      setProgress('📄 Building your PDF…', 94);
+      await new Promise(res => setTimeout(res, 300));
+
+      // Step 3: Build PDF using existing buildEbookPDF function from main.js
+      try {
+        if (typeof buildEbookPDF === 'function') {
+          generatedDoc   = buildEbookPDF(outline, chapters);
+          generatedTitle = (outline.title || topic).replace(/[^a-z0-9]/gi,'_').slice(0,40) + '_AIMSS';
+        } else {
+          // Fallback: use jsPDF directly (basic)
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          doc.setFontSize(20);
+          doc.text(outline.title, 20, 30);
+          chapters.forEach((ch, i) => {
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text(`Chapter ${i+1}: ${ch.title}`, 20, 20);
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(ch.content, 170);
+            doc.text(lines, 20, 35);
+          });
+          generatedDoc = doc;
+          generatedTitle = topic.replace(/\W/g,'_').slice(0,40) + '_AIMSS';
+        }
+
+        setProgress('✅ eBook complete!', 100);
+        generatedTitle = (outline.title || topic).replace(/[^a-z0-9]/gi,'_').slice(0,40) + '_AIMSS';
+        showSuccess(outline.title, chapters.length);
+
+        // Auto-download
+        generatedDoc.save(generatedTitle + '.pdf');
+
+      } catch(err) {
+        addMsg('❌ PDF build failed: ' + err.message + '. Please try again.', 'bot');
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    /* ── Manual download ── */
+    function downloadEbook() {
+      if (generatedDoc && generatedTitle) {
+        generatedDoc.save(generatedTitle + '.pdf');
+      }
+    }
+
+    /* expose cleanAIText if not already global */
+    if (typeof cleanAIText === 'undefined') {
+      window.cleanAIText = function(text) {
+        if (!text) return text;
+        return text
+          .replace(/\*{3}(.+?)\*{3}/gs,'$1')
+          .replace(/\*{2}(.+?)\*{2}/gs,'$1')
+          .replace(/\*(.+?)\*/gs,'$1')
+          .replace(/~~(.+?)~~/gs,'$1')
+          .replace(/_{2}(.+?)_{2}/gs,'$1')
+          .replace(/^#{1,6}\s+/gm,'')
+          .replace(/`{3}[\s\S]*?`{3}/g,'')
+          .replace(/`(.+?)`/g,'$1')
+          .replace(/\[(.+?)\]\(.+?\)/g,'$1')
+          .replace(/>{1,}\s*/gm,'')
+          .replace(/---+/g,'')
+          .replace(/\n{3,}/g,'\n\n')
+          .trim();
+      };
+    }
+  </script>
 </body>
 </html>

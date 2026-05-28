@@ -60,15 +60,22 @@ function initThemeToggle() {
   });
 }
 
-/* ── Shared AI API Helper with multi-proxy fallback ── */
-const AI_API_KEY = "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";
-const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const PROXY_URLS = [
-  NVIDIA_URL,
-  'https://api.allorigins.win/raw?url=' + encodeURIComponent(NVIDIA_URL),
-  'https://corsproxy.io/?' + encodeURIComponent(NVIDIA_URL),
-  'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(NVIDIA_URL),
-];
+/* ══════════════════════════════════════════════════════════════
+   AI ENGINE — delegated to ai-resilience.js
+   The following are defined there and available globally:
+     - ACTIVE_AI_PROVIDER  (let, synced via setActiveProvider())
+     - AI_PROVIDERS        (label/icon map)
+     - callAIWithFallback(messages, maxTokens)  ← protected entry
+     - callNvidiaAI(messages, maxTokens)        ← simple wrapper
+     - CIRCUIT_BREAKERS, HealthMonitor, AIQueue (for UI)
+     - bindHealthDots(panelEl)                  ← wires live dots
+   ══════════════════════════════════════════════════════════════ */
+
+/** Sync provider preference into the resilience module */
+function setActiveProvider(prov) {
+  ACTIVE_AI_PROVIDER = prov;   // defined in ai-resilience.js
+  localStorage.setItem('aimss-ai-provider', prov);
+}
 
 /* ── Strip Markdown formatting for clean plain-text output ── */
 function cleanAIText(text) {
@@ -88,113 +95,88 @@ function cleanAIText(text) {
     .replace(/!\[.*?\]\(.+?\)/g, '')
     .replace(/>{1,}\s*/gm, '')
     .replace(/---+/g, '')
+    .replace(/~~(.+?)~~/gs, '$1')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-/* ══ MULTI-PROVIDER AI ══ */
-let ACTIVE_AI_PROVIDER = localStorage.getItem('aimss-ai-provider') || 'nvidia';
-
-const AI_PROVIDERS = {
-  nvidia: {
-    label: 'NVIDIA', icon: '⚡',
-    call: async (messages, maxTokens) => {
-      const body = JSON.stringify({ model: 'meta/llama-3.1-8b-instruct', messages, max_tokens: maxTokens });
-      const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AI_API_KEY}` };
-      const urls = [NVIDIA_URL, 'https://corsproxy.io/?' + encodeURIComponent(NVIDIA_URL)];
-      for (const url of urls) {
-        try {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 12000);
-          const res = await fetch(url, { method: 'POST', headers, body, signal: ctrl.signal });
-          clearTimeout(tid);
-          if (!res.ok) continue;
-          const d = await res.json();
-          const c = d.choices?.[0]?.message?.content;
-          if (c) return c;
-        } catch (_) { continue; }
-      }
-      return null;
-    }
+/* ══ CHAT MODE SYSTEM ══ */
+const CHAT_MODES = {
+  general: {
+    key: 'general', label: 'General', icon: '🎓', color: '#a78bfa',
+    placeholder: 'Ask anything about NEET, CBSE, Matric…',
+    maxTokens: 400,
+    welcome: 'Hi! I’m Dr.AIMSS AI. Click a mode chip below or ask me anything! 🎓',
+    systemPrompt: 'You are Dr.AIMSS Educational Academy AI assistant. Answer clearly and concisely for NEET, Stateboard, and CBSE students Class 6-12. Be accurate and motivating. Use plain text only — no **, *, # or backticks.'
   },
-  pollinations: {
-    label: 'Image AI', icon: '🖼️',
-    call: async (messages, maxTokens) => {
-      try {
-        /* Anonymous GET request — unaffected by legacy API deprecation */
-        const sysMsg = messages.find(m => m.role === 'system')?.content || '';
-        const userMsg = messages.filter(m => m.role === 'user').pop()?.content || '';
-        const combined = sysMsg ? `${sysMsg}\n\nUser: ${userMsg}` : userMsg;
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 18000);
-        /* Migrated to new endpoint (enter.pollinations.ai) — no auth headers sent */
-        const url = `https://enter.pollinations.ai/${encodeURIComponent(combined)}?model=openai&seed=${Date.now()}`;
-        const res = await fetch(url, { signal: ctrl.signal });
-        clearTimeout(tid);
-        if (!res.ok) return null;
-        let txt = await res.text();
-        /* Strip any injected deprecation / system notices from response */
-        txt = txt.replace(/⚠+\s*IMPORTANT NOTICE[\s\S]*?work normally\.?/gi, '').trim();
-        txt = txt.replace(/The Pollinations legacy text API[\s\S]*?work normally\.?/gi, '').trim();
-        return txt || null;
-      } catch (_) { return null; }
-    }
+  ebook: {
+    key: 'ebook', label: 'eBook', icon: '📖', color: '#f59e0b',
+    placeholder: 'Describe the eBook you want to generate…',
+    maxTokens: 4096,
+    welcome: '📖 eBook Mode active! Tell me what eBook to generate (e.g. “NEET Biology Chapter: Cell Division” or “Rich Dad Poor Dad style book on study habits”). I’ll write a full 25–45 page PDF for you!',
+    systemPrompt: 'You are an expert educational eBook author writing for NEET, CBSE, and Stateboard students. Write detailed, accurate, well-structured educational content. Use plain text only — no markdown symbols (no **, *, #, backticks). Use CAPS for headings. Write in flowing paragraphs.'
+  },
+  biology: {
+    key: 'biology', label: 'Biology', icon: '🧬', color: '#10b981',
+    placeholder: 'Ask any Biology question (NEET, CBSE, Class 11-12)…',
+    maxTokens: 500,
+    welcome: '🧬 Biology Mode! Ask me anything about Cell Biology, Genetics, Ecology, Human Physiology, Plant Biology and more!',
+    systemPrompt: 'You are Dr.AIMSS Biology expert teacher specializing in NEET, CBSE Class 11-12. Give clear, accurate, exam-focused answers. Include key points and important terms. Use plain text only — no **, *, # or backticks.'
+  },
+  chemistry: {
+    key: 'chemistry', label: 'Chemistry', icon: '⚗️', color: '#06b6d4',
+    placeholder: 'Ask any Chemistry question (NEET, CBSE)…',
+    maxTokens: 500,
+    welcome: '⚗️ Chemistry Mode! Ask about Organic, Inorganic, Physical Chemistry, reactions, equations and more!',
+    systemPrompt: 'You are Dr.AIMSS Chemistry expert for NEET, CBSE students. Explain reactions, mechanisms, and concepts clearly. Always include formulae written in plain text. Use plain text only — no **, *, # or backticks.'
+  },
+  physics: {
+    key: 'physics', label: 'Physics', icon: '⚡', color: '#f97316',
+    placeholder: 'Ask any Physics question (NEET, CBSE, Class 12)…',
+    maxTokens: 500,
+    welcome: '⚡ Physics Mode! Ask about Mechanics, Electricity, Optics, Modern Physics, Thermodynamics and more!',
+    systemPrompt: 'You are Dr.AIMSS Physics expert for NEET, CBSE Class 11-12. Explain concepts with clarity, include relevant formulae in plain text. Be exam-focused and accurate. Use plain text only — no **, *, # or backticks.'
+  },
+  maths: {
+    key: 'maths', label: 'Maths', icon: '📐', color: '#8b5cf6',
+    placeholder: 'Ask any Maths problem or concept…',
+    maxTokens: 500,
+    welcome: '📐 Maths Mode! Ask me to solve problems, explain concepts or derive formulae for Class 6-12, CBSE, Stateboard!',
+    systemPrompt: 'You are Dr.AIMSS Mathematics expert for CBSE, Stateboard Class 6-12. Solve problems step by step clearly. Write equations and formulae in plain text notation. Be precise and show working. Use plain text only — no **, *, # or backticks.'
+  },
+  studyplan: {
+    key: 'studyplan', label: 'Study Plan', icon: '🗓️', color: '#ec4899',
+    placeholder: 'Tell me your exam, goal and days available…',
+    maxTokens: 600,
+    welcome: '🗓️ Study Plan Mode! Tell me your exam (NEET, CBSE, Stateboard), available days, and weak subjects. I’ll create a personalised revision schedule!',
+    systemPrompt: 'You are Dr.AIMSS study planning expert. Create detailed, practical, day-by-day or week-by-week study schedules for NEET, CBSE, Stateboard students. Be specific with topics and time allocation. Use plain text only — no **, *, # or backticks.'
+  },
+  mcq: {
+    key: 'mcq', label: 'MCQ', icon: '📊', color: '#ef4444',
+    placeholder: 'Which subject/topic MCQs should I generate?…',
+    maxTokens: 700,
+    welcome: '📊 MCQ Mode! Tell me the subject and topic and I’ll generate 10 multiple-choice questions with options A, B, C, D and the correct answer!',
+    systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE. Generate exactly 10 MCQ questions. Format each as:\nQ1. [Question]\nA) option B) option C) option D) option\nAnswer: [Letter]\n\nMake questions exam-standard quality. Use plain text only.'
   }
 };
 
-async function callAIWithFallback(messages, maxTokens = 320) {
-  const order = ACTIVE_AI_PROVIDER === 'nvidia' ? ['nvidia','pollinations'] : ['pollinations','nvidia'];
-  for (const key of order) {
-    try {
-      const text = await AI_PROVIDERS[key].call(messages, maxTokens);
-      if (text) return { text, usedProvider: key };
-    } catch (_) { continue; }
-  }
-  return null;
-}
+const CHIP_MODE_KEYS = ['ebook','biology','chemistry','physics','maths','studyplan','mcq'];
+let ACTIVE_CHAT_MODE = 'general';
 
-async function callNvidiaAI(messages, maxTokens = 280) {
-  const r = await callAIWithFallback(messages, maxTokens);
-  return r ? r.text : null;
-}
-
-/* ══ IMAGE GEN — Flux ══ */
-let IMAGE_MODE = false;
-
-function isImageRequest(msg) {
-  return IMAGE_MODE
-    || /\b(draw|paint|sketch|generate|create|make|render|design|show)\b.{0,30}\b(flower|rose|heart|diagram|cell|atom|planet|animal|tree|face|scene|landscape|portrait|logo|art|illustration|picture|image|photo)/i.test(msg)
-    || /\b(image of|picture of|photo of|draw me|draw a|draw an|generate image|create image|make image|show image|generate a|create a picture)\b/i.test(msg);
-}
-
-function extractImagePrompt(msg) {
-  /* Keep the subject — strip only leading command words */
-  return msg
-    .replace(/^(please\s+)?(can you\s+)?(could you\s+)?/i, '')
-    .replace(/^(generate|create|draw|make|render|design|paint|sketch|show me|give me)\s+(me\s+)?/i, '')
-    .replace(/\b(an image of|a picture of|a photo of|an illustration of|a drawing of|a diagram of)\b/gi, '')
-    .trim() || msg.trim();
-}
-
-/* ══ CHIPS ══ */
-const CHAT_CHIPS = [
-  { label: '📖 eBook', msg: 'Help me create a study eBook outline for NEET biology' },
-  { label: '🧬 Biology', msg: 'Explain cell division for Class 12 NEET' },
-  { label: '⚗️ Chemistry', msg: 'Key organic chemistry reactions for NEET' },
-  { label: '⚡ Physics', msg: 'Important physics formulas for Class 12 boards' },
-  { label: '📐 Maths', msg: 'Solve a calculus problem step by step' },
-  { label: '🗓️ Study Plan', msg: 'Create a 30-day NEET revision plan' },
-  { label: '🎨 Draw', msg: 'Generate an image of a human heart diagram' },
-  { label: '📊 MCQ Tips', msg: 'Give me 5 tips to improve MCQ accuracy in NEET' },
-];
 
 function initFloatingChat() {
   const toggle = document.getElementById('chatToggle');
   const panel  = document.getElementById('chatPanel');
   if (!toggle || !panel) return;
 
-  /* ── Inject fully redesigned panel HTML ── */
-  const logoSrc = document.querySelector('.brand-logo')?.src || 'assets/images/ai-bot.png';
+  /* ── Build chip HTML ── */
+  const chipHTML = CHIP_MODE_KEYS.map(key => {
+    const m = CHAT_MODES[key];
+    return `<button class="cp-chip cp-mode-chip" data-mode="${key}" style="--mode-color:${m.color}">${m.icon} ${m.label}</button>`;
+  }).join('');
+
+  /* ── Inject panel HTML ── */
+  const isGeminiPro = ACTIVE_AI_PROVIDER === 'geminipro';
   panel.innerHTML = `
     <div class="cp-header">
       <div class="cp-avatar-wrap">
@@ -203,68 +185,110 @@ function initFloatingChat() {
       </div>
       <div class="cp-title-group">
         <strong>Dr.AIMSS AI</strong>
-        <span>NVIDIA · Image AI · Flux</span>
+        <span id="cpActiveModelLabel">${isGeminiPro ? '🧠 Gemini Pro' : '⚡ NVIDIA'} &mdash; Active</span>
       </div>
       <button id="chatClose" class="cp-close" aria-label="Close">✕</button>
     </div>
 
-    <div class="cp-provider-bar">
-      <span class="cp-prov-label">Model:</span>
-      <button class="cp-prov-btn ${ACTIVE_AI_PROVIDER==='nvidia'?'active':''}" data-prov="nvidia">⚡ NVIDIA</button>
-      <button class="cp-prov-btn ${ACTIVE_AI_PROVIDER==='pollinations'?'active':''}" data-prov="pollinations">🖼️ Image AI</button>
+    <div class="cp-mode-indicator" id="cpModeIndicator" style="--mode-color:${CHAT_MODES[ACTIVE_CHAT_MODE].color}">
+      <span class="cp-mode-icon">${CHAT_MODES[ACTIVE_CHAT_MODE].icon}</span>
+      <span class="cp-mode-label">${CHAT_MODES[ACTIVE_CHAT_MODE].label} Mode</span>
+      <button class="cp-mode-reset" id="cpModeReset" title="Back to General">Reset</button>
+    </div>
+
+    <div class="cp-model-switcher-bar">
+      <span class="cp-model-switcher-title">AI Model</span>
+      <div class="cp-model-toggle ${isGeminiPro ? 'geminipro' : 'nvidia'}" id="cpModelToggle" role="group" aria-label="Select AI model">
+        <div class="cp-model-toggle-track">
+          <div class="cp-model-toggle-pill"></div>
+          <button class="cp-model-opt ${!isGeminiPro ? 'active' : ''}" data-prov="nvidia" aria-pressed="${!isGeminiPro}">
+            <span class="cp-health-dot health-healthy" data-prov="nvidia"></span>
+            <span class="cp-model-opt-icon">⚡</span>
+            <span class="cp-model-opt-name">NVIDIA</span>
+          </button>
+          <button class="cp-model-opt ${isGeminiPro ? 'active' : ''}" data-prov="geminipro" aria-pressed="${isGeminiPro}">
+            <span class="cp-health-dot health-healthy" data-prov="geminipro"></span>
+            <span class="cp-model-opt-icon">🧠</span>
+            <span class="cp-model-opt-name">Gemini Pro</span>
+          </button>
+        </div>
+      </div>
+      <span id="cpQueueBadge" class="cp-queue-badge" style="display:none"></span>
       <span class="cp-status" id="aiProvStatus">Ready</span>
     </div>
 
     <div id="chatLog" class="cp-log">
-      <div class="msg bot">Hi! I'm Dr.AIMSS AI. Ask me anything about NEET, CBSE, Stateboard, or tap 🎨 to generate images! 🎓</div>
+      <div class="msg bot">${CHAT_MODES.general.welcome}</div>
     </div>
 
-    <div class="cp-chips">
-      ${CHAT_CHIPS.map(c=>`<button class="cp-chip">${c.label}</button>`).join('')}
-    </div>
+    <div class="cp-chips">${chipHTML}</div>
 
     <div class="cp-input-row">
-      <button id="imgModeBtn" type="button" class="cp-img-mode-btn" title="Image Generation Mode">🎨</button>
-      <input id="chatInput" type="text" placeholder="Ask anything or say Draw..."/>
+      <input id="chatInput" type="text" placeholder="${CHAT_MODES[ACTIVE_CHAT_MODE].placeholder}"/>
       <button id="chatSend" type="button" class="cp-send-btn" aria-label="Send">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
   `;
 
-  const close   = panel.querySelector('#chatClose');
-  const input   = panel.querySelector('#chatInput');
-  const sendBtn = panel.querySelector('#chatSend');
-  const imgModeBtn = panel.querySelector('#imgModeBtn');
-  const log     = panel.querySelector('#chatLog');
+  const close      = panel.querySelector('#chatClose');
+  const input      = panel.querySelector('#chatInput');
+  const sendBtn    = panel.querySelector('#chatSend');
+  const log        = panel.querySelector('#chatLog');
+  const modeBar    = panel.querySelector('#cpModeIndicator');
+  const modelToggle = panel.querySelector('#cpModelToggle');
+  const modelLabel  = panel.querySelector('#cpActiveModelLabel');
 
-  /* ── Image Mode Toggle ── */
-  imgModeBtn.addEventListener('click', () => {
-    IMAGE_MODE = !IMAGE_MODE;
-    imgModeBtn.classList.toggle('active', IMAGE_MODE);
-    imgModeBtn.title = IMAGE_MODE ? 'Image Mode ON — click to turn off' : 'Image Generation Mode';
-    input.placeholder = IMAGE_MODE ? '🎨 Describe anything to generate...' : 'Ask anything or say Draw...';
-    setStatus(IMAGE_MODE ? '🎨 Image Mode ON' : 'Ready');
-  });
-
-  /* ── Provider toggle ── */
-  panel.querySelectorAll('.cp-prov-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      ACTIVE_AI_PROVIDER = btn.dataset.prov;
-      localStorage.setItem('aimss-ai-provider', ACTIVE_AI_PROVIDER);
-      panel.querySelectorAll('.cp-prov-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  /* ── Mode Switcher ── */
+  const applyMode = (modeKey) => {
+    ACTIVE_CHAT_MODE = modeKey;
+    const m = CHAT_MODES[modeKey];
+    // Update mode indicator bar
+    modeBar.style.setProperty('--mode-color', m.color);
+    modeBar.querySelector('.cp-mode-icon').textContent  = m.icon;
+    modeBar.querySelector('.cp-mode-label').textContent = m.label + ' Mode';
+    modeBar.classList.toggle('cp-mode-general', modeKey === 'general');
+    // Update input placeholder
+    input.placeholder = m.placeholder;
+    // Highlight active chip
+    panel.querySelectorAll('.cp-mode-chip').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === modeKey);
     });
-  });
+    // Add mode welcome message to chat
+    const welcome = document.createElement('div');
+    welcome.className = 'msg bot cp-mode-welcome';
+    welcome.style.setProperty('--mode-color', m.color);
+    welcome.textContent = m.welcome;
+    log.appendChild(welcome);
+    log.scrollTop = log.scrollHeight;
+    input.focus();
+  };
 
-  /* ── Chips ── */
-  panel.querySelectorAll('.cp-chip').forEach((btn, i) => {
-    btn.addEventListener('click', () => { input.value = CHAT_CHIPS[i].msg; input.focus(); void send(); });
+  panel.querySelectorAll('.cp-mode-chip').forEach(btn => {
+    btn.addEventListener('click', () => applyMode(btn.dataset.mode));
   });
+  panel.querySelector('#cpModeReset')?.addEventListener('click', () => applyMode('general'));
 
-  /* ── Message helpers ── */
+  /* ── Model toggle switcher ── */
+  const applyProvider = (prov, animate = true) => {
+    setActiveProvider(prov);
+    modelToggle.className = `cp-model-toggle ${prov}${animate ? ' switching' : ''}`;
+    if (animate) setTimeout(() => modelToggle.classList.remove('switching'), 400);
+    panel.querySelectorAll('.cp-model-opt').forEach(b => {
+      const active = b.dataset.prov === prov;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', active);
+    });
+    const info = AI_PROVIDERS[prov];
+    if (modelLabel) modelLabel.innerHTML = `${info.icon} ${info.label} &mdash; Active`;
+  };
+  panel.querySelectorAll('.cp-model-opt').forEach(btn => {
+    btn.addEventListener('click', () => applyProvider(btn.dataset.prov));
+  });
+  if (typeof bindHealthDots === 'function') bindHealthDots(panel);
+
+  /* ── Helpers ── */
   const setStatus = (txt) => { const el = panel.querySelector('#aiProvStatus'); if (el) el.textContent = txt; };
-
   const addText = (text, cls) => {
     const m = document.createElement('div');
     m.className = `msg ${cls}`;
@@ -274,70 +298,318 @@ function initFloatingChat() {
     return m;
   };
 
-  /* ── addImage: fully DOM-based, no inline handlers, 3-URL fallback ── */
-  const addImage = (prompt) => {
-    const cleanPrompt = extractImagePrompt(prompt);
+  /* ═══════════════════════════════════════════════════
+     eBOOK PDF GENERATOR
+  ═══════════════════════════════════════════════════ */
 
-    const m = document.createElement('div');
-    m.className = 'msg bot msg-image';
-
-    const wrap = document.createElement('div');
-    wrap.className = 'ai-img-wrap';
-    wrap.style.cssText = 'padding:4px 0;';
-
-    const lbl = document.createElement('span');
-    lbl.className = 'ai-img-loading';
-    lbl.textContent = '🎨 Generating image…';
-    lbl.style.cssText = 'display:block;font-size:13px;opacity:.8;margin-bottom:6px;';
-
-    const img = document.createElement('img');
-    img.alt = cleanPrompt;
-    img.style.cssText = 'display:none;max-width:100%;width:100%;border-radius:12px;margin-top:6px;';
-
-    wrap.appendChild(lbl);
-    wrap.appendChild(img);
-    m.appendChild(wrap);
-    log.appendChild(m);
+  /** Progress bubble shown in chat during eBook generation */
+  let ebookProgressBubble = null;
+  const setEbookProgress = (text, pct) => {
+    if (!ebookProgressBubble) {
+      ebookProgressBubble = document.createElement('div');
+      ebookProgressBubble.className = 'msg bot cp-ebook-progress-bubble';
+      log.appendChild(ebookProgressBubble);
+    }
+    ebookProgressBubble.innerHTML = `
+      <div class="cp-ebook-prog-label">${text}</div>
+      <div class="cp-ebook-prog-bar"><div class="cp-ebook-prog-fill" style="width:${pct}%"></div></div>
+      <div class="cp-ebook-prog-pct">${Math.round(pct)}%</div>
+    `;
     log.scrollTop = log.scrollHeight;
-
-    /* Build 3 fallback URLs with different seeds / params */
-    const getUrls = () => {
-      const base = encodeURIComponent(cleanPrompt + ', vibrant, high quality, detailed');
-      const s = Date.now();
-      return [
-        `https://image.pollinations.ai/prompt/${base}?model=flux&width=512&height=512&nologo=true&seed=${s}`,
-        `https://image.pollinations.ai/prompt/${base}?width=512&height=512&seed=${s + 1}`,
-        `https://image.pollinations.ai/prompt/${base}?seed=${s + 2}`,
-      ];
-    };
-
-    const tryLoad = (urls, attempt = 0) => {
-      if (attempt >= urls.length) {
-        lbl.textContent = '❌ Image failed. Try rephrasing or tap 🎨 and describe again.';
-        setStatus('❌ Image failed');
-        return;
-      }
-      lbl.textContent = attempt === 0 ? '🎨 Generating image…' : `🔄 Retrying (${attempt}/${urls.length - 1})…`;
-      img.src = '';
-
-      const newImg = new Image();
-      newImg.onload = () => {
-        img.src = newImg.src;
-        img.style.display = 'block';
-        lbl.style.display = 'none';
-        setStatus('✅ Image ready');
-        log.scrollTop = log.scrollHeight;
-      };
-      newImg.onerror = () => {
-        setTimeout(() => tryLoad(urls, attempt + 1), 1800);
-      };
-      newImg.src = urls[attempt];
-    };
-
-    tryLoad(getUrls());
   };
 
-  /* ── Send logic ── */
+  /** Build the PDF using jsPDF */
+  function buildEbookPDF(outline, chapters) {
+    if (!window.jspdf) throw new Error('jsPDF not loaded');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const PW = 210, PH = 297;
+    const BM = 10;   // border margin
+    const TM = 22;   // text top margin
+    const LM = 22;   // text left margin
+    const RM = 22;   // text right margin
+    const CW = PW - LM - RM; // content width
+    let pageNum = 0;
+
+    const addBorder = () => {
+      doc.setDrawColor(100, 60, 200);
+      doc.setLineWidth(1.0);
+      doc.rect(BM, BM, PW - BM*2, PH - BM*2);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(150, 110, 230);
+      doc.rect(BM+2.5, BM+2.5, PW - (BM+2.5)*2, PH - (BM+2.5)*2);
+    };
+
+    const addFooter = (n) => {
+      doc.setFontSize(8);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(150, 100, 200);
+      doc.text('Generated by Dr. AIMSS AI  |  Dr.AIMSS Educational Academy', PW/2, PH - BM - 4, {align:'center'});
+      doc.text(String(n), PW/2, PH - BM - 8, {align:'center'});
+    };
+
+    // ── COVER PAGE ──
+    addBorder();
+    // Header strip
+    doc.setFillColor(60, 20, 130);
+    doc.rect(BM, BM, PW - BM*2, 38, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica','bold');
+    doc.text('Dr. AIMSS Educational Academy', PW/2, BM+16, {align:'center'});
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    doc.text('Excellence in Education • NEET • CBSE • Stateboard', PW/2, BM+26, {align:'center'});
+
+    // Title
+    doc.setTextColor(40, 10, 90);
+    doc.setFontSize(26);
+    doc.setFont('helvetica','bold');
+    const titleLines = doc.splitTextToSize(outline.title || 'Educational eBook', CW - 10);
+    doc.text(titleLines, PW/2, 110, {align:'center'});
+
+    if (outline.subtitle) {
+      doc.setFontSize(13);
+      doc.setFont('helvetica','italic');
+      doc.setTextColor(90, 50, 160);
+      const subLines = doc.splitTextToSize(outline.subtitle, CW - 20);
+      doc.text(subLines, PW/2, 118 + titleLines.length * 10, {align:'center'});
+    }
+
+    // Decorative divider
+    doc.setDrawColor(139, 92, 246);
+    doc.setLineWidth(1.2);
+    doc.line(LM + 15, 160, PW - RM - 15, 160);
+    doc.setLineWidth(0.4);
+    doc.line(LM + 25, 163, PW - RM - 25, 163);
+
+    // Chapter count
+    doc.setTextColor(100, 60, 180);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','normal');
+    doc.text(`${chapters.length} Chapters  •  Comprehensive Study Material`, PW/2, 175, {align:'center'});
+
+    // Date
+    doc.setFontSize(9);
+    doc.setTextColor(130, 90, 190);
+    doc.text(new Date().toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'}), PW/2, 185, {align:'center'});
+
+    addFooter('Cover');
+    pageNum++;
+
+    // ── TABLE OF CONTENTS ──
+    doc.addPage();
+    pageNum++;
+    addBorder();
+    doc.setFillColor(240, 232, 255);
+    doc.rect(BM, BM, PW - BM*2, 18, 'F');
+    doc.setTextColor(60, 20, 130);
+    doc.setFontSize(14);
+    doc.setFont('helvetica','bold');
+    doc.text('TABLE OF CONTENTS', PW/2, BM+12, {align:'center'});
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica','normal');
+    let tocY = TM + 18;
+    chapters.forEach((ch, idx) => {
+      doc.setTextColor(60, 30, 120);
+      doc.setFont('helvetica','bold');
+      doc.text(`${idx+1}.`, LM, tocY);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(40, 10, 80);
+      const chLine = doc.splitTextToSize(ch.title, CW - 20);
+      doc.text(chLine, LM + 10, tocY);
+      // Dots
+      doc.setTextColor(160, 130, 200);
+      doc.text(`${idx + 3}`, PW - RM - 2, tocY, {align:'right'});
+      tocY += chLine.length * 6 + 4;
+      if (tocY > PH - TM - 20) {
+        doc.addPage(); pageNum++;
+        addBorder();
+        tocY = TM;
+      }
+    });
+    addFooter(pageNum);
+
+    // ── CHAPTER PAGES ──
+    chapters.forEach((ch, idx) => {
+      doc.addPage();
+      pageNum++;
+      addBorder();
+
+      // Chapter header strip
+      doc.setFillColor(80, 30, 160);
+      doc.rect(BM, BM, PW - BM*2, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica','normal');
+      doc.text(`CHAPTER ${idx + 1}`, LM, BM+9);
+      doc.setFontSize(12);
+      doc.setFont('helvetica','bold');
+      const chTitleLines = doc.splitTextToSize(ch.title.toUpperCase(), CW - 4);
+      doc.text(chTitleLines, LM, BM+17);
+
+      let y = BM + 30;
+      const content = ch.content || '';
+      const paragraphs = content.split(/\n\n+/).filter(p => p.trim().length > 0);
+
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(30, 10, 60);
+
+      for (const para of paragraphs) {
+        const trimmed = para.trim();
+        // Detect ALL-CAPS heading
+        const isHeading = trimmed === trimmed.toUpperCase() && trimmed.length < 80 && trimmed.length > 2;
+        if (isHeading) {
+          y += 3;
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(11);
+          doc.setTextColor(70, 20, 150);
+          const hl = doc.splitTextToSize(trimmed, CW);
+          if (y + hl.length * 6 > PH - BM - 18) {
+            addFooter(pageNum);
+            doc.addPage(); pageNum++;
+            addBorder();
+            y = TM;
+          }
+          doc.text(hl, LM, y);
+          // Draw underline IMMEDIATELY below heading baseline (before advancing y)
+          // Bug fix: drawing at y-1 AFTER y advances caused it to fall inside the next text line
+          doc.setDrawColor(139, 92, 246);
+          doc.setLineWidth(0.4);
+          doc.line(LM, y + 1.5, LM + CW * 0.6, y + 1.5);
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor(30, 10, 60);
+          y += hl.length * 6 + 8; // proper gap: heading height + space below underline
+        } else {
+          const lines = doc.splitTextToSize(trimmed, CW);
+          for (const line of lines) {
+            if (y > PH - BM - 18) {
+              addFooter(pageNum);
+              doc.addPage(); pageNum++;
+              addBorder();
+              y = TM;
+            }
+            doc.text(line, LM, y);
+            y += 5.5;
+          }
+          y += 3; // paragraph spacing
+        }
+      }
+      addFooter(pageNum);
+    });
+
+    return doc;
+  }
+
+  // ── Expose globally so ai-pdf-generator.html can use it ──
+  window.buildEbookPDF = buildEbookPDF;
+
+  /** Main eBook generation flow */
+  async function generateEbook(topic) {
+    sendBtn.disabled = true;
+    ebookProgressBubble = null;
+    setEbookProgress('💻 Planning your eBook structure…', 3);
+    setStatus('📖 Generating…');
+
+    // Step 1: Outline
+    const outlinePrompt = `You are an expert educational eBook author for NEET/CBSE students.
+Create a detailed eBook outline for: "${topic}"
+Respond with ONLY a valid JSON object — no extra text before or after:
+{
+  "title": "Full Book Title Here",
+  "subtitle": "A descriptive subtitle",
+  "chapters": [
+    {"number": 1, "title": "Chapter Title", "description": "Brief description of what this chapter covers"},
+    ... (8 to 12 chapters total)
+  ]
+}`;
+
+    let outline = { title: topic, subtitle: 'A Comprehensive Guide', chapters: [] };
+    try {
+      const r = await callAIWithFallback([{role:'user',content:outlinePrompt}], 1500);
+      if (r) {
+        const jsonMatch = r.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) outline = JSON.parse(jsonMatch[0]);
+      }
+    } catch(_) {}
+
+    // Fallback: create generic chapters if parse failed
+    if (!outline.chapters || outline.chapters.length === 0) {
+      outline.title    = topic;
+      outline.subtitle = 'A Comprehensive Educational Guide';
+      outline.chapters = [
+        'Introduction','Core Concepts','Key Principles','Detailed Analysis',
+        'Practical Applications','Important Examples','Common Questions',
+        'Advanced Topics','Exam Tips & Tricks','Summary & Revision'
+      ].map((t,i) => ({number:i+1, title:t, description:''}));
+    }
+
+    setEbookProgress(`📚 Outline ready — ${outline.chapters.length} chapters planned`, 8);
+
+    // Step 2: Generate each chapter
+    const chapters = [];
+    for (let i = 0; i < outline.chapters.length; i++) {
+      const ch = outline.chapters[i];
+      const pct = 10 + (i / outline.chapters.length) * 80;
+      setEbookProgress(`✍️ Writing Chapter ${i+1}/${outline.chapters.length}: ${ch.title}…`, pct);
+
+      const chPrompt = `Write Chapter ${ch.number}: "${ch.title}" for the eBook titled "${outline.title}".
+Audience: NEET, CBSE, Stateboard students.
+Requirements:
+- Write 600-900 words of detailed, accurate educational content
+- Use CAPS for section headings within the chapter (e.g. INTRODUCTION, KEY CONCEPTS)
+- Write in clear flowing paragraphs, no bullet symbols
+- Include key definitions, examples, and important points
+- Plain text only, no markdown symbols (no **, *, # or backticks)`;
+
+      try {
+        const r = await callAIWithFallback([{role:'user',content:chPrompt}], 2500);
+        if (r) chapters.push({...ch, content: cleanAIText(r.text)});
+        else chapters.push({...ch, content: `[Content for ${ch.title} could not be generated. Please retry.]`});
+      } catch(_) {
+        chapters.push({...ch, content: `[Content for ${ch.title} unavailable.]`});
+      }
+      // Small cooldown between calls to avoid rate-limiting
+      await new Promise(res => setTimeout(res, 400));
+    }
+
+    setEbookProgress('📄 Building your PDF…', 93);
+    await new Promise(res => setTimeout(res, 200));
+
+    // Step 3: Build PDF
+    try {
+      const doc = buildEbookPDF(outline, chapters);
+      const filename = (outline.title || topic).replace(/[^a-z0-9]/gi,'_').slice(0,40) + '_AIMSS.pdf';
+      doc.save(filename);
+      setEbookProgress('✅ eBook ready! Downloading…', 100);
+
+      // Final success message
+      setTimeout(() => {
+        if (ebookProgressBubble) {
+          ebookProgressBubble.classList.add('done');
+          ebookProgressBubble.innerHTML = `
+            <div class="cp-ebook-done">
+              🎉 <strong>"${outline.title}"</strong> — ${chapters.length} chapters downloaded!<br>
+              <span style="font-size:.8rem;opacity:.7">Check your Downloads folder</span>
+            </div>
+          `;
+        }
+        setStatus('✅ eBook Done');
+        sendBtn.disabled = false;
+      }, 1200);
+    } catch(err) {
+      if (ebookProgressBubble) ebookProgressBubble.textContent = '❌ PDF generation failed: ' + err.message;
+      setStatus('❌ Failed');
+      sendBtn.disabled = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SEND LOGIC (mode-aware)
+  ═══════════════════════════════════════════════════ */
   const send = async () => {
     const msg = input.value.trim();
     if (!msg) return;
@@ -345,26 +617,60 @@ function initFloatingChat() {
     input.value = '';
     sendBtn.disabled = true;
 
-    if (isImageRequest(msg)) {
-      setStatus('🎨 Generating image…');
-      addImage(msg);
-      sendBtn.disabled = false;
+    const mode = CHAT_MODES[ACTIVE_CHAT_MODE];
+
+    // ── eBook mode: launch PDF generator ──
+    if (ACTIVE_CHAT_MODE === 'ebook') {
+      await generateEbook(msg);
       return;
     }
 
+    // ── Standard mode: chat with mode-specific system prompt ──
     const thinking = addText('Thinking…', 'bot thinking-bubble');
     setStatus('⏳ Thinking…');
+
+    const queueTimer = setInterval(() => {
+      const depth = typeof AIQueue !== 'undefined' ? AIQueue.depth : 0;
+      if (depth > 0) {
+        thinking.textContent = `⏳ Queued (${depth} ahead)…`;
+        setStatus(`📥 Queued (${depth})`);
+      } else {
+        thinking.textContent = 'Thinking…';
+      }
+    }, 600);
+
     try {
-      const sys = 'You are Dr.AIMSS Educational Academy AI assistant. Answer clearly for NEET, Stateboard, and CBSE students Class 6-12. Be concise, accurate and motivating. Use plain text — no **, *, # or backticks.';
-      const result = await callAIWithFallback([{role:'system',content:sys},{role:'user',content:msg}], 320);
+      const result = await callAIWithFallback(
+        [{role:'system', content: mode.systemPrompt}, {role:'user', content: msg}],
+        mode.maxTokens
+      );
+      clearInterval(queueTimer);
       thinking.remove();
-      if (!result) { addText('AI unavailable right now. Try again.', 'bot'); setStatus('❌ Failed'); }
-      else { addText(cleanAIText(result.text), 'bot'); setStatus(AI_PROVIDERS[result.usedProvider].icon+' '+AI_PROVIDERS[result.usedProvider].label); }
+
+      if (!result) {
+        addText('AI unavailable right now. Try again.', 'bot');
+        setStatus('❌ Failed');
+      } else {
+        const prov = AI_PROVIDERS[result.usedProvider];
+        const bubble = document.createElement('div');
+        bubble.className = 'msg bot';
+        const badgeClass = result.usedProvider === 'nvidia' ? 'badge-nvidia' : 'badge-geminipro';
+        const modeBadge = ACTIVE_CHAT_MODE !== 'general'
+          ? `<span class="ai-mode-badge" style="--mode-color:${mode.color}">${mode.icon} ${mode.label}</span>`
+          : '';
+        bubble.innerHTML = `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${prov.label}</span>`;
+        log.appendChild(bubble);
+        log.scrollTop = log.scrollHeight;
+        setStatus(prov.icon + ' ' + prov.label);
+      }
     } catch(_) {
+      clearInterval(queueTimer);
       thinking.remove();
       addText('Network error. Please retry.', 'bot');
       setStatus('❌ Error');
-    } finally { sendBtn.disabled = false; }
+    } finally {
+      if (ACTIVE_CHAT_MODE !== 'ebook') sendBtn.disabled = false;
+    }
   };
 
   toggle.addEventListener('click', () => panel.classList.toggle('open'));
@@ -620,93 +926,22 @@ function initVideoProgress() {
 }
 
 function initLoginForm() {
-  const form = document.getElementById('loginForm');
-  const emailInput = document.getElementById('loginEmail');
-  const passwordInput = document.getElementById('loginPassword');
-  const status = document.getElementById('loginStatus');
-  const loginBtn = document.getElementById('loginBtn');
-  if (!form || !emailInput || !passwordInput || !status || !loginBtn) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    if (!email || !password) {
-      status.textContent = 'Please enter email and password.';
-      return;
-    }
-
-    loginBtn.disabled = true;
-    status.textContent = 'Signing in...';
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        status.textContent = data?.error || 'Login failed.';
-        return;
-      }
-      status.textContent = `Welcome ${data?.user?.email || email}. Login successful.`;
-    } catch (_err) {
-      status.textContent = 'Network error. Please try again.';
-    } finally {
-      loginBtn.disabled = false;
-    }
-  });
+  // Handled by supabase-auth.js on student-login.html / teacher-login.html
+  // This stub is kept so old pages that call initLoginForm() don't throw errors.
 }
 
 function initRoleLogin() {
-  const form = document.getElementById('roleLoginForm');
-  const emailInput = document.getElementById('roleEmail');
-  const passwordInput = document.getElementById('rolePassword');
-  const roleInput = document.getElementById('roleType');
-  const status = document.getElementById('roleLoginStatus');
-  if (!form || !emailInput || !passwordInput || !roleInput || !status) return;
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const role = roleInput.value;
-
-    if (!email || !password) {
-      status.textContent = 'Please enter email and password.';
-      return;
-    }
-
-    localStorage.setItem(`auth-${role}`, JSON.stringify({ email, at: Date.now() }));
-    localStorage.setItem('portal-auth', role);
-    status.textContent = `Login successful for ${role}. Redirecting...`;
-    setTimeout(() => {
-      window.location.href = role === 'student' ? 'student-dashboard.html' : 'command-center.html';
-    }, 500);
-  });
+  // Handled by supabase-auth.js on student-login.html / teacher-login.html
+  // This stub is kept so old pages that call initRoleLogin() don't throw errors.
 }
 
 function initPortalGuard() {
-  const protectedPages = new Set([
-    '/command-center.html',
-    '/student-dashboard.html',
-    '/student-login.html',
-    '/teacher-login.html',
-    '/teacher-progress.html',
-    '/ai-pdf-generator.html',
-    '/mcq-test.html'
-  ]);
-  const path = window.location.pathname;
-  if (!protectedPages.has(path)) return;
-  if (path.endsWith('/student-login.html') || path.endsWith('/teacher-login.html') || path.endsWith('/login.html')) return;
-
-  const role = localStorage.getItem('portal-auth');
-  const hasStudent = !!localStorage.getItem('auth-student');
-  const hasTeacher = !!localStorage.getItem('auth-teacher');
-  if (!role && !hasStudent && !hasTeacher) {
-    window.location.href = 'login.html';
-  }
+  // Guard is now handled per-page via DrAuth.guardPage() in supabase-auth.js.
+  // student-dashboard.html  → DrAuth.guardPage('student')
+  // command-center.html     → DrAuth.guardPage('teacher')
+  // teacher-progress.html   → DrAuth.guardPage('teacher')
+  // Login pages are public — no guard needed.
+  // This stub is kept to avoid call-site errors in main.js.
 }
 
 function getRewardState() {
@@ -819,7 +1054,6 @@ function initAiPdfGenerator() {
     }
     status.textContent = 'Generating notes with AI...';
     try {
-      const API_KEY = "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";
       const promptText = `Create clean study notes for students.
 Topic: ${topic}
 Class/Grade: ${grade || "General"}
@@ -831,27 +1065,17 @@ Format:
 5) 3 short practice questions
 Keep it concise and exam oriented.`;
 
-      const res = await fetch('https://corsproxy.io/?url=https%3A%2F%2Fintegrate.api.nvidia.com%2Fv1%2Fchat%2Fcompletions', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({ 
-          model: 'meta/llama-3.1-8b-instruct',
-          messages: [
-            { role: 'user', content: promptText }
-          ],
-          max_tokens: 900
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        status.textContent = data?.error || 'Generation failed.';
+      const result = await callAIWithFallback([
+        { role: 'user', content: promptText }
+      ], 900);
+
+      if (!result) {
+        status.textContent = 'AI unavailable. Please try again.';
         return;
       }
-      output.value = data.choices?.[0]?.message?.content || '';
-      status.textContent = 'Generated. Click Print/Save as PDF.';
+      const prov = AI_PROVIDERS[result.usedProvider];
+      output.value = result.text || '';
+      status.textContent = `Generated via ${prov.icon} ${prov.label}. Click Print/Save as PDF.`;
       awardPoints(20);
       initStudentRewards();
     } catch (_e) {
@@ -1060,5 +1284,84 @@ initMcqTest();
 initStudentRewards();
 initSidebarMobile();
 initTeacherVideo();
+initMobileNav();
 
+/* ══ MOBILE NAV — injected dynamically on every page ══ */
+function initMobileNav() {
+  const nav = document.querySelector('.nav');
+  if (!nav) return;
 
+  // Avoid double-inject
+  if (nav.querySelector('.nav-hamburger')) return;
+
+  /* 1. Inject hamburger button into nav — insert BEFORE nav-tools so order is
+     [Brand]  [nav-links desktop]  [Apply btn]  [☰ Hamburger]
+     On mobile nav-links is hidden, Apply is hidden, hamburger stays right. */
+  const ham = document.createElement('button');
+  ham.className = 'nav-hamburger';
+  ham.setAttribute('aria-label', 'Open menu');
+  ham.setAttribute('aria-expanded', 'false');
+  ham.innerHTML = '<span></span><span></span><span></span>';
+  const navTools = nav.querySelector('.nav-tools');
+  if (navTools) {
+    nav.insertBefore(ham, navTools.nextSibling); // insert AFTER nav-tools
+  } else {
+    nav.appendChild(ham);
+  }
+
+  /* 2. Build mobile nav drawer */
+  const drawer = document.createElement('div');
+  drawer.className = 'mobile-nav-drawer';
+  drawer.id = 'mobileNavDrawer';
+  drawer.innerHTML = `
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav-panel">
+      <div class="mobile-nav-head">
+        <strong>📚 Dr.AIMSS</strong>
+        <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close menu">✕</button>
+      </div>
+      <nav class="mobile-nav-links">
+        <a href="index.html">🏠 Home</a>
+        <a href="index.html#programs">📖 Programs</a>
+        <a href="matric.html">📚 Stateboard</a>
+        <a href="cbse.html">🎓 CBSE</a>
+        <a href="lectures.html">🎬 Video Lectures</a>
+        <a href="mcq-test.html">📊 MCQ Tests</a>
+        <a href="study-materials.html">📄 Study Materials</a>
+        <a href="ai-pdf-generator.html">🤖 AI PDF Generator</a>
+        <a href="login.html">🔐 Login</a>
+        <a href="login.html">🏛️ Command Center</a>
+      </nav>
+      <div class="mobile-nav-footer">
+        <a class="btn" href="index.html#admission">Apply Now</a>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(drawer);
+
+  /* 3. Wire open/close */
+  const openDrawer = () => {
+    drawer.classList.add('open');
+    ham.classList.add('open');
+    ham.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  };
+  const closeDrawer = () => {
+    drawer.classList.remove('open');
+    ham.classList.remove('open');
+    ham.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  };
+
+  ham.addEventListener('click', openDrawer);
+  document.getElementById('mobileNavClose')?.addEventListener('click', closeDrawer);
+  document.getElementById('mobileNavOverlay')?.addEventListener('click', closeDrawer);
+
+  // Close on link click
+  drawer.querySelectorAll('.mobile-nav-links a').forEach(a => {
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+}

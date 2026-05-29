@@ -26,13 +26,13 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(139,92,246,0.1);
-      border: 1px solid rgba(139,92,246,0.25);
+      background: rgba(76, 209, 214, 0.1);
+      border: 1px solid rgba(76, 209, 214, 0.25);
       border-radius: 999px;
       padding: 6px 18px;
       font-size: .8rem;
       font-weight: 700;
-      color: #a78bfa;
+      color: #4cd1d6;
       letter-spacing: .06em;
       text-transform: uppercase;
       margin-bottom: 24px;
@@ -46,13 +46,13 @@
       line-height: 1.1;
     }
     .portal-title span {
-      background: linear-gradient(135deg, #a78bfa, #fb923c);
+      background: linear-gradient(135deg, #4cd1d6, #0d848c);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .portal-subtitle {
-      color: #64748b;
+      color: #8b8c92;
       font-size: 1rem;
       margin: 0 0 48px;
     }
@@ -93,28 +93,28 @@
 
     /* Student card */
     .role-card.student {
-      background: linear-gradient(160deg, rgba(109,40,217,0.2) 0%, rgba(30,27,75,0.5) 100%);
+      background: linear-gradient(160deg, rgba(76,209,214,0.06) 0%, rgba(10,10,15,0.85) 100%);
     }
     .role-card.student::before {
-      background: linear-gradient(160deg, rgba(109,40,217,0.35), rgba(167,139,250,0.1));
+      background: linear-gradient(160deg, rgba(76,209,214,0.2), rgba(76,209,214,0.03));
     }
-    .role-card.student { border-color: rgba(139,92,246,0.25); }
+    .role-card.student { border-color: rgba(76,209,214,0.22); }
     .role-card.student:hover {
-      border-color: rgba(139,92,246,0.6);
-      box-shadow: 0 24px 60px rgba(109,40,217,0.3);
+      border-color: rgba(76,209,214,0.65);
+      box-shadow: 0 24px 60px rgba(76,209,214,0.2);
     }
 
     /* Teacher card */
     .role-card.teacher {
-      background: linear-gradient(160deg, rgba(120,53,15,0.2) 0%, rgba(15,23,42,0.5) 100%);
+      background: linear-gradient(160deg, rgba(229,228,227,0.05) 0%, rgba(10,10,15,0.85) 100%);
     }
     .role-card.teacher::before {
-      background: linear-gradient(160deg, rgba(180,83,9,0.3), rgba(245,158,11,0.08));
+      background: linear-gradient(160deg, rgba(229,228,227,0.18), rgba(229,228,227,0.02));
     }
-    .role-card.teacher { border-color: rgba(245,158,11,0.2); }
+    .role-card.teacher { border-color: rgba(229,228,227,0.18); }
     .role-card.teacher:hover {
-      border-color: rgba(245,158,11,0.5);
-      box-shadow: 0 24px 60px rgba(180,83,9,0.25);
+      border-color: rgba(229,228,227,0.55);
+      box-shadow: 0 24px 60px rgba(229,228,227,0.15);
     }
 
     .role-icon {
@@ -127,8 +127,8 @@
       position: relative;
       z-index: 1;
     }
-    .student .role-icon { background: rgba(139,92,246,0.2); }
-    .teacher .role-icon { background: rgba(245,158,11,0.15); }
+    .student .role-icon { background: rgba(76,209,214,0.2); color: #4cd1d6; }
+    .teacher .role-icon { background: rgba(229,228,227,0.15); color: #e5e4e3; }
 
     .role-name {
       font-family: 'Outfit', sans-serif;

@@ -15,27 +15,27 @@
 
     .login-card {
       width: min(460px, 100%);
-      background: linear-gradient(160deg, rgba(30,27,75,0.97) 0%, rgba(15,23,42,0.98) 100%);
-      border: 1px solid rgba(139,92,246,0.3);
+      background: linear-gradient(160deg, rgba(76, 209, 214, 0.05) 0%, rgba(10, 10, 14, 0.98) 100%);
+      border: 1px solid rgba(76, 209, 214, 0.28);
       border-radius: 28px;
       padding: 40px 36px 36px;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.06);
       backdrop-filter: blur(24px);
       position: relative; overflow: hidden;
     }
     .login-card::before {
       content:''; position:absolute; top:-80px; right:-80px;
       width:200px; height:200px;
-      background: radial-gradient(circle, rgba(139,92,246,0.2), transparent 70%);
+      background: radial-gradient(circle, rgba(76, 209, 214, 0.18), transparent 70%);
       pointer-events:none;
     }
 
     /* Role badge */
     .login-role-badge {
       display:inline-flex; align-items:center; gap:8px;
-      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(251,146,60,0.1));
-      border: 1px solid rgba(139,92,246,0.35); border-radius:999px;
-      padding:6px 16px; font-size:.78rem; font-weight:700; color:#a78bfa;
+      background: linear-gradient(135deg, rgba(76, 209, 214, 0.15), rgba(229, 228, 227, 0.05));
+      border: 1px solid rgba(76, 209, 214, 0.3); border-radius:999px;
+      padding:6px 16px; font-size:.78rem; font-weight:700; color:#4cd1d6;
       letter-spacing:.04em; text-transform:uppercase; margin-bottom:20px;
     }
     .role-dot { width:7px; height:7px; background:#4ade80; border-radius:50%; animation:blink 1.8s ease infinite; }
@@ -54,8 +54,8 @@
       transition:all .2s;
     }
     .auth-tab.active {
-      background:linear-gradient(135deg,rgba(109,40,217,0.8),rgba(167,139,250,0.5));
-      color:#fff; box-shadow:0 4px 16px rgba(109,40,217,0.3);
+      background: var(--accent-gradient);
+      color:#fff; box-shadow:0 4px 16px rgba(76, 209, 214, 0.25);
     }
 
     /* Forms */
@@ -74,8 +74,8 @@
       transition:border-color .2s, background .2s, box-shadow .2s; box-sizing:border-box;
     }
     .login-field:focus {
-      border-color:rgba(139,92,246,0.7); background:rgba(139,92,246,0.07);
-      box-shadow:0 0 0 3px rgba(139,92,246,0.15);
+      border-color:rgba(76, 209, 214, 0.7); background:rgba(76, 209, 214, 0.07);
+      box-shadow:0 0 0 3px rgba(76, 209, 214, 0.15);
     }
     .login-field::placeholder { color:#475569; }
     .f-icon {
@@ -85,13 +85,13 @@
 
     /* Button */
     .login-btn {
-      width:100%; background:linear-gradient(135deg,#7c3aed,#a78bfa 50%,#fb923c);
-      background-size:200% auto; color:#fff; border:none; border-radius:12px;
+      width:100%; background:var(--accent-gradient);
+      color:#fff; border:none; border-radius:12px;
       padding:14px; font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:800;
-      cursor:pointer; margin-top:6px; transition:background-position .4s, transform .2s, box-shadow .2s;
-      box-shadow:0 8px 24px rgba(124,58,237,0.4);
+      cursor:pointer; margin-top:6px; transition:transform .2s, box-shadow .2s;
+      box-shadow:0 8px 24px rgba(76, 209, 214, 0.3);
     }
-    .login-btn:hover:not(:disabled) { background-position:right center; transform:translateY(-2px); }
+    .login-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 32px rgba(76, 209, 214, 0.45); }
     .login-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
     .btn-spinner {
       display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,0.4);
@@ -108,11 +108,11 @@
     }
     .login-status.error   { display:block; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; }
     .login-status.success { display:block; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); color:#4ade80; }
-    .login-status.info    { display:block; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); color:#c4b5fd; }
+    .login-status.info    { display:block; background:rgba(76, 209, 214, 0.1); border:1px solid rgba(76, 209, 214, 0.25); color:#4cd1d6; }
 
     /* Footer */
     .switch-portal { text-align:center; margin-top:20px; font-size:.82rem; color:#475569; }
-    .switch-portal a { color:#a78bfa; font-weight:700; }
+    .switch-portal a { color:#4cd1d6; font-weight:700; }
     .security-badge {
       display:flex; align-items:center; justify-content:center;
       gap:6px; margin-top:18px; font-size:.72rem; color:#334155;

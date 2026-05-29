@@ -4,31 +4,171 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Command Center | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Teacher command center — manage study materials and track student progress." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed var(--line-hard);
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      transition: all .25s;
+      cursor: pointer;
+      position: relative;
+      background: rgba(0,229,204,0.02);
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(0,229,204,0.06);
+      box-shadow: 0 0 30px rgba(0,229,204,0.1);
+    }
+    .upload-zone .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .upload-zone h3 { margin: 0 0 6px; color: var(--ink); }
+    .upload-zone p  { margin: 0; color: var(--muted); font-size: .88rem; }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0;
+      cursor: pointer; width: 100%; height: 100%;
+    }
+
+    /* ── Progress bar ── */
+    .upload-progress {
+      display: none; margin-top: 16px;
+    }
+    .upload-progress-bar {
+      width: 100%; height: 8px; background: var(--surface-2);
+      border-radius: 999px; overflow: hidden;
+    }
+    .upload-progress-fill {
+      height: 100%; width: 0%;
+      background: var(--accent-gradient);
+      border-radius: 999px;
+      transition: width .2s ease;
+      box-shadow: 0 0 12px rgba(0,229,204,0.5);
+    }
+    .upload-progress-label {
+      font-size: .8rem; color: var(--muted); margin-top: 6px;
+      display: flex; justify-content: space-between;
+    }
+
+    /* ── File table ── */
+    .file-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .file-table th {
+      text-align: left; font-size: .75rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+      padding: 8px 12px; border-bottom: 1px solid var(--line);
+    }
+    .file-table td {
+      padding: 12px 12px; border-bottom: 1px solid rgba(0,229,204,0.06);
+      font-size: .88rem; vertical-align: middle;
+    }
+    .file-table tr:hover td { background: rgba(0,229,204,0.03); }
+    .file-table .file-name-cell {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; max-width: 280px;
+    }
+    .file-table .file-name-text {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .action-btn {
+      padding: 5px 12px; border-radius: 7px; border: none;
+      font: inherit; font-size: .78rem; font-weight: 700;
+      cursor: pointer; transition: all .15s;
+    }
+    .action-btn-view {
+      background: rgba(0,229,204,0.1);
+      border: 1px solid rgba(0,229,204,0.2);
+      color: var(--accent);
+    }
+    .action-btn-view:hover { background: rgba(0,229,204,0.2); }
+    .action-btn-dl {
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.25);
+      color: var(--gold);
+    }
+    .action-btn-dl:hover { background: rgba(255,215,0,0.2); }
+    .action-btn-del {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: #f87171;
+    }
+    .action-btn-del:hover { background: rgba(239,68,68,0.2); }
+
+    /* ── Status messages ── */
+    .status-msg {
+      padding: 12px 16px; border-radius: 10px;
+      font-size: .88rem; font-weight: 600; margin-top: 12px;
+      display: none;
+    }
+    .status-msg.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80; display: block; }
+    .status-msg.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.25);  color: #f87171; display: block; }
+
+    /* ── Loading / empty ── */
+    .file-loading { text-align: center; padding: 40px; color: var(--muted); }
+    .file-spinner {
+      display: inline-block; width: 32px; height: 32px; border-radius: 50%;
+      border: 3px solid rgba(0,229,204,0.15); border-top-color: var(--accent);
+      animation: spin .7s linear infinite; margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stat cards ── */
+    .cmd-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+    .cmd-stat  {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 18px; text-align: center;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .cmd-stat:hover { border-color: var(--line-hard); box-shadow: 0 0 24px rgba(0,229,204,0.08); }
+    .cmd-stat-num {
+      font-size: 2rem; font-weight: 800; font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, var(--accent), #fff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cmd-stat-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      .cmd-stats { grid-template-columns: 1fr 1fr; }
+      .file-table th:nth-child(3),
+      .file-table td:nth-child(3),
+      .file-table th:nth-child(4),
+      .file-table td:nth-child(4) { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="#" data-logout id="navLogout">Logout</a></nav><div class="nav-tools"><span data-auth-email style="font-size:.82rem;color:var(--muted);"></span></div></div></header>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" />
+        <span>Dr.AIMSS EDUCATIONAL ACADEMY</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="#" data-logout id="navLogout">Logout</a>
+      </nav>
+      <div class="nav-tools">
+        <span data-auth-email style="font-size:.82rem;color:var(--muted);"></span>
+      </div>
+    </div>
+  </header>
+
   <main class="portal-shell">
     <div class="portal-side-overlay" id="sidebarOverlay"></div>
     <aside class="portal-side" id="portalSidebar">
       <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width:36px; height:36px; background:#5b58ed; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">DA</div>
+          <div style="width:36px; height:36px; background:var(--gold-gradient); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold;">DA</div>
           <span style="font-size: 1.1rem; font-weight: 800; font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
         </div>
         <button id="sidebarCloseBtn" class="btn btn-soft" style="padding: 4px 8px; border: none; display: none;">
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
-      </div>
-      <div style="margin-bottom: 24px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span style="font-size: 0.9rem; font-weight:600;">Personal Workspace</span>
-        </div>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
 
       <div class="portal-title">MAIN</div>
@@ -39,7 +179,7 @@
 
       <div class="portal-title">CONTENT STUDIO</div>
       <a class="portal-link" href="ai-pdf-generator.html">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
         AI PDF Generator
       </a>
 
@@ -50,21 +190,315 @@
       </a>
       <a class="portal-link" href="teacher-progress.html">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-        Teacher Progress Tracker
+        Progress Tracker
       </a>
     </aside>
+
     <section class="portal-main">
-      <div class="glass card"><h2>Main Page</h2><p style="color:var(--muted);">Login completed. Use the sidebar to open each option page.</p><div class="split-2"><a class="card" href="ai-pdf-generator.html"><h3>AI PDF Generator</h3><p>Create chapter notes and save as PDF.</p></a><a class="card" href="mcq-test.html"><h3>MCQ Test</h3><p>Practice questions with instant score.</p></a><a class="card" href="teacher-progress.html"><h3>Teacher Progress Tracker</h3><p>Track and export student performance.</p></a></div></div>
+
+      <!-- Stats Row -->
+      <div class="cmd-stats">
+        <div class="cmd-stat">
+          <div class="cmd-stat-num" id="statTotal">—</div>
+          <div class="cmd-stat-label">Total Files</div>
+        </div>
+        <div class="cmd-stat">
+          <div class="cmd-stat-num" id="statPdf">—</div>
+          <div class="cmd-stat-label">PDFs</div>
+        </div>
+        <div class="cmd-stat">
+          <div class="cmd-stat-num" id="statOther">—</div>
+          <div class="cmd-stat-label">Other Files</div>
+        </div>
+      </div>
+
+      <!-- Upload Card -->
+      <div class="glass card" style="padding: 28px; margin-bottom: 20px;">
+        <h2 style="margin: 0 0 6px;">
+          📤 Upload Study Material
+        </h2>
+        <p style="color: var(--muted); margin: 0 0 20px; font-size: .88rem;">
+          Upload PDFs, Word documents, PowerPoint slides, images. Max 50 MB per file.
+        </p>
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt" />
+          <div class="upload-icon">☁️</div>
+          <h3>Drag &amp; Drop or Click to Upload</h3>
+          <p>PDF, Word, PowerPoint, Excel, Images, Text · Max 50 MB</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="upload-progress" id="uploadProgress">
+          <div class="upload-progress-bar">
+            <div class="upload-progress-fill" id="progressFill"></div>
+          </div>
+          <div class="upload-progress-label">
+            <span id="progressFile">Uploading…</span>
+            <span id="progressPct">0%</span>
+          </div>
+        </div>
+
+        <!-- Status messages -->
+        <div class="status-msg" id="uploadStatus"></div>
+      </div>
+
+      <!-- File Manager Card -->
+      <div class="glass card" style="padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <h2 style="margin: 0;">📁 Uploaded Files</h2>
+          <button class="btn btn-soft" id="refreshBtn" onclick="loadFiles()">⟳ Refresh</button>
+        </div>
+
+        <!-- Loading state -->
+        <div id="fileLoading" class="file-loading">
+          <div class="file-spinner"></div><br>Loading files…
+        </div>
+
+        <!-- Error -->
+        <div id="fileError" style="display:none; padding:16px; border-radius:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:.88rem;"></div>
+
+        <!-- Table -->
+        <div id="fileTableWrap" style="overflow-x: auto; display:none;">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fileTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Empty -->
+        <div id="fileEmpty" style="display:none; text-align:center; padding:40px; color:var(--muted);">
+          <div style="font-size:2.5rem; margin-bottom:12px;">📭</div>
+          <h3 style="color:var(--ink); margin:0 0 6px;">No files yet</h3>
+          <p style="margin:0;">Upload your first study material above.</p>
+        </div>
+      </div>
+
     </section>
   </main>
+
+  <!-- Delete confirm modal -->
+  <div id="deleteModal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid rgba(239,68,68,0.3); border-radius:20px; padding:32px; max-width:400px; width:90%; box-shadow:0 40px 80px rgba(0,0,0,0.8);">
+      <h3 style="color:#f87171; margin:0 0 10px;">🗑️ Delete File?</h3>
+      <p style="color:var(--muted); margin:0 0 20px;" id="deleteFileName">This action cannot be undone.</p>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-soft" style="flex:1;" onclick="closeDeleteModal()">Cancel</button>
+        <button id="confirmDeleteBtn" class="btn" style="flex:1; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#f87171;">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
-  <script>
-    // Guard this page — teacher role required
-    DrAuth.guardPage('teacher');
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/drive.js"></script>
   <script src="assets/js/main.js?v=5"></script>
+  <script>
+    // Guard: teacher only
+    DrAuth.guardPage('teacher');
+
+    let allFiles   = [];
+    let pendingDeleteId = null;
+
+    /* ═══════════════════════════════
+       LOAD FILES
+    ═══════════════════════════════ */
+    async function loadFiles() {
+      const loading  = document.getElementById('fileLoading');
+      const tableWrap= document.getElementById('fileTableWrap');
+      const empty    = document.getElementById('fileEmpty');
+      const errEl    = document.getElementById('fileError');
+
+      loading.style.display   = 'block';
+      tableWrap.style.display = 'none';
+      empty.style.display     = 'none';
+      errEl.style.display     = 'none';
+
+      try {
+        const result = await DrDrive.listFiles();
+        allFiles = result.files || [];
+
+        // Update stats
+        document.getElementById('statTotal').textContent = allFiles.length;
+        document.getElementById('statPdf').textContent   = allFiles.filter(f => f.mimeType === 'application/pdf').length;
+        document.getElementById('statOther').textContent = allFiles.filter(f => f.mimeType !== 'application/pdf').length;
+
+        loading.style.display = 'none';
+
+        if (allFiles.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        renderTable();
+        tableWrap.style.display = 'block';
+      } catch (err) {
+        loading.style.display = 'none';
+        errEl.style.display   = 'block';
+        errEl.textContent     = '⚠️ ' + (err.message || 'Could not load files.');
+      }
+    }
+
+    function renderTable() {
+      const body = document.getElementById('fileTableBody');
+      body.innerHTML = allFiles.map(f => `
+        <tr id="row-${f.id}">
+          <td>
+            <div class="file-name-cell">
+              <span>${DrDrive.getIcon(f.mimeType)}</span>
+              <span class="file-name-text" title="${escAttr(f.name)}">${escHtml(f.name)}</span>
+            </div>
+          </td>
+          <td style="color:var(--muted); white-space:nowrap;">${DrDrive.formatSize(f.size)}</td>
+          <td style="color:var(--muted); white-space:nowrap;">${DrDrive.formatDate(f.createdTime)}</td>
+          <td>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="action-btn action-btn-view" onclick="openPreview('${f.id}','${escAttr(f.name)}')">👁 View</button>
+              <a class="action-btn action-btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇ DL</a>
+              <button class="action-btn action-btn-del" onclick="confirmDelete('${f.id}','${escAttr(f.name)}')">🗑 Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+    /* ═══════════════════════════════
+       UPLOAD
+    ═══════════════════════════════ */
+    const fileInput    = document.getElementById('fileInput');
+    const uploadZone   = document.getElementById('uploadZone');
+    const progressWrap = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressFile = document.getElementById('progressFile');
+    const progressPct  = document.getElementById('progressPct');
+    const statusEl     = document.getElementById('uploadStatus');
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) startUpload(fileInput.files[0]);
+    });
+
+    // Drag & drop
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave',  () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) startUpload(e.dataTransfer.files[0]);
+    });
+
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className   = 'status-msg ' + type;
+    }
+
+    async function startUpload(file) {
+      // Validate size
+      if (file.size > 50 * 1024 * 1024) {
+        setStatus('❌ File too large. Maximum 50 MB allowed.', 'error');
+        return;
+      }
+
+      statusEl.className   = 'status-msg';  // hide
+      progressWrap.style.display = 'block';
+      progressFill.style.width   = '0%';
+      progressFile.textContent   = `Uploading: ${file.name}`;
+      progressPct.textContent    = '0%';
+      fileInput.disabled = true;
+
+      try {
+        await DrDrive.uploadFile(file, pct => {
+          progressFill.style.width  = pct + '%';
+          progressPct.textContent   = pct + '%';
+        });
+
+        progressFill.style.width = '100%';
+        progressPct.textContent  = '100%';
+        setStatus(`✅ "${file.name}" uploaded successfully!`, 'success');
+
+        // Reload file list
+        setTimeout(() => {
+          progressWrap.style.display = 'none';
+          loadFiles();
+        }, 1200);
+      } catch (err) {
+        progressWrap.style.display = 'none';
+        setStatus('❌ ' + (err.message || 'Upload failed. Please try again.'), 'error');
+      } finally {
+        fileInput.disabled = false;
+        fileInput.value = '';
+      }
+    }
+
+    /* ═══════════════════════════════
+       DELETE
+    ═══════════════════════════════ */
+    function confirmDelete(fileId, fileName) {
+      pendingDeleteId = fileId;
+      document.getElementById('deleteFileName').textContent = `Delete "${fileName}"? This cannot be undone.`;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteId = null;
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+      if (!pendingDeleteId) return;
+      const id = pendingDeleteId;
+      closeDeleteModal();
+
+      // Optimistically remove the row
+      const row = document.getElementById('row-' + id);
+      if (row) row.style.opacity = '0.3';
+
+      try {
+        await DrDrive.deleteFile(id);
+        if (row) row.remove();
+        allFiles = allFiles.filter(f => f.id !== id);
+        document.getElementById('statTotal').textContent = allFiles.length;
+        document.getElementById('statPdf').textContent   = allFiles.filter(f => f.mimeType === 'application/pdf').length;
+        document.getElementById('statOther').textContent = allFiles.filter(f => f.mimeType !== 'application/pdf').length;
+        if (allFiles.length === 0) {
+          document.getElementById('fileTableWrap').style.display = 'none';
+          document.getElementById('fileEmpty').style.display     = 'block';
+        }
+      } catch (err) {
+        if (row) row.style.opacity = '1';
+        alert('Delete failed: ' + err.message);
+      }
+    });
+
+    /* ═══════════════════════════════
+       PREVIEW MODAL
+    ═══════════════════════════════ */
+    function openPreview(fileId, fileName) {
+      const overlay = document.createElement('div');
+      overlay.id = 'previewOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+      overlay.innerHTML = `
+        <div style="width:100%;max-width:900px;height:85vh;background:var(--surface);border-radius:20px;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);">
+            <span style="font-weight:700;font-size:.95rem;">${escHtml(fileName)}</span>
+            <button onclick="document.getElementById('previewOverlay').remove()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 14px;cursor:pointer;font:inherit;font-weight:700;">✕ Close</button>
+          </div>
+          <iframe src="${DrDrive.getPreviewUrl(fileId)}" style="flex:1;border:none;background:#fff;"></iframe>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+
+    /* ── Load on page ready ── */
+    document.addEventListener('DOMContentLoaded', loadFiles);
+  </script>
 </body>
 </html>

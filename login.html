@@ -26,13 +26,13 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(76, 209, 214, 0.1);
-      border: 1px solid rgba(76, 209, 214, 0.25);
+      background: rgba(0, 229, 204, 0.08);
+      border: 1px solid rgba(0, 229, 204, 0.28);
       border-radius: 999px;
       padding: 6px 18px;
       font-size: .8rem;
       font-weight: 700;
-      color: #4cd1d6;
+      color: var(--accent);
       letter-spacing: .06em;
       text-transform: uppercase;
       margin-bottom: 24px;
@@ -46,7 +46,7 @@
       line-height: 1.1;
     }
     .portal-title span {
-      background: linear-gradient(135deg, #4cd1d6, #0d848c);
+      background: linear-gradient(135deg, #00e5cc, #00b8a4);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -93,15 +93,15 @@
 
     /* Student card */
     .role-card.student {
-      background: linear-gradient(160deg, rgba(76,209,214,0.06) 0%, rgba(10,10,15,0.85) 100%);
+      background: linear-gradient(160deg, rgba(0,229,204,0.06) 0%, rgba(0,0,0,0.95) 100%);
     }
     .role-card.student::before {
-      background: linear-gradient(160deg, rgba(76,209,214,0.2), rgba(76,209,214,0.03));
+      background: linear-gradient(160deg, rgba(0,229,204,0.18), rgba(0,229,204,0.02));
     }
-    .role-card.student { border-color: rgba(76,209,214,0.22); }
+    .role-card.student { border-color: rgba(0,229,204,0.22); }
     .role-card.student:hover {
-      border-color: rgba(76,209,214,0.65);
-      box-shadow: 0 24px 60px rgba(76,209,214,0.2);
+      border-color: rgba(0,229,204,0.7);
+      box-shadow: 0 24px 60px rgba(0,229,204,0.2);
     }
 
     /* Teacher card */
@@ -127,8 +127,8 @@
       position: relative;
       z-index: 1;
     }
-    .student .role-icon { background: rgba(76,209,214,0.2); color: #4cd1d6; }
-    .teacher .role-icon { background: rgba(229,228,227,0.15); color: #e5e4e3; }
+    .student .role-icon { background: rgba(0,229,204,0.15); color: var(--accent); }
+    .teacher .role-icon { background: rgba(255,215,0,0.12); color: #ffd700; }
 
     .role-name {
       font-family: 'Outfit', sans-serif;
@@ -193,7 +193,7 @@
 </head>
 <body>
   <div class="grid-noise"></div>
-  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div><div class="orb four"></div>
 
   <header class="topbar">
     <div class="container nav">

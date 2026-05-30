@@ -60,9 +60,9 @@ html {
 body {
   margin: 0;
   font-family: "Manrope", sans-serif;
-  color: #111827;
-  background: #f3f4f6;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  color: #1a1f2e;
+  background: #e8eaf0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
   overflow-x: hidden;
 }
@@ -207,6 +207,16 @@ a {
   gap: 12px;
   align-items: center;
   font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+}
+
+.brand span {
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .brand-badge {
@@ -222,12 +232,13 @@ a {
 }
 
 .brand-logo {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 12px;
   object-fit: cover;
-  box-shadow: 0 0 16px var(--accent-glow);
-  border: 1px solid var(--line-hard);
+  box-shadow: 0 0 20px var(--accent-glow), 0 0 0 2px rgba(0,229,204,0.4);
+  border: 2px solid rgba(0,229,204,0.5);
+  filter: brightness(1.1) contrast(1.05);
 }
 
 .nav-links {

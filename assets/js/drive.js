@@ -21,7 +21,7 @@
 
   const SUPABASE_URL = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
-  const BUCKET       = 'materials';
+  const BUCKET       = 'material';
 
   /* ── Get Supabase client (reuse existing or create) ── */
   function getClient() {

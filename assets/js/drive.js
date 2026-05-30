@@ -92,7 +92,15 @@
             reject(new Error(data.error || `Upload failed (${xhr.status})`));
           }
         } catch {
-          reject(new Error('Invalid server response.'));
+          // Detect Vercel's 4.5 MB Payload limit or local server HTML errors
+          if (xhr.status === 413) {
+            reject(new Error('File is too large! Vercel limits uploads to 4.5 MB. Please compress your file.'));
+          } else if (xhr.status === 501) {
+            reject(new Error('Uploads do not work on the local server.py. Please test on your live Vercel site!'));
+          } else {
+            const raw = xhr.responseText.substring(0, 80);
+            reject(new Error(`Server error (${xhr.status}): Not valid JSON. Raw: ${raw}`));
+          }
         }
       };
 

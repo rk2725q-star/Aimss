@@ -58,15 +58,16 @@
 
     const { data, error } = await client.storage
       .from(BUCKET)
-      .list('', { limit: 500, sortBy: { column: 'created_at', order: 'desc' } });
+      .list('', { limit: 500 });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error('List error: ' + error.message);
 
     const files = (data || [])
-      .filter(f => f.name !== '.emptyFolderPlaceholder')
+      .filter(f => f.name && f.name !== '.emptyFolderPlaceholder' && f.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .map(f => ({
-        id:          f.name,   // use filename as ID (path in bucket)
-        name:        f.name,
+        id:          f.name,
+        name:        _displayName(f.name),
         mimeType:    _mimeFromName(f.name),
         size:        f.metadata?.size || 0,
         createdTime: f.created_at,
@@ -172,6 +173,11 @@
   /* ══════════════════════════════════════════════════════════════
      HELPERS
   ══════════════════════════════════════════════════════════════ */
+  // Strip the timestamp prefix we add on upload (e.g. "1717078800000_file.pdf" → "file.pdf")
+  function _displayName(name) {
+    return name.replace(/^\d+_/, '');
+  }
+
   function _mimeFromName(name) {
     const ext = (name.split('.').pop() || '').toLowerCase();
     const MAP = {

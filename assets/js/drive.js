@@ -70,13 +70,44 @@
     const jwt = await _getJWT();
     if (!jwt) throw new Error('Not logged in. Please sign in first.');
 
-    const formData = new FormData();
-    formData.append('file', file);
+    // 1. Get direct-upload token & folderId from backend
+    const tokenRes = await fetch(API_BASE + '/api/drive-token', {
+      headers: { 'Authorization': `Bearer ${jwt}` }
+    });
+    if (!tokenRes.ok) {
+      const err = await tokenRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to get upload permissions from server.');
+    }
+    const { token, folderId, email } = await tokenRes.json();
 
+    // 2. Build multipart/related body manually (to attach metadata)
+    const boundary = '-------314159265358979323846';
+    const delimiter = `\r\n--${boundary}\r\n`;
+    const close_delim = `\r\n--${boundary}--`;
+
+    const metadata = JSON.stringify({
+      name: file.name,
+      parents: [folderId],
+      description: `Uploaded by teacher: ${email || 'unknown'}`
+    });
+
+    const metadataPart = `Content-Type: application/json; charset=UTF-8\r\n\r\n${metadata}`;
+    const mediaPart    = `Content-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`;
+
+    // We construct a Blob to send as the body
+    const body = new Blob([
+      delimiter,
+      metadataPart,
+      delimiter,
+      mediaPart,
+      file,
+      close_delim
+    ]);
+
+    // 3. Upload directly to Google Drive
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
-      // Track upload progress
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && onProgress) {
           onProgress(Math.round((e.loaded / e.total) * 100));
@@ -87,28 +118,21 @@
         try {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(data);
+            resolve({ success: true, file: data });
           } else {
-            reject(new Error(data.error || `Upload failed (${xhr.status})`));
+            reject(new Error(data.error?.message || `Google Drive Upload failed (${xhr.status})`));
           }
         } catch {
-          // Detect Vercel's 4.5 MB Payload limit or local server HTML errors
-          if (xhr.status === 413) {
-            reject(new Error('File is too large! Vercel limits uploads to 4.5 MB. Please compress your file.'));
-          } else if (xhr.status === 501) {
-            reject(new Error('Uploads do not work on the local server.py. Please test on your live Vercel site!'));
-          } else {
-            const raw = xhr.responseText.substring(0, 80);
-            reject(new Error(`Server error (${xhr.status}): Not valid JSON. Raw: ${raw}`));
-          }
+          reject(new Error(`Invalid response (${xhr.status}): ` + xhr.responseText.substring(0, 80)));
         }
       };
 
-      xhr.onerror = () => reject(new Error('Network error during upload.'));
+      xhr.onerror = () => reject(new Error('Network error during Google Drive upload.'));
 
-      xhr.open('POST', API_BASE + '/api/drive-upload');
-      xhr.setRequestHeader('Authorization', `Bearer ${jwt}`);
-      xhr.send(formData);
+      xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink');
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', `multipart/related; boundary=${boundary}`);
+      xhr.send(body);
     });
   }
 

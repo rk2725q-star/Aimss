@@ -153,10 +153,10 @@ const CHAT_MODES = {
   },
   mcq: {
     key: 'mcq', label: 'MCQ', icon: '📊', color: '#ef4444',
-    placeholder: 'Which subject/topic MCQs should I generate?…',
-    maxTokens: 700,
-    welcome: '📊 MCQ Mode! Tell me the subject and topic and I’ll generate 10 multiple-choice questions with options A, B, C, D and the correct answer!',
-    systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE. Generate exactly 10 MCQ questions. Format each as:\nQ1. [Question]\nA) option B) option C) option D) option\nAnswer: [Letter]\n\nMake questions exam-standard quality. Use plain text only.'
+    placeholder: 'Which subject/topic MCQs should I generate? (e.g. NEET Biology – Cell Division, 50 questions)…',
+    maxTokens: 4000,
+    welcome: '📊 MCQ Mode! Tell me the subject, topic and how many questions (40–75 recommended). I\'ll generate a full question bank with options A, B, C, D and the correct answer for each!',
+    systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE, and Stateboard students. The user will specify a subject, topic and number of questions (typically 40–75). Generate ALL the requested questions — do NOT stop early. Format each question exactly as:\nQ1. [Question]\nA) option B) option C) option D) option\nAnswer: [Letter]\n\nContinue numbering Q2, Q3 … up to the full requested count. Make every question exam-standard quality and cover the topic broadly. Use plain text only — no **, *, # or backticks.'
   }
 };
 

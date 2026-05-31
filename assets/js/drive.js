@@ -601,8 +601,11 @@
       return await _deleteChunkedFile(client, path, fileObj);
     }
 
-    const { error } = await client.storage.from(BUCKET).remove([path]);
+    const { data: removed, error } = await client.storage.from(BUCKET).remove([path]);
     if (error) throw new Error(error.message);
+    if (!removed || removed.length === 0) {
+      throw new Error('Delete was blocked — please check storage permissions or try again.');
+    }
     return { success: true };
   }
 
@@ -610,21 +613,30 @@
     // groupPath is the chunk group directory (e.g. class-6/Math/__chunks__/1234_file.pdf)
     const meta = fileObj?.chunkMeta;
 
-    const paths = [];
-    if (meta) {
+    const pathSet = new Set();
+    if (meta && meta.totalChunks > 0) {
+      // Known chunk count — build paths directly from metadata
       for (let i = 0; i < meta.totalChunks; i++) {
-        paths.push(`${groupPath}/part_${String(i).padStart(3, '0')}`);
+        pathSet.add(`${groupPath}/part_${String(i).padStart(3, '0')}`);
       }
+      pathSet.add(`${groupPath}/meta.json`);
     } else {
-      // Fallback: list all files in group
+      // Fallback: list ALL files in the group folder (includes parts + meta.json)
       const { data } = await client.storage.from(BUCKET).list(groupPath, { limit: 1000 });
-      (data || []).forEach(f => { if (f.id) paths.push(`${groupPath}/${f.name}`); });
+      (data || []).forEach(f => {
+        if (f.id && f.name) pathSet.add(`${groupPath}/${f.name}`);
+      });
+      // Always include meta.json even if listing somehow missed it
+      pathSet.add(`${groupPath}/meta.json`);
     }
-    paths.push(`${groupPath}/meta.json`);
 
+    const paths = [...pathSet];
     if (paths.length > 0) {
-      const { error } = await client.storage.from(BUCKET).remove(paths);
-      if (error) throw new Error(error.message);
+      const { data: removed, error } = await client.storage.from(BUCKET).remove(paths);
+      if (error) throw new Error('Delete failed: ' + error.message);
+      if (!removed || removed.length === 0) {
+        throw new Error('Delete was blocked — please check storage permissions or try again.');
+      }
     }
     return { success: true };
   }

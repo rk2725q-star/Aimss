@@ -1616,6 +1616,9 @@
       emp.style.display  = 'none';
       wrap.style.display = 'block';
 
+      // Store for index-based action handlers
+      window._afFiles = filtered;
+
       tbody.innerHTML = filtered.map((f, idx) => {
         const loc = afPathLabel(f.path);
         return `
@@ -1631,9 +1634,9 @@
             <td style="color:var(--muted);font-size:.75rem;">${DrDrive.formatDate(f.createdTime)}</td>
             <td>
               <div style="display:flex;gap:3px;flex-wrap:nowrap;">
-                <button class="action-btn btn-view" title="View" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.name)}')">👁</button>
-                <a class="action-btn btn-dl" title="Download" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇</a>
-                <button class="action-btn btn-del" title="Delete" onclick="afDeleteFile('${escAttr(f.id)}','${escAttr(f.name)}')">🗑</button>
+                <button class="action-btn btn-view" title="View" onclick="afPreview(${idx})">👁</button>
+                <button class="action-btn btn-dl" title="Download" onclick="afDownload(${idx})">⬇</button>
+                <button class="action-btn btn-del" title="Delete" onclick="afDeleteFile(${idx},'${escAttr(f.name)}')">🗑</button>
               </div>
             </td>
           </tr>
@@ -1686,9 +1689,10 @@
     }
 
     /* Delete directly from the drawer */
-    function afDeleteFile(fileId, fileName, fileIdx) {
+    function afDeleteFile(fileIdx, fileName) {
       const fileObj = (window._afFiles || [])[fileIdx];
-      pendingDelete = { type: 'file', path: fileId, fileObj };
+      if (!fileObj) return;
+      pendingDelete = { type: 'file', path: fileObj.path, fileObj };
       document.getElementById('deleteItemName').textContent = `Delete "${fileName}"? This cannot be undone.`;
       document.getElementById('deleteModal').classList.add('show');
       // Override confirm action to also refresh drawer

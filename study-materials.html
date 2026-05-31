@@ -4,64 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Study Materials | Dr.AIMSS EDUCATIONAL ACADEMY</title>
-  <meta name="description" content="Download study materials, notes and guides uploaded by teachers at Dr.AIMSS Educational Academy." />
+  <meta name="description" content="Browse class-wise study materials, notes and resources uploaded by teachers at Dr.AIMSS Educational Academy." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
-    /* ── File Browser ── */
-    .drive-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    /* ═══════════════════════════════
+       CLASS SELECTOR
+    ═══════════════════════════════ */
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
     }
-    .drive-search {
-      flex: 1; max-width: 340px;
-      background: var(--surface-2);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 16px 10px 40px;
-      color: var(--ink); font: inherit; font-size: .9rem;
-      outline: none; transition: border-color .2s, box-shadow .2s;
-      position: relative;
+    .class-btn {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .22s;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--muted);
+      position: relative; overflow: hidden;
     }
-    .drive-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.12); }
-    .search-wrap { position: relative; flex: 1; max-width: 340px; }
-    .search-icon {
-      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-      color: var(--muted); pointer-events: none;
+    .class-btn span { position: relative; z-index: 1; }
+    .class-btn .cls-label {
+      display: block; font-size: .72rem; color: var(--muted-2);
+      margin-top: 3px; font-family: 'Manrope', sans-serif;
+      font-weight: 500; position: relative; z-index: 1;
     }
-    .file-count { font-size: .82rem; color: var(--muted); }
+    .class-btn:hover {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: 0 0 20px rgba(0,229,204,0.12); transform: translateY(-2px);
+    }
+    .class-btn.active {
+      border-color: var(--accent); background: rgba(0,229,204,0.08);
+      color: var(--accent); box-shadow: 0 0 24px rgba(0,229,204,0.2);
+    }
 
-    /* ── File Grid ── */
+    /* ═══════════════════════════════
+       BREADCRUMB
+    ═══════════════════════════════ */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 10px 16px; background: var(--surface-2);
+      border: 1px solid var(--line); border-radius: 10px;
+      margin-bottom: 16px; font-size: .85rem;
+    }
+    .breadcrumb-item {
+      color: var(--muted); cursor: pointer; padding: 2px 6px;
+      border-radius: 6px; transition: color .15s, background .15s; font-weight: 600;
+    }
+    .breadcrumb-item:hover { color: var(--accent); background: rgba(0,229,204,0.08); }
+    .breadcrumb-item.active { color: var(--ink); cursor: default; }
+    .breadcrumb-item.active:hover { background: none; }
+    .breadcrumb-sep { color: var(--muted-2); font-size: .75rem; }
+
+    /* ═══════════════════════════════
+       FOLDER GRID
+    ═══════════════════════════════ */
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    .folder-card {
+      background: var(--surface); border: 1.5px solid var(--line);
+      border-radius: 12px; padding: 18px 14px; cursor: pointer;
+      transition: all .22s; display: flex; align-items: center; gap: 10px;
+      position: relative; overflow: hidden;
+    }
+    .folder-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--gold-gradient); opacity: 0; transition: opacity .25s;
+    }
+    .folder-card:hover {
+      border-color: var(--gold-dim); transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(255,215,0,0.12);
+    }
+    .folder-card:hover::before { opacity: 1; }
+    .folder-icon { font-size: 1.7rem; flex-shrink: 0; }
+    .folder-info { flex: 1; min-width: 0; }
+    .folder-name {
+      font-weight: 700; font-size: .9rem; color: var(--ink);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .folder-sub { font-size: .72rem; color: var(--muted-2); margin-top: 2px; }
+
+    /* ═══════════════════════════════
+       FILE GRID (cards)
+    ═══════════════════════════════ */
     .file-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 14px;
-      margin-top: 4px;
     }
-
     .file-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 18px 16px;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 18px 16px;
       display: flex; flex-direction: column; gap: 10px;
       transition: transform .25s, border-color .25s, box-shadow .25s;
       position: relative; overflow: hidden;
     }
     .file-card::before {
-      content: ''; position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: var(--accent-gradient); opacity: 0; transition: opacity .3s;
     }
-    .file-card:hover { transform: translateY(-4px); border-color: var(--line-hard); box-shadow: 0 12px 36px rgba(0,229,204,0.1); }
+    .file-card:hover {
+      transform: translateY(-4px); border-color: var(--line-hard);
+      box-shadow: 0 12px 36px rgba(0,229,204,0.1);
+    }
     .file-card:hover::before { opacity: 1; }
-
     .file-icon { font-size: 2.2rem; line-height: 1; }
     .file-name {
       font-weight: 700; font-size: .9rem; color: var(--ink);
-      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; word-break: break-word; line-height: 1.4;
     }
     .file-meta { font-size: .75rem; color: var(--muted-2); display: flex; flex-direction: column; gap: 2px; }
@@ -74,53 +137,76 @@
       justify-content: center; gap: 5px;
     }
     .file-btn-view {
-      background: rgba(0,229,204,0.1);
-      border: 1px solid rgba(0,229,204,0.25);
-      color: var(--accent);
+      background: rgba(0,229,204,0.1); border: 1px solid rgba(0,229,204,0.25); color: var(--accent);
     }
     .file-btn-view:hover { background: rgba(0,229,204,0.18); transform: translateY(-1px); }
     .file-btn-dl {
-      background: var(--accent-gradient);
-      color: #000;
+      background: var(--accent-gradient); color: #000;
       box-shadow: 0 4px 14px rgba(0,229,204,0.2);
     }
     .file-btn-dl:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,204,0.35); }
 
-    /* ── States ── */
+    /* ═══════════════════════════════
+       STATES
+    ═══════════════════════════════ */
     .drive-loading {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 60px 20px; gap: 16px; color: var(--muted);
     }
     .drive-spinner {
       width: 40px; height: 40px; border-radius: 50%;
-      border: 3px solid rgba(0,229,204,0.15);
-      border-top-color: var(--accent);
+      border: 3px solid rgba(0,229,204,0.15); border-top-color: var(--accent);
       animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .drive-empty {
-      text-align: center; padding: 60px 20px; color: var(--muted);
-    }
+    .drive-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
     .drive-empty .empty-icon { font-size: 3rem; margin-bottom: 12px; }
     .drive-error {
       padding: 20px 24px; border-radius: 12px;
       background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
-      color: #f87171; font-size: .9rem; margin-top: 8px;
+      color: #f87171; font-size: .9rem;
     }
 
-    /* ── Filter chips ── */
-    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-    .chip {
-      padding: 5px 14px; border-radius: 999px;
-      border: 1px solid var(--line); background: var(--surface);
-      color: var(--muted); font-size: .78rem; font-weight: 600;
-      cursor: pointer; transition: all .2s;
+    /* ═══════════════════════════════
+       SECTION DIVIDER
+    ═══════════════════════════════ */
+    .section-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0 16px; color: var(--muted); font-size: .78rem;
+      text-transform: uppercase; letter-spacing: .06em; font-weight: 700;
     }
-    .chip.active, .chip:hover {
-      border-color: var(--accent);
-      background: rgba(0,229,204,0.08);
-      color: var(--accent);
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--line);
+    }
+
+    /* Search */
+    .drive-search {
+      width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 16px 10px 40px; color: var(--ink);
+      font: inherit; font-size: .9rem; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .drive-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.12); }
+    .search-wrap { position: relative; margin-bottom: 14px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+    /* File count */
+    .file-count { font-size: .82rem; color: var(--muted); }
+
+    /* No class selected */
+    .no-class-msg {
+      text-align: center; padding: 40px 20px; color: var(--muted);
+    }
+    .no-class-msg .big-icon { font-size: 3rem; margin-bottom: 12px; }
+    .no-class-msg h3 { color: var(--ink); margin: 0 0 6px; }
+    .no-class-msg p { margin: 0; font-size: .88rem; }
+
+    @media (max-width: 760px) {
+      .class-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .class-grid { grid-template-columns: repeat(4, 1fr); }
+      .folder-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -176,58 +262,75 @@
 
     <section class="portal-main">
       <div class="glass card" style="padding: 28px;">
+
         <!-- Header -->
-        <div class="drive-header">
-          <div>
-            <h2 style="margin: 0 0 4px; font-size: 1.5rem;">
-              📚 Study Materials
-            </h2>
-            <p style="margin: 0; color: var(--muted); font-size: .88rem;">
-              Notes, guides &amp; resources uploaded by your teachers
-            </p>
+        <div style="margin-bottom: 24px;">
+          <h2 style="margin: 0 0 6px; font-size: 1.5rem;">📚 Study Materials</h2>
+          <p style="margin: 0; color: var(--muted); font-size: .88rem;">
+            Select your class, then browse folders and files uploaded by your teachers.
+          </p>
+        </div>
+
+        <!-- Class Selector -->
+        <div class="class-grid" id="classGrid"></div>
+
+        <!-- No class selected -->
+        <div id="noClassMsg" class="no-class-msg">
+          <div class="big-icon">🏫</div>
+          <h3>Choose Your Class</h3>
+          <p>Select your class above (6 to 12) to see your study materials.</p>
+        </div>
+
+        <!-- Browser (hidden until class selected) -->
+        <div id="browserSection" style="display:none;">
+
+          <!-- Breadcrumb -->
+          <div class="breadcrumb" id="breadcrumb"></div>
+
+          <!-- Search (only visible at file level) -->
+          <div class="search-wrap" id="searchWrap" style="display:none;">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="driveSearch" class="drive-search" type="text" placeholder="Search files…" autocomplete="off" />
           </div>
-          <span class="file-count" id="fileCount">Loading…</span>
+
+          <!-- File count -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+            <span id="browserTitle" style="font-weight:700; font-size:1rem; color:var(--ink);"></span>
+            <span class="file-count" id="fileCount"></span>
+          </div>
+
+          <!-- Error -->
+          <div id="driveError" class="drive-error" style="display:none;"></div>
+
+          <!-- Loading -->
+          <div id="driveLoading" class="drive-loading" style="display:none;">
+            <div class="drive-spinner"></div>
+            <span>Loading…</span>
+          </div>
+
+          <!-- Folders -->
+          <div id="folderGrid" class="folder-grid"></div>
+
+          <!-- Divider (only when both folders + files exist) -->
+          <div class="section-divider" id="filesDivider" style="display:none;">Files</div>
+
+          <!-- File grid -->
+          <div id="fileGrid" class="file-grid"></div>
+
+          <!-- Empty state -->
+          <div id="driveEmpty" class="drive-empty" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <h3 style="color: var(--ink); margin: 0 0 8px;">Nothing here yet</h3>
+            <p style="margin: 0;">No materials have been uploaded in this location.</p>
+          </div>
         </div>
 
-        <!-- Search + filter -->
-        <div class="search-wrap" style="margin-bottom: 14px;">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="driveSearch" class="drive-search" style="width: 100%; max-width: 100%;"
-            type="text" placeholder="Search by file name…" autocomplete="off" />
-        </div>
-
-        <div class="filter-chips" id="filterChips">
-          <span class="chip active" data-filter="all">All Files</span>
-          <span class="chip" data-filter="pdf">📄 PDF</span>
-          <span class="chip" data-filter="doc">📝 Word</span>
-          <span class="chip" data-filter="ppt">📊 Slides</span>
-          <span class="chip" data-filter="img">🖼️ Images</span>
-        </div>
-
-        <!-- Error banner -->
-        <div id="driveError" class="drive-error" style="display:none;"></div>
-
-        <!-- Loading state -->
-        <div id="driveLoading" class="drive-loading">
-          <div class="drive-spinner"></div>
-          <span>Loading materials…</span>
-        </div>
-
-        <!-- File grid -->
-        <div id="fileGrid" class="file-grid" style="display:none;"></div>
-
-        <!-- Empty state -->
-        <div id="driveEmpty" class="drive-empty" style="display:none;">
-          <div class="empty-icon">📭</div>
-          <h3 style="color: var(--ink); margin: 0 0 8px;">No files found</h3>
-          <p style="margin: 0;">No study materials have been uploaded yet, or none match your search.</p>
-        </div>
       </div>
     </section>
   </main>
 
   <!-- Preview Modal -->
-  <div id="previewModal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:20px;">
+  <div id="previewModal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
     <div style="width:100%; max-width:900px; height:85vh; background:var(--surface); border-radius:20px; border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line);">
         <span id="previewTitle" style="font-weight:700; font-size:.95rem;"></span>
@@ -245,65 +348,181 @@
     // Guard page — must be logged in as student
     DrAuth.guardPage('student');
 
-    let allFiles = [];
-    let activeFilter = 'all';
+    /* ═══════════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════════ */
+    let selectedClass = null;
+    let currentPath   = '';
+    let currentFiles  = [];
 
-    /* ── Filter chip logic ── */
-    document.getElementById('filterChips').addEventListener('click', e => {
-      const chip = e.target.closest('.chip');
-      if (!chip) return;
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      activeFilter = chip.dataset.filter;
-      renderFiles();
-    });
-
-    /* ── Search ── */
-    document.getElementById('driveSearch').addEventListener('input', renderFiles);
-
-    /* ── MIME filter map ── */
-    const FILTER_MAP = {
-      pdf: ['application/pdf'],
-      doc: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-      ppt: ['application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
-      img: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    };
-
-    function renderFiles() {
-      const query   = document.getElementById('driveSearch').value.toLowerCase().trim();
-      const grid    = document.getElementById('fileGrid');
-      const empty   = document.getElementById('driveEmpty');
-      const count   = document.getElementById('fileCount');
-
-      let filtered = allFiles.filter(f => {
-        const nameMatch = f.name.toLowerCase().includes(query);
-        if (!nameMatch) return false;
-        if (activeFilter === 'all') return true;
-        const types = FILTER_MAP[activeFilter] || [];
-        return types.includes(f.mimeType);
+    /* ═══════════════════════════════════════════
+       BUILD CLASS BUTTONS
+    ═══════════════════════════════════════════ */
+    (function buildClassButtons() {
+      const grid = document.getElementById('classGrid');
+      DrDrive.CLASSES.forEach(cls => {
+        const btn = document.createElement('button');
+        btn.className   = 'class-btn';
+        btn.id          = `clsBtn-${cls}`;
+        btn.innerHTML   = `<span>${cls}</span><span class="cls-label">Class</span>`;
+        btn.onclick     = () => selectClass(cls);
+        grid.appendChild(btn);
       });
+    })();
 
-      count.textContent = `${filtered.length} file${filtered.length !== 1 ? 's' : ''}`;
+    function selectClass(cls) {
+      selectedClass = cls;
+      currentPath   = `class-${cls}`;
+
+      document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`clsBtn-${cls}`).classList.add('active');
+
+      document.getElementById('noClassMsg').style.display    = 'none';
+      document.getElementById('browserSection').style.display = 'block';
+
+      loadCurrentPath();
+    }
+
+    /* ═══════════════════════════════════════════
+       BREADCRUMB
+    ═══════════════════════════════════════════ */
+    function buildBreadcrumb() {
+      const bc = document.getElementById('breadcrumb');
+      bc.innerHTML = '';
+
+      const parts = currentPath.replace(/\/$/, '').split('/').filter(Boolean);
+
+      parts.forEach((part, i) => {
+        if (i > 0) {
+          const sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '›';
+          bc.appendChild(sep);
+        }
+        const label = i === 0 ? `🏫 Class ${selectedClass}` : part;
+        const pathSoFar = parts.slice(0, i + 1).join('/');
+
+        const item = document.createElement('span');
+        item.className = 'breadcrumb-item' + (i === parts.length - 1 ? ' active' : '');
+        item.textContent = label;
+        if (i < parts.length - 1) {
+          item.onclick = () => navigateTo(pathSoFar);
+        }
+        bc.appendChild(item);
+      });
+    }
+
+    function navigateTo(path) {
+      currentPath = path;
+      loadCurrentPath();
+    }
+
+    /* ═══════════════════════════════════════════
+       LOAD CURRENT PATH
+    ═══════════════════════════════════════════ */
+    async function loadCurrentPath() {
+      buildBreadcrumb();
+
+      const folderGrid   = document.getElementById('folderGrid');
+      const fileGrid     = document.getElementById('fileGrid');
+      const filesDivider = document.getElementById('filesDivider');
+      const emptyEl      = document.getElementById('driveEmpty');
+      const loadingEl    = document.getElementById('driveLoading');
+      const errorEl      = document.getElementById('driveError');
+      const titleEl      = document.getElementById('browserTitle');
+      const countEl      = document.getElementById('fileCount');
+      const searchWrap   = document.getElementById('searchWrap');
+
+      folderGrid.innerHTML = '';
+      fileGrid.innerHTML   = '';
+      filesDivider.style.display = 'none';
+      emptyEl.style.display  = 'none';
+      errorEl.style.display  = 'none';
+      searchWrap.style.display = 'none';
+      loadingEl.style.display  = 'block';
+      countEl.textContent = '';
+
+      // Title
+      const parts = currentPath.split('/').filter(Boolean);
+      titleEl.textContent = parts.length > 1
+        ? `📂 ${parts[parts.length - 1]}`
+        : `🏫 Class ${selectedClass} Materials`;
+
+      try {
+        const { folders, files } = await DrDrive.listFolderContents(currentPath);
+        currentFiles = files;
+
+        loadingEl.style.display = 'none';
+
+        // Render folders
+        if (folders.length > 0) {
+          folderGrid.innerHTML = folders.map(f => {
+            const childPath = currentPath + '/' + f.name;
+            return `
+              <div class="folder-card" onclick="navigateTo('${escAttr(childPath)}')">
+                <div class="folder-icon">📂</div>
+                <div class="folder-info">
+                  <div class="folder-name" title="${escAttr(f.name)}">${escHtml(f.name)}</div>
+                  <div class="folder-sub">Tap to open</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Render files
+        if (files.length > 0) {
+          if (folders.length > 0) filesDivider.style.display = 'flex';
+          searchWrap.style.display = 'block';
+          countEl.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+          renderFiles();
+        } else {
+          countEl.textContent = '';
+        }
+
+        if (folders.length === 0 && files.length === 0) {
+          emptyEl.style.display = 'block';
+        }
+
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display   = 'block';
+        errorEl.textContent     = '⚠️ ' + (err.message || 'Could not load materials. Please try again.');
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       RENDER FILES (with search filter)
+    ═══════════════════════════════════════════ */
+    function renderFiles() {
+      const query    = (document.getElementById('driveSearch').value || '').toLowerCase().trim();
+      const grid     = document.getElementById('fileGrid');
+      const emptyEl  = document.getElementById('driveEmpty');
+      const countEl  = document.getElementById('fileCount');
+
+      const filtered = currentFiles.filter(f =>
+        f.displayName.toLowerCase().includes(query)
+      );
+
+      countEl.textContent = `${filtered.length} file${filtered.length !== 1 ? 's' : ''}`;
 
       if (filtered.length === 0) {
-        grid.style.display  = 'none';
-        empty.style.display = 'block';
+        grid.innerHTML = '';
+        emptyEl.style.display = 'block';
         return;
       }
 
-      empty.style.display = 'none';
-      grid.style.display  = 'grid';
-
+      emptyEl.style.display = 'none';
       grid.innerHTML = filtered.map(f => `
         <div class="file-card">
           <div class="file-icon">${DrDrive.getIcon(f.mimeType)}</div>
-          <div class="file-name" title="${f.name}">${f.name}</div>
+          <div class="file-name" title="${escAttr(f.displayName)}">${escHtml(f.displayName)}</div>
           <div class="file-meta">
             <span>${DrDrive.formatSize(f.size)}</span>
             <span>Added: ${DrDrive.formatDate(f.createdTime)}</span>
           </div>
           <div class="file-actions">
-            <button class="file-btn file-btn-view" onclick="openPreview('${f.id}','${escapeAttr(f.name)}')">
+            <button class="file-btn file-btn-view" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.displayName)}')">
               👁 View
             </button>
             <a class="file-btn file-btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">
@@ -314,41 +533,26 @@
       `).join('');
     }
 
-    function escapeAttr(str) {
-      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
+    document.getElementById('driveSearch').addEventListener('input', renderFiles);
 
-    /* ── Preview modal ── */
+    /* ═══════════════════════════════════════════
+       PREVIEW MODAL
+    ═══════════════════════════════════════════ */
     function openPreview(fileId, fileName) {
       document.getElementById('previewTitle').textContent = fileName;
       document.getElementById('previewFrame').src = DrDrive.getPreviewUrl(fileId);
-      const modal = document.getElementById('previewModal');
-      modal.style.display = 'flex';
+      document.getElementById('previewModal').style.display = 'flex';
     }
     function closePreview() {
       document.getElementById('previewModal').style.display = 'none';
       document.getElementById('previewFrame').src = '';
     }
 
-    /* ── Load files on page ready ── */
-    document.addEventListener('DOMContentLoaded', async () => {
-      const loading = document.getElementById('driveLoading');
-      const grid    = document.getElementById('fileGrid');
-      const error   = document.getElementById('driveError');
-
-      try {
-        const result = await DrDrive.listFiles();
-        allFiles = result.files || [];
-        loading.style.display = 'none';
-        grid.style.display    = 'grid';
-        renderFiles();
-      } catch (err) {
-        loading.style.display = 'none';
-        error.style.display   = 'block';
-        error.textContent     = '⚠️ ' + (err.message || 'Could not load study materials. Please try again later.');
-        document.getElementById('fileCount').textContent = '0 files';
-      }
-    });
+    /* ═══════════════════════════════════════════
+       HELPERS
+    ═══════════════════════════════════════════ */
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
   </script>
 </body>
 </html>

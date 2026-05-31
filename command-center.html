@@ -154,12 +154,80 @@
     .status-msg.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80; display: block; }
     .status-msg.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.25);  color: #f87171; display: block; }
 
-    /* ═══════════════ STAT CARDS ═══════════════ */
+    /* ═══════════════ STAT CARDS (clickable) ═══════════════ */
     .cmd-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
-    .cmd-stat  { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; text-align: center; transition: all .22s; }
-    .cmd-stat:hover { border-color: var(--line-hard); box-shadow: 0 0 24px rgba(0,229,204,0.08); }
+    .cmd-stat  {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+      text-align: center; transition: all .22s; cursor: pointer; position: relative; overflow: hidden;
+    }
+    .cmd-stat::after {
+      content: 'View All ›'; position: absolute; bottom: 8px; right: 10px;
+      font-size: .68rem; color: var(--accent); opacity: 0; transition: opacity .2s; font-weight: 700;
+    }
+    .cmd-stat:hover { border-color: var(--accent); box-shadow: 0 0 28px rgba(0,229,204,0.12); transform: translateY(-2px); }
+    .cmd-stat:hover::after { opacity: 1; }
     .cmd-stat-num { font-size: 1.9rem; font-weight: 800; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, var(--accent), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .cmd-stat-label { font-size: .74rem; color: var(--muted); margin-top: 3px; }
+
+    /* ═══════════════ ALL-FILES DRAWER ═══════════════ */
+    .af-overlay {
+      position: fixed; inset: 0; z-index: 8500;
+      background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none; transition: opacity .28s;
+    }
+    .af-overlay.open { opacity: 1; pointer-events: all; }
+    .af-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 8600;
+      width: min(720px, 100vw); background: var(--surface);
+      border-left: 1px solid var(--line-hard);
+      box-shadow: -20px 0 80px rgba(0,0,0,0.7);
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .af-drawer.open { transform: translateX(0); }
+    .af-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(0,229,204,0.06), transparent);
+    }
+    .af-header h2 { margin: 0; font-size: 1.1rem; }
+    .af-close {
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
+      color: #f87171; border-radius: 8px; padding: 6px 14px;
+      cursor: pointer; font: inherit; font-weight: 700; transition: all .15s;
+    }
+    .af-close:hover { background: rgba(239,68,68,0.22); }
+    .af-filters {
+      padding: 14px 22px 10px; border-bottom: 1px solid var(--line); flex-shrink: 0;
+    }
+    .af-search {
+      width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 9px 14px 9px 38px; color: var(--ink);
+      font: inherit; font-size: .88rem; outline: none;
+      transition: border-color .2s; box-sizing: border-box; margin-bottom: 10px;
+    }
+    .af-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.1); }
+    .af-search-wrap { position: relative; }
+    .af-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .af-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+    .af-chip {
+      padding: 4px 13px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface-2); color: var(--muted); font-size: .76rem;
+      font-weight: 700; cursor: pointer; transition: all .18s; white-space: nowrap;
+    }
+    .af-chip.active { border-color: var(--accent); background: rgba(0,229,204,0.1); color: var(--accent); }
+    .af-chip.gold.active { border-color: var(--gold); background: rgba(255,215,0,0.08); color: var(--gold); }
+    .af-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .af-chip.gold:hover { border-color: var(--gold); color: var(--gold); }
+    .af-body { flex: 1; overflow-y: auto; padding: 16px 22px; }
+    .af-body::-webkit-scrollbar { width: 4px; }
+    .af-body::-webkit-scrollbar-thumb { background: var(--line-hard); border-radius: 4px; }
+    .af-summary {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+    }
+    .af-count { font-size: .82rem; color: var(--muted); font-weight: 600; }
+    /* reuse .file-table + action-btn styles from parent */
 
     /* ═══════════════ PATH BANNER ═══════════════ */
     .path-banner {
@@ -309,11 +377,20 @@
 
     <section class="portal-main">
 
-      <!-- Stat Cards -->
+      <!-- Stat Cards (clickable → All Files drawer) -->
       <div class="cmd-stats">
-        <div class="cmd-stat"><div class="cmd-stat-num" id="statTotal">—</div><div class="cmd-stat-label">Total Files</div></div>
-        <div class="cmd-stat"><div class="cmd-stat-num" id="statPdf">—</div><div class="cmd-stat-label">PDFs</div></div>
-        <div class="cmd-stat"><div class="cmd-stat-num" id="statOther">—</div><div class="cmd-stat-label">Other Files</div></div>
+        <div class="cmd-stat" id="statCardTotal" onclick="openAllFiles('all')" title="Click to view all files">
+          <div class="cmd-stat-num" id="statTotal">—</div>
+          <div class="cmd-stat-label">Total Files</div>
+        </div>
+        <div class="cmd-stat" id="statCardPdf" onclick="openAllFiles('pdf')" title="Click to view all PDFs">
+          <div class="cmd-stat-num" id="statPdf">—</div>
+          <div class="cmd-stat-label">PDFs</div>
+        </div>
+        <div class="cmd-stat" id="statCardOther" onclick="openAllFiles('other')" title="Click to view other files">
+          <div class="cmd-stat-num" id="statOther">—</div>
+          <div class="cmd-stat-label">Other Files</div>
+        </div>
       </div>
 
       <!-- ══════════════ MAIN CARD ══════════════ -->
@@ -425,6 +502,83 @@
 
     </section>
   </main>
+
+  <!-- ══════════ ALL-FILES DRAWER ══════════ -->
+  <div class="af-overlay" id="afOverlay" onclick="closeAllFiles()"></div>
+  <div class="af-drawer" id="afDrawer">
+    <div class="af-header">
+      <div>
+        <h2>📋 All Uploaded Files</h2>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">Across all classes &amp; exam categories</div>
+      </div>
+      <button class="af-close" onclick="closeAllFiles()">✕ Close</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="af-filters">
+      <div class="af-search-wrap">
+        <svg class="af-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="afSearch" class="af-search" type="text" placeholder="Search file names…" autocomplete="off" />
+      </div>
+
+      <!-- File type chips -->
+      <div style="font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">File Type</div>
+      <div class="af-chips" id="afTypeChips" style="margin-bottom:10px;">
+        <span class="af-chip active" data-type="all">All Types</span>
+        <span class="af-chip" data-type="pdf">📄 PDF</span>
+        <span class="af-chip" data-type="doc">📝 Word</span>
+        <span class="af-chip" data-type="ppt">📊 Slides</span>
+        <span class="af-chip" data-type="xls">📈 Excel</span>
+        <span class="af-chip" data-type="img">🖼️ Images</span>
+        <span class="af-chip" data-type="other">📁 Other</span>
+      </div>
+
+      <!-- Category chips -->
+      <div style="font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Category</div>
+      <div class="af-chips" id="afCatChips">
+        <span class="af-chip active" data-cat="all">All Categories</span>
+        <!-- class chips built by JS -->
+        <!-- exam chips built by JS -->
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="af-body">
+      <!-- Loading -->
+      <div id="afLoading" class="file-loading">
+        <div class="file-spinner"></div><br>Loading all files…
+      </div>
+
+      <!-- Summary row -->
+      <div class="af-summary" id="afSummary" style="display:none;">
+        <span class="af-count" id="afCount">0 files</span>
+        <button class="tool-btn" onclick="reloadAllFiles()">⟳ Refresh</button>
+      </div>
+
+      <!-- Table -->
+      <div id="afTableWrap" style="overflow-x:auto;display:none;">
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Location</th>
+              <th>Size</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="afTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Empty -->
+      <div id="afEmpty" class="empty-state" style="display:none;">
+        <div class="es-icon">🔍</div>
+        <h3>No files match</h3>
+        <p>Try changing the filters or search term.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════ MODAL: NEW FOLDER ══════════ -->
   <div id="newFolderModal" class="modal-overlay">
@@ -873,7 +1027,237 @@
     function escAttr(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
     /* ── Init stats on load ── */
-    document.addEventListener('DOMContentLoaded', updateGlobalStats);
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGlobalStats();
+      buildAllFilesChips();
+    });
+
+    /* ═══════════════════════════════════════
+       ALL-FILES DRAWER
+    ═══════════════════════════════════════ */
+    let afAllFiles    = [];   // full flat list
+    let afTypeFilter  = 'all';
+    let afCatFilter   = 'all';
+    let afLoaded      = false;
+
+    const AF_TYPE_MAP = {
+      pdf:   ['application/pdf'],
+      doc:   ['application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      ppt:   ['application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+      xls:   ['application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+      img:   ['image/jpeg','image/png','image/gif','image/webp'],
+      other: null   // computed as "not in above"
+    };
+    const AF_KNOWN_MIMES = Object.values(AF_TYPE_MAP).flat().filter(Boolean);
+
+    /* Build category chips (class-6…class-12 + each exam) */
+    function buildAllFilesChips() {
+      const catChips = document.getElementById('afCatChips');
+      // class chips
+      DrDrive.CLASSES.forEach(cls => {
+        const s = document.createElement('span');
+        s.className = 'af-chip';
+        s.dataset.cat = `class-${cls}`;
+        s.textContent = `🏫 Class ${cls}`;
+        catChips.appendChild(s);
+      });
+      // exam chips
+      DrDrive.EXAMS.forEach(ex => {
+        const s = document.createElement('span');
+        s.className = 'af-chip gold';
+        s.dataset.cat = `exam-${ex.id}`;
+        s.textContent = `${ex.icon} ${ex.label}`;
+        catChips.appendChild(s);
+      });
+
+      // Chip click handlers
+      document.getElementById('afTypeChips').addEventListener('click', e => {
+        const chip = e.target.closest('.af-chip');
+        if (!chip) return;
+        document.querySelectorAll('#afTypeChips .af-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        afTypeFilter = chip.dataset.type;
+        renderAllFiles();
+      });
+
+      document.getElementById('afCatChips').addEventListener('click', e => {
+        const chip = e.target.closest('.af-chip');
+        if (!chip) return;
+        document.querySelectorAll('#afCatChips .af-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        afCatFilter = chip.dataset.cat;
+        renderAllFiles();
+      });
+
+      document.getElementById('afSearch').addEventListener('input', renderAllFiles);
+    }
+
+    /* Open drawer — preset type filter based on which stat card was clicked */
+    async function openAllFiles(preset) {
+      document.getElementById('afOverlay').classList.add('open');
+      document.getElementById('afDrawer').classList.add('open');
+
+      // Set preset type chip
+      afTypeFilter = preset === 'pdf' ? 'pdf' : preset === 'other' ? 'other' : 'all';
+      afCatFilter  = 'all';
+      document.getElementById('afSearch').value = '';
+      document.querySelectorAll('#afTypeChips .af-chip').forEach(c =>
+        c.classList.toggle('active', c.dataset.type === afTypeFilter)
+      );
+      document.querySelectorAll('#afCatChips .af-chip').forEach(c =>
+        c.classList.toggle('active', c.dataset.cat === 'all')
+      );
+
+      if (!afLoaded) {
+        await reloadAllFiles();
+      } else {
+        renderAllFiles();
+      }
+    }
+
+    function closeAllFiles() {
+      document.getElementById('afOverlay').classList.remove('open');
+      document.getElementById('afDrawer').classList.remove('open');
+    }
+
+    async function reloadAllFiles() {
+      afLoaded = false;
+      document.getElementById('afLoading').style.display  = 'block';
+      document.getElementById('afSummary').style.display  = 'none';
+      document.getElementById('afTableWrap').style.display = 'none';
+      document.getElementById('afEmpty').style.display    = 'none';
+
+      try {
+        const { files } = await DrDrive.listFiles('');
+        afAllFiles = files;
+        afLoaded   = true;
+        document.getElementById('afLoading').style.display = 'none';
+        document.getElementById('afSummary').style.display = 'flex';
+        renderAllFiles();
+      } catch (err) {
+        document.getElementById('afLoading').style.display = 'none';
+        document.getElementById('afEmpty').style.display   = 'block';
+        document.getElementById('afEmpty').querySelector('h3').textContent = '⚠️ Error loading';
+        document.getElementById('afEmpty').querySelector('p').textContent  = err.message;
+      }
+    }
+
+    function renderAllFiles() {
+      const query   = (document.getElementById('afSearch').value || '').toLowerCase().trim();
+      const tbody   = document.getElementById('afTableBody');
+      const wrap    = document.getElementById('afTableWrap');
+      const emp     = document.getElementById('afEmpty');
+      const countEl = document.getElementById('afCount');
+
+      let filtered = afAllFiles.filter(f => {
+        // Search
+        if (query && !f.name.toLowerCase().includes(query)) return false;
+
+        // Type filter
+        if (afTypeFilter !== 'all') {
+          if (afTypeFilter === 'other') {
+            if (AF_KNOWN_MIMES.includes(f.mimeType)) return false;
+          } else {
+            const allowed = AF_TYPE_MAP[afTypeFilter] || [];
+            if (!allowed.includes(f.mimeType)) return false;
+          }
+        }
+
+        // Category filter
+        if (afCatFilter !== 'all') {
+          if (!f.path.startsWith(afCatFilter + '/')) return false;
+        }
+
+        return true;
+      });
+
+      countEl.textContent = `${filtered.length} file${filtered.length !== 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        wrap.style.display = 'none';
+        emp.style.display  = 'block';
+        emp.querySelector('h3').textContent = 'No files match';
+        emp.querySelector('p').textContent  = 'Try changing the filters or search term.';
+        return;
+      }
+
+      emp.style.display  = 'none';
+      wrap.style.display = 'block';
+
+      tbody.innerHTML = filtered.map((f, idx) => {
+        const loc = afPathLabel(f.path);
+        return `
+          <tr>
+            <td>
+              <div class="file-name-cell">
+                <span>${DrDrive.getIcon(f.mimeType)}</span>
+                <span class="file-name-text" title="${escAttr(f.name)}" style="max-width:180px;">${escHtml(f.name)}</span>
+              </div>
+            </td>
+            <td style="color:var(--muted);font-size:.78rem;max-width:160px;white-space:normal;">${escHtml(loc)}</td>
+            <td style="color:var(--muted);white-space:nowrap;">${DrDrive.formatSize(f.size)}</td>
+            <td style="color:var(--muted);white-space:nowrap;font-size:.78rem;">${DrDrive.formatDate(f.createdTime)}</td>
+            <td>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="action-btn btn-view" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.name)}')">👁</button>
+                <a class="action-btn btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇</a>
+                <button class="action-btn btn-del" onclick="afDeleteFile('${escAttr(f.id)}','${escAttr(f.name)}')">🗑</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* Build a human-readable location label from a file's storage path */
+    function afPathLabel(path) {
+      const parts = path.split('/');
+      if (parts.length < 2) return path;
+      const root = parts[0];  // e.g. 'class-6' or 'exam-neet'
+      const folders = parts.slice(1, -1); // middle path segments (exclude filename)
+
+      let rootLabel;
+      if (root.startsWith('class-')) {
+        rootLabel = `Class ${root.replace('class-', '')}`;
+      } else if (root.startsWith('exam-')) {
+        const id = root.replace('exam-', '');
+        const ex = DrDrive.EXAMS.find(e => e.id === id);
+        rootLabel = ex ? `${ex.icon} ${ex.label}` : root.toUpperCase();
+      } else {
+        rootLabel = root;
+      }
+
+      return folders.length > 0
+        ? `${rootLabel} › ${folders.join(' › ')}`
+        : rootLabel;
+    }
+
+    /* Delete directly from the drawer */
+    function afDeleteFile(fileId, fileName) {
+      pendingDelete = { type: 'file', path: fileId };
+      document.getElementById('deleteItemName').textContent = `Delete "${fileName}"? This cannot be undone.`;
+      document.getElementById('deleteModal').classList.add('show');
+      // Override confirm action to also refresh drawer
+      const origHandler = document.getElementById('confirmDeleteBtn')._afOverridden;
+      if (!origHandler) {
+        document.getElementById('confirmDeleteBtn')._afOverridden = true;
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+          // Refresh drawer after delete if open
+          if (document.getElementById('afDrawer').classList.contains('open')) {
+            afLoaded = false;
+            setTimeout(reloadAllFiles, 400);
+          }
+        });
+      }
+    }
+
+    /* Keyboard: Escape closes drawer */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('afDrawer').classList.contains('open')) closeAllFiles();
+      }
+    });
   </script>
+
 </body>
 </html>

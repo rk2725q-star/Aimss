@@ -162,7 +162,7 @@
     .chunk-dl-box h3 { margin:0 0 6px;font-size:1rem; }
     .chunk-dl-box p  { margin:0 0 16px;color:var(--muted);font-size:.82rem; }
     .chunk-dl-bar { width:100%;height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-bottom:8px; }
-    .chunk-dl-fill { height:100%;width:0%;background:var(--accent-gradient);border-radius:999px;transition:width .3s ease;box-shadow:0 0 12px rgba(0,229,204,0.5); }
+    .chunk-dl-fill { height:100%;width:0%;background:var(--accent-gradient);border-radius:999px;box-shadow:0 0 12px rgba(0,229,204,0.5); }
     .chunk-dl-pct { font-size:.8rem;color:var(--accent);font-weight:700; }
 
     /* ═══════════════ STAT CARDS (clickable) ═══════════════ */
@@ -1053,7 +1053,10 @@
       const fill = overlay.querySelector('.chunk-dl-fill');
       const pct  = overlay.querySelector('.chunk-dl-pct');
       try {
-        const blobUrl = await DrDrive.getChunkedBlobUrl(fileObj);
+        const blobUrl = await DrDrive.getChunkedBlobUrl(fileObj, p => {
+          fill.style.width = p + '%';
+          pct.textContent  = p + '%';
+        });
         document.body.removeChild(overlay);
         // Open in preview modal
         const o = document.createElement('div');

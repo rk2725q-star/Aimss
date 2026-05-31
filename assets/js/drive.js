@@ -439,65 +439,127 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
+     _fetchChunkStreamed  — internal helper
+     Fetches one chunk part via its signed URL using a ReadableStream
+     reader loop so we get real byte-level progress instead of a
+     single blocking arrayBuffer() call.
+
+     @param {string}   signedUrl   — pre-signed URL for the part
+     @param {number}   chunkIndex  — 0-based index of this chunk
+     @param {number}   totalChunks — total number of chunks
+     @param {number}   totalBytes  — total file size in bytes (for %-calc)
+     @param {number}   bytesAlreadyLoaded — bytes from previous chunks
+     @param {function} onProgress  — callback(0-100)
+     @returns {Uint8Array}
+  ══════════════════════════════════════════════════════════════ */
+  async function _fetchChunkStreamed(signedUrl, chunkIndex, totalChunks, totalBytes, bytesAlreadyLoaded, onProgress) {
+    const resp = await fetch(signedUrl);
+    if (!resp.ok) throw new Error(`Chunk ${chunkIndex} download failed (HTTP ${resp.status})`);
+
+    // Use streaming reader for real progress
+    const reader = resp.body.getReader();
+    const pieces = [];
+    let bytesThisChunk = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      pieces.push(value);
+      bytesThisChunk += value.length;
+
+      if (onProgress && totalBytes > 0) {
+        const loaded = bytesAlreadyLoaded + bytesThisChunk;
+        // Report 0–100 based on actual bytes received vs total file size
+        onProgress(Math.min(99, Math.round((loaded / totalBytes) * 100)));
+      }
+    }
+
+    // Combine Uint8Array pieces into one
+    const total  = pieces.reduce((s, p) => s + p.length, 0);
+    const merged = new Uint8Array(total);
+    let offset   = 0;
+    for (const p of pieces) { merged.set(p, offset); offset += p.length; }
+    return merged;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      DOWNLOAD CHUNKED FILE
-     Fetches all parts using signed URLs, concatenates into a Blob,
-     and triggers browser download — appears as one unified file.
+     Fetches all parts with real streaming progress, concatenates
+     into one Blob and triggers a browser download — the user sees
+     the file as a single unified file, no missing pieces.
   ══════════════════════════════════════════════════════════════ */
   async function downloadChunkedFile(fileObj, onProgress) {
     const client    = getClient();
     if (!client) throw new Error('Supabase not loaded.');
 
     const meta      = fileObj.chunkMeta;
-    const groupPath = fileObj.path;  // e.g. class-6/Math/__chunks__/1234_file.pdf
+    const groupPath = fileObj.path;
+    const totalBytes = meta.size || 0;
 
-    const buffers = [];
+    if (onProgress) onProgress(0);
+
+    const parts = [];          // Uint8Array[]
+    let bytesLoaded = 0;
+
     for (let i = 0; i < meta.totalChunks; i++) {
       const partPath = `${groupPath}/part_${String(i).padStart(3, '0')}`;
 
+      // Get a fresh signed URL (300 s = 5 min per chunk)
       const { data: sd, error: se } = await client.storage
         .from(BUCKET)
-        .createSignedUrl(partPath, 300);  // 5-minute signed URL
+        .createSignedUrl(partPath, 300);
 
-      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i}`);
+      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i + 1}`);
 
-      const resp = await fetch(sd.signedUrl);
-      if (!resp.ok) throw new Error(`Chunk ${i} download failed (${resp.status})`);
-
-      const buf = await resp.arrayBuffer();
-      buffers.push(buf);
-
-      if (onProgress) {
-        onProgress(Math.round(((i + 1) / meta.totalChunks) * 100));
-      }
+      const part = await _fetchChunkStreamed(
+        sd.signedUrl, i, meta.totalChunks, totalBytes, bytesLoaded, onProgress
+      );
+      parts.push(part);
+      bytesLoaded += part.length;
     }
 
-    // Concatenate all chunk buffers into one Blob
-    const fullBlob = new Blob(buffers, { type: meta.mimeType });
+    if (onProgress) onProgress(99); // almost done — building blob
+
+    // Assemble all parts into one single unified Blob
+    const mimeType = meta.mimeType || 'application/octet-stream';
+    const fullBlob = new Blob(parts, { type: mimeType });
+    const url      = URL.createObjectURL(fullBlob);
 
     // Trigger browser download
-    const url  = URL.createObjectURL(fullBlob);
-    const link = document.createElement('a');
-    link.href     = url;
-    link.download = meta.name;
+    const link      = document.createElement('a');
+    link.style.display = 'none';
+    link.href          = url;
+    link.download      = meta.name;   // sets the saved filename
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
 
-    return { success: true };
+    if (onProgress) onProgress(100);
+
+    // Keep blob URL alive for 5 minutes so "Open" in the browser's
+    // download bar still works after the download completes
+    setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+
+    return { success: true, blobUrl: url };
   }
 
   /* ══════════════════════════════════════════════════════════════
      GET CHUNKED BLOB URL (for inline preview)
-     Returns a Promise<string> blob URL for chunked files.
+     Same streaming approach — returns the blob URL when ready.
+     onProgress optional callback for progress overlay.
   ══════════════════════════════════════════════════════════════ */
-  async function getChunkedBlobUrl(fileObj) {
+  async function getChunkedBlobUrl(fileObj, onProgress) {
     const client    = getClient();
     if (!client) throw new Error('Supabase not loaded.');
 
     const meta      = fileObj.chunkMeta;
     const groupPath = fileObj.path;
-    const buffers   = [];
+    const totalBytes = meta.size || 0;
+
+    if (onProgress) onProgress(0);
+
+    const parts      = [];
+    let bytesLoaded  = 0;
 
     for (let i = 0; i < meta.totalChunks; i++) {
       const partPath = `${groupPath}/part_${String(i).padStart(3, '0')}`;
@@ -506,15 +568,20 @@
         .from(BUCKET)
         .createSignedUrl(partPath, 300);
 
-      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i}`);
+      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i + 1}`);
 
-      const resp = await fetch(sd.signedUrl);
-      if (!resp.ok) throw new Error(`Chunk ${i} download failed`);
-
-      buffers.push(await resp.arrayBuffer());
+      const part = await _fetchChunkStreamed(
+        sd.signedUrl, i, meta.totalChunks, totalBytes, bytesLoaded, onProgress
+      );
+      parts.push(part);
+      bytesLoaded += part.length;
     }
 
-    const fullBlob = new Blob(buffers, { type: meta.mimeType });
+    if (onProgress) onProgress(99);
+
+    const mimeType = meta.mimeType || 'application/octet-stream';
+    const fullBlob = new Blob(parts, { type: mimeType });
+    if (onProgress) onProgress(100);
     return URL.createObjectURL(fullBlob);
   }
 

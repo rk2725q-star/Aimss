@@ -1,39 +1,51 @@
 /**
  * ═══════════════════════════════════════════════════════════════════
- *  Dr.AIMSS — Supabase Storage Module  v4.0
+ *  Dr.AIMSS — Supabase Storage Module  v5.0  (Chunked Upload)
  *
  *  Exposes: window.DrDrive
  *    ── File ops ──
- *    listFolderContents(prefix)   → Promise<{folders, files, role}>
- *    listFiles(prefix)            → Promise<{files, role}>  (recursive flat)
- *    uploadFile(file,path,prog)   → Promise<{success, file}>     [teacher]
- *    deleteFile(path)             → Promise<{success}>            [teacher]
- *    deleteFolder(prefix)         → Promise<{success}>            [teacher]
- *    moveFile(fromPath, toPath)   → Promise<{success}>            [teacher]
+ *    listFolderContents(prefix)     → Promise<{folders, files, role}>
+ *    listFiles(prefix)              → Promise<{files, role}>  (recursive flat)
+ *    uploadFile(file,path,prog)     → Promise<{success, file}>     [teacher]
+ *    deleteFile(path)               → Promise<{success}>            [teacher]
+ *    deleteFolder(prefix)           → Promise<{success}>            [teacher]
+ *    moveFile(fromPath, toPath)     → Promise<{success}>            [teacher]
  *    ── Folder ops ──
- *    createFolder(path)           → Promise<{success}>            [teacher]
+ *    createFolder(path)             → Promise<{success}>            [teacher]
  *    ── URL helpers ──
- *    getDownloadUrl(path)         → String
- *    getPreviewUrl(path)          → String
+ *    getDownloadUrl(path)           → String  (or chunked blob trigger)
+ *    getPreviewUrl(path)            → String
+ *    downloadChunkedFile(fileObj)   → void   (assembles chunks → download)
  *    ── Utils ──
- *    getIcon(mimeType)            → emoji string
- *    formatSize(bytes)            → "2.4 MB" etc.
- *    formatDate(dateStr)          → "29 May 2026"
- *    CLASSES                      → ['6','7',...,'12']
- *    EXAMS                        → [{id,label,icon}, ...]
+ *    getIcon(mimeType)              → emoji string
+ *    formatSize(bytes)              → "2.4 MB" etc.
+ *    formatDate(dateStr)            → "29 May 2026"
+ *    CLASSES                        → ['6','7',...,'12']
+ *    EXAMS                          → [{id,label,icon}, ...]
  *
- *  Storage layout:
- *    Classes  → material/class-{N}/{folder}/{subfolder}/{file}
- *    Exams    → material/exam-{id}/{folder}/{subfolder}/{file}
+ *  Storage layout (regular files ≤ 45 MB):
+ *    material/{folderPath}/{timestamp}_{safeName}
+ *
+ *  Storage layout (chunked files > 45 MB):
+ *    material/{folderPath}/__chunks__/{timestamp}_{safeName}/meta.json
+ *    material/{folderPath}/__chunks__/{timestamp}_{safeName}/part_000
+ *    material/{folderPath}/__chunks__/{timestamp}_{safeName}/part_001
+ *    …
+ *
+ *  meta.json schema:
+ *    { name, mimeType, size, totalChunks, chunkSize, createdAt, chunkId }
+ *
  *  Auth: Supabase session reused from window.__supabaseClient
  * ═══════════════════════════════════════════════════════════════════
  */
 (function () {
   'use strict';
 
-  const SUPABASE_URL = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
-  const BUCKET       = 'material';
+  const SUPABASE_URL  = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
+  const SUPABASE_KEY  = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
+  const BUCKET        = 'material';
+  const CHUNK_SIZE    = 45 * 1024 * 1024;   // 45 MB per chunk
+  const CHUNKS_FOLDER = '__chunks__';        // virtual folder name
 
   const CLASSES = ['6', '7', '8', '9', '10', '11', '12'];
 
@@ -69,8 +81,20 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
+     CHUNK ID helper
+     A chunk group lives at: {folderPath}/__chunks__/{chunkId}/
+     chunkId = {timestamp}_{safeName}  (no extension — the actual
+     name + mime come from meta.json)
+  ══════════════════════════════════════════════════════════════ */
+  function _makeChunkId(file) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
+    return `${Date.now()}_${safeName}`;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      LIST FOLDER CONTENTS  (one level deep at given prefix)
      Returns: { folders: [{name, path}], files: [{...}], role }
+     Chunks inside __chunks__ are resolved into logical file entries.
   ══════════════════════════════════════════════════════════════ */
   async function listFolderContents(prefix) {
     const client = getClient();
@@ -79,7 +103,6 @@
     const role = await _getRole();
     if (!role) throw new Error('Not logged in. Please sign in first.');
 
-    // Strip trailing slash — Supabase .list() expects no trailing slash
     const cleanPrefix = (prefix || '').replace(/\/$/, '');
 
     const { data, error } = await client.storage
@@ -91,8 +114,16 @@
     const folders = [];
     const files   = [];
 
-    (data || []).forEach(item => {
-      if (!item.name || item.name === '.emptyFolderPlaceholder') return;
+    for (const item of (data || [])) {
+      if (!item.name || item.name === '.emptyFolderPlaceholder') continue;
+
+      if (item.name === CHUNKS_FOLDER) {
+        // Resolve chunked files from this folder's __chunks__ directory
+        const chunkFiles = await _resolveChunkedFiles(client, cleanPrefix);
+        files.push(...chunkFiles);
+        continue;
+      }
+
       const fullPath = cleanPrefix ? `${cleanPrefix}/${item.name}` : item.name;
 
       if (!item.id) {
@@ -106,15 +137,68 @@
           mimeType:    _mimeFromName(item.name),
           size:        item.metadata?.size || 0,
           createdTime: item.created_at,
-          path:        fullPath
+          path:        fullPath,
+          isChunked:   false
         });
       }
-    });
+    }
 
     folders.sort((a, b) => a.name.localeCompare(b.name));
     files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
 
     return { folders, files, role };
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Resolve chunked file entries from {prefix}/__chunks__/
+     Each sub-folder is a chunk group. We read its meta.json.
+  ────────────────────────────────────────────────────────────── */
+  async function _resolveChunkedFiles(client, prefix) {
+    const chunksPath = prefix ? `${prefix}/${CHUNKS_FOLDER}` : CHUNKS_FOLDER;
+
+    const { data: groups, error } = await client.storage
+      .from(BUCKET)
+      .list(chunksPath, { limit: 1000 });
+
+    if (error || !groups) return [];
+
+    const results = [];
+    for (const group of groups) {
+      if (!group.name || group.id) continue; // skip non-folders
+      const groupPath = `${chunksPath}/${group.name}`;
+      try {
+        const meta = await _fetchChunkMeta(client, groupPath);
+        if (!meta) continue;
+        results.push({
+          id:          groupPath,           // used as file identifier
+          name:        meta.name,           // actual file name from metadata
+          displayName: meta.name,
+          mimeType:    meta.mimeType,
+          size:        meta.size,
+          createdTime: meta.createdAt,
+          path:        groupPath,
+          isChunked:   true,
+          chunkMeta:   meta
+        });
+      } catch (_) {
+        // Skip broken chunks silently
+      }
+    }
+    return results;
+  }
+
+  /* Fetch and parse meta.json for a chunk group */
+  async function _fetchChunkMeta(client, groupPath) {
+    const metaPath = `${groupPath}/meta.json`;
+    const { data: signedData, error: signErr } = await client.storage
+      .from(BUCKET)
+      .createSignedUrl(metaPath, 60);
+
+    if (signErr || !signedData?.signedUrl) return null;
+
+    const resp = await fetch(signedData.signedUrl);
+    if (!resp.ok) return null;
+    return await resp.json();
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -129,18 +213,47 @@
 
     const raw = await _listRecursive(client, (prefix || '').replace(/\/$/, ''), []);
 
-    const files = raw
-      .filter(f => f.name && f.name !== '.emptyFolderPlaceholder' && f.id)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .map(f => ({
+    // Separate chunk parts from regular files
+    const chunkMetas   = raw.filter(f => f._fullPath.includes(`/${CHUNKS_FOLDER}/`) && f.name === 'meta.json');
+    const regularFiles = raw.filter(f => !f._fullPath.includes(`/${CHUNKS_FOLDER}/`) && f.id && f.name !== '.emptyFolderPlaceholder');
+
+    const files = [];
+
+    // Regular files
+    for (const f of regularFiles) {
+      files.push({
         id:          f._fullPath,
         name:        _displayName(f.name),
+        displayName: _displayName(f.name),
         mimeType:    _mimeFromName(f.name),
         size:        f.metadata?.size || 0,
         createdTime: f.created_at,
-        path:        f._fullPath
-      }));
+        path:        f._fullPath,
+        isChunked:   false
+      });
+    }
 
+    // Chunked files — resolve each meta.json
+    for (const m of chunkMetas) {
+      try {
+        const groupPath = m._fullPath.replace('/meta.json', '');
+        const meta = await _fetchChunkMeta(client, groupPath);
+        if (!meta) continue;
+        files.push({
+          id:          groupPath,
+          name:        meta.name,
+          displayName: meta.name,
+          mimeType:    meta.mimeType,
+          size:        meta.size,
+          createdTime: meta.createdAt,
+          path:        groupPath,
+          isChunked:   true,
+          chunkMeta:   meta
+        });
+      } catch (_) {}
+    }
+
+    files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
     return { files, role };
   }
 
@@ -165,7 +278,6 @@
 
   /* ══════════════════════════════════════════════════════════════
      CREATE FOLDER  (teachers only)
-     folderPath e.g. 'class-6/Mathematics'  or  'exam-neet/Organic'
   ══════════════════════════════════════════════════════════════ */
   async function createFolder(folderPath) {
     const client = getClient();
@@ -189,6 +301,8 @@
 
   /* ══════════════════════════════════════════════════════════════
      UPLOAD FILE  (teachers only)
+     Automatically uses chunked upload if file > CHUNK_SIZE (45 MB)
+
      @param {File}     file        — HTML File object
      @param {string}   folderPath  — destination e.g. 'class-6/Math'
      @param {function} onProgress  — optional callback (0–100)
@@ -201,10 +315,19 @@
     if (!role) throw new Error('Not logged in.');
     if (role !== 'teacher') throw new Error('Only teachers can upload files.');
 
-    if (file.size > 250 * 1024 * 1024) throw new Error('File too large. Maximum 250 MB allowed.');
+    // No hard cap anymore — we chunk large files
+    const prefix = (folderPath || '').replace(/\/+$/, '');
 
+    if (file.size > CHUNK_SIZE) {
+      return await _uploadChunked(client, file, prefix, onProgress);
+    } else {
+      return await _uploadSingle(client, file, prefix, onProgress);
+    }
+  }
+
+  /* ─── Single file upload (≤ 45 MB) ─── */
+  async function _uploadSingle(client, file, prefix, onProgress) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
-    const prefix   = (folderPath || '').replace(/\/+$/, '');
     const filePath = prefix ? `${prefix}/${Date.now()}_${safeName}` : `${Date.now()}_${safeName}`;
 
     if (onProgress) onProgress(10);
@@ -227,17 +350,215 @@
     };
   }
 
+  /* ─── Chunked upload (> 45 MB) ─── */
+  async function _uploadChunked(client, file, prefix, onProgress) {
+    const chunkId   = _makeChunkId(file);
+    const groupPath = prefix
+      ? `${prefix}/${CHUNKS_FOLDER}/${chunkId}`
+      : `${CHUNKS_FOLDER}/${chunkId}`;
+
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+    if (onProgress) onProgress(2);
+
+    // Upload each chunk
+    for (let i = 0; i < totalChunks; i++) {
+      const start  = i * CHUNK_SIZE;
+      const end    = Math.min(start + CHUNK_SIZE, file.size);
+      const blob   = file.slice(start, end);
+      const partName = `part_${String(i).padStart(3, '0')}`;
+      const partPath = `${groupPath}/${partName}`;
+
+      const { error } = await client.storage
+        .from(BUCKET)
+        .upload(partPath, blob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'application/octet-stream'
+        });
+
+      if (error) {
+        // Clean up any already-uploaded chunks
+        await _cleanupChunkGroup(client, groupPath, i).catch(() => {});
+        throw new Error(`Chunk ${i + 1}/${totalChunks} failed: ${error.message}`);
+      }
+
+      if (onProgress) {
+        // Reserve first 2% for init, last 3% for meta upload
+        const pct = 2 + Math.round(((i + 1) / totalChunks) * 90);
+        onProgress(pct);
+      }
+    }
+
+    // Upload meta.json
+    const meta = {
+      name:        file.name,
+      mimeType:    file.type || 'application/octet-stream',
+      size:        file.size,
+      totalChunks,
+      chunkSize:   CHUNK_SIZE,
+      createdAt:   new Date().toISOString(),
+      chunkId
+    };
+
+    const metaBlob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
+    const { error: metaErr } = await client.storage
+      .from(BUCKET)
+      .upload(`${groupPath}/meta.json`, metaBlob, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'application/json'
+      });
+
+    if (metaErr) throw new Error('Meta upload failed: ' + metaErr.message);
+
+    if (onProgress) onProgress(100);
+
+    return {
+      success: true,
+      file: {
+        id:         groupPath,
+        name:       file.name,
+        mimeType:   file.type,
+        size:       file.size,
+        path:       groupPath,
+        isChunked:  true
+      }
+    };
+  }
+
+  /* Clean up partially uploaded chunk group on error */
+  async function _cleanupChunkGroup(client, groupPath, uploadedCount) {
+    const paths = [];
+    for (let i = 0; i < uploadedCount; i++) {
+      paths.push(`${groupPath}/part_${String(i).padStart(3, '0')}`);
+    }
+    if (paths.length > 0) {
+      await client.storage.from(BUCKET).remove(paths).catch(() => {});
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     DOWNLOAD CHUNKED FILE
+     Fetches all parts using signed URLs, concatenates into a Blob,
+     and triggers browser download — appears as one unified file.
+  ══════════════════════════════════════════════════════════════ */
+  async function downloadChunkedFile(fileObj, onProgress) {
+    const client    = getClient();
+    if (!client) throw new Error('Supabase not loaded.');
+
+    const meta      = fileObj.chunkMeta;
+    const groupPath = fileObj.path;  // e.g. class-6/Math/__chunks__/1234_file.pdf
+
+    const buffers = [];
+    for (let i = 0; i < meta.totalChunks; i++) {
+      const partPath = `${groupPath}/part_${String(i).padStart(3, '0')}`;
+
+      const { data: sd, error: se } = await client.storage
+        .from(BUCKET)
+        .createSignedUrl(partPath, 300);  // 5-minute signed URL
+
+      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i}`);
+
+      const resp = await fetch(sd.signedUrl);
+      if (!resp.ok) throw new Error(`Chunk ${i} download failed (${resp.status})`);
+
+      const buf = await resp.arrayBuffer();
+      buffers.push(buf);
+
+      if (onProgress) {
+        onProgress(Math.round(((i + 1) / meta.totalChunks) * 100));
+      }
+    }
+
+    // Concatenate all chunk buffers into one Blob
+    const fullBlob = new Blob(buffers, { type: meta.mimeType });
+
+    // Trigger browser download
+    const url  = URL.createObjectURL(fullBlob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = meta.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+    return { success: true };
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     GET CHUNKED BLOB URL (for inline preview)
+     Returns a Promise<string> blob URL for chunked files.
+  ══════════════════════════════════════════════════════════════ */
+  async function getChunkedBlobUrl(fileObj) {
+    const client    = getClient();
+    if (!client) throw new Error('Supabase not loaded.');
+
+    const meta      = fileObj.chunkMeta;
+    const groupPath = fileObj.path;
+    const buffers   = [];
+
+    for (let i = 0; i < meta.totalChunks; i++) {
+      const partPath = `${groupPath}/part_${String(i).padStart(3, '0')}`;
+
+      const { data: sd, error: se } = await client.storage
+        .from(BUCKET)
+        .createSignedUrl(partPath, 300);
+
+      if (se || !sd?.signedUrl) throw new Error(`Cannot get signed URL for chunk ${i}`);
+
+      const resp = await fetch(sd.signedUrl);
+      if (!resp.ok) throw new Error(`Chunk ${i} download failed`);
+
+      buffers.push(await resp.arrayBuffer());
+    }
+
+    const fullBlob = new Blob(buffers, { type: meta.mimeType });
+    return URL.createObjectURL(fullBlob);
+  }
+
   /* ══════════════════════════════════════════════════════════════
      DELETE FILE  (teachers only)
+     For chunked files: deletes all parts + meta.json
   ══════════════════════════════════════════════════════════════ */
-  async function deleteFile(path) {
+  async function deleteFile(path, fileObj) {
     const client = getClient();
     if (!client) throw new Error('Supabase not loaded.');
     const role = await _getRole();
     if (!role) throw new Error('Not logged in.');
     if (role !== 'teacher') throw new Error('Only teachers can delete files.');
+
+    // Check if this is a chunked file path (contains __chunks__)
+    if (path.includes(`/${CHUNKS_FOLDER}/`) || (fileObj && fileObj.isChunked)) {
+      return await _deleteChunkedFile(client, path, fileObj);
+    }
+
     const { error } = await client.storage.from(BUCKET).remove([path]);
     if (error) throw new Error(error.message);
+    return { success: true };
+  }
+
+  async function _deleteChunkedFile(client, groupPath, fileObj) {
+    // groupPath is the chunk group directory (e.g. class-6/Math/__chunks__/1234_file.pdf)
+    const meta = fileObj?.chunkMeta;
+
+    const paths = [];
+    if (meta) {
+      for (let i = 0; i < meta.totalChunks; i++) {
+        paths.push(`${groupPath}/part_${String(i).padStart(3, '0')}`);
+      }
+    } else {
+      // Fallback: list all files in group
+      const { data } = await client.storage.from(BUCKET).list(groupPath, { limit: 1000 });
+      (data || []).forEach(f => { if (f.id) paths.push(`${groupPath}/${f.name}`); });
+    }
+    paths.push(`${groupPath}/meta.json`);
+
+    if (paths.length > 0) {
+      const { error } = await client.storage.from(BUCKET).remove(paths);
+      if (error) throw new Error(error.message);
+    }
     return { success: true };
   }
 
@@ -265,21 +586,23 @@
 
   /* ══════════════════════════════════════════════════════════════
      MOVE FILE  (teachers only)
-     Renames/moves a file to a new path within the same bucket.
-     @param {string} fromPath  e.g. 'class-6/old/1234_file.pdf'
-     @param {string} toFolder  e.g. 'class-6/new/subfolder'   (no filename)
+     Note: chunked files cannot be moved via the storage .move() API
+     since they span multiple objects. We report a helpful error.
   ══════════════════════════════════════════════════════════════ */
-  async function moveFile(fromPath, toFolder) {
+  async function moveFile(fromPath, toFolder, fileObj) {
     const client = getClient();
     if (!client) throw new Error('Supabase not loaded.');
     const role = await _getRole();
     if (!role) throw new Error('Not logged in.');
     if (role !== 'teacher') throw new Error('Only teachers can move files.');
 
-    // Keep the original filename (last segment of fromPath)
-    const fileName = fromPath.split('/').pop();
+    if (fromPath.includes(`/${CHUNKS_FOLDER}/`) || (fileObj && fileObj.isChunked)) {
+      throw new Error('Large chunked files cannot be moved. Please delete and re-upload in the new location.');
+    }
+
+    const fileName  = fromPath.split('/').pop();
     const destFolder = (toFolder || '').replace(/\/+$/, '');
-    const toPath = destFolder ? `${destFolder}/${fileName}` : fileName;
+    const toPath    = destFolder ? `${destFolder}/${fileName}` : fileName;
 
     if (fromPath === toPath) throw new Error('Source and destination are the same.');
 
@@ -290,8 +613,14 @@
 
   /* ══════════════════════════════════════════════════════════════
      PUBLIC DOWNLOAD / PREVIEW URLS
+     For chunked files, these return a sentinel — the UI must call
+     downloadChunkedFile() or getChunkedBlobUrl() instead.
   ══════════════════════════════════════════════════════════════ */
   function getDownloadUrl(path) {
+    // If this is a chunked group path, return a sentinel
+    if (path.includes(`/${CHUNKS_FOLDER}/`)) {
+      return '__chunked__:' + path;
+    }
     const client = getClient();
     if (!client) return '#';
     const { data } = client.storage.from(BUCKET).getPublicUrl(path);
@@ -299,6 +628,9 @@
   }
 
   function getPreviewUrl(path) {
+    if (path.includes(`/${CHUNKS_FOLDER}/`)) {
+      return '__chunked__:' + path;
+    }
     const client = getClient();
     if (!client) return '#';
     const { data } = client.storage.from(BUCKET).getPublicUrl(path);
@@ -362,6 +694,7 @@
   /* ── Public API ── */
   window.DrDrive = {
     CLASSES, EXAMS,
+    CHUNKS_FOLDER,
     listFolderContents,
     listFiles,
     createFolder,
@@ -369,6 +702,8 @@
     deleteFile,
     deleteFolder,
     moveFile,
+    downloadChunkedFile,
+    getChunkedBlobUrl,
     getDownloadUrl,
     getPreviewUrl,
     getIcon,

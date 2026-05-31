@@ -200,6 +200,16 @@
       .folder-grid { grid-template-columns: repeat(2, 1fr); }
       .file-grid   { grid-template-columns: 1fr; }
     }
+    /* chunked badge */
+    .chunk-badge { display: inline-flex; align-items: center; gap: 2px; padding: 1px 5px; border-radius: 4px; font-size: .62rem; font-weight: 800; background: rgba(123,97,255,0.12); border: 1px solid rgba(123,97,255,0.25); color: var(--violet); margin-left: 4px; vertical-align: middle; white-space: nowrap; }
+    /* Chunk download/preview overlay */
+    .chunk-dl-overlay { position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px; }
+    .chunk-dl-box { background:var(--surface);border:1px solid var(--line-hard);border-radius:18px;padding:28px 32px;max-width:400px;width:100%;text-align:center; }
+    .chunk-dl-box h3 { margin:0 0 6px;font-size:1rem; }
+    .chunk-dl-box p  { margin:0 0 14px;color:var(--muted);font-size:.82rem; }
+    .chunk-dl-bar { width:100%;height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-bottom:8px; }
+    .chunk-dl-fill { height:100%;width:0%;background:var(--accent-gradient);border-radius:999px;transition:width .3s ease;box-shadow:0 0 12px rgba(0,229,204,0.5); }
+    .chunk-dl-pct { font-size:.8rem;color:var(--accent);font-weight:700; }
   </style>
 </head>
 <body>
@@ -604,24 +614,103 @@
       }
 
       emp.style.display = 'none';
-      grid.innerHTML = filtered.map(f => `
+      _displayedFiles = filtered;   // store for index-based onclick handlers
+      grid.innerHTML = filtered.map((f, idx) => {
+        const badge = f.isChunked
+          ? `<span class="chunk-badge">⚡ Large</span>` : '';
+        const viewBtn = `<button class="file-btn file-btn-view" onclick="handleView(${idx})">👁 View</button>`;
+        const dlBtn   = f.isChunked
+          ? `<button class="file-btn file-btn-dl" onclick="handleDownload(${idx})">⬇ Download</button>`
+          : `<a class="file-btn file-btn-dl" href="${escAttr(DrDrive.getDownloadUrl(f.id))}" target="_blank" rel="noopener">⬇ Download</a>`;
+        return `
         <div class="file-card">
           <div class="file-icon">${DrDrive.getIcon(f.mimeType)}</div>
-          <div class="file-name" title="${escAttr(f.displayName)}">${escHtml(f.displayName)}</div>
+          <div class="file-name" title="${escAttr(f.displayName)}">${escHtml(f.displayName)}${badge}</div>
           <div class="file-meta">
             <span>${DrDrive.formatSize(f.size)}</span>
             <span>Added: ${DrDrive.formatDate(f.createdTime)}</span>
           </div>
           <div class="file-actions">
-            <button class="file-btn file-btn-view" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.displayName)}')">
-              👁 View
-            </button>
-            <a class="file-btn file-btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">
-              ⬇ Download
-            </a>
+            ${viewBtn}
+            ${dlBtn}
           </div>
         </div>
-      `).join('');
+      `}).join('');
+    }
+
+    /* ═══════════════════════════════════════
+       FILE ACTION HANDLERS (chunked-aware)
+    ═══════════════════════════════════════ */
+    // Store current filtered list so action buttons can access by index
+    let _displayedFiles = [];
+
+    function handleView(idx) {
+      const f = _displayedFiles[idx];
+      if (!f) return;
+      if (f.isChunked) {
+        openChunkedPreview(f);
+      } else {
+        openPreview(f.id, f.displayName);
+      }
+    }
+
+    function handleDownload(idx) {
+      const f = _displayedFiles[idx];
+      if (!f) return;
+      if (f.isChunked) {
+        triggerChunkedDownload(f);
+      } else {
+        window.open(DrDrive.getDownloadUrl(f.id), '_blank');
+      }
+    }
+
+    /* Reassemble chunks → trigger browser download */
+    async function triggerChunkedDownload(fileObj) {
+      const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?');
+      document.body.appendChild(overlay);
+      const fill = overlay.querySelector('.chunk-dl-fill');
+      const pct  = overlay.querySelector('.chunk-dl-pct');
+      try {
+        await DrDrive.downloadChunkedFile(fileObj, p => {
+          fill.style.width = p + '%';
+          pct.textContent  = p + '%';
+        });
+        document.body.removeChild(overlay);
+      } catch(err) {
+        document.body.removeChild(overlay);
+        alert('Download failed: ' + err.message);
+      }
+    }
+
+    /* Reassemble chunks → open inline preview */
+    async function openChunkedPreview(fileObj) {
+      const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?', 'Preparing Preview');
+      document.body.appendChild(overlay);
+      try {
+        const blobUrl = await DrDrive.getChunkedBlobUrl(fileObj);
+        document.body.removeChild(overlay);
+        document.getElementById('previewTitle').textContent = fileObj.displayName;
+        document.getElementById('previewFrame').src = blobUrl;
+        document.getElementById('previewModal').style.display = 'flex';
+      } catch(err) {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        alert('Preview failed: ' + err.message);
+      }
+    }
+
+    function _buildDlOverlay(name, totalChunks, action = 'Downloading') {
+      const div = document.createElement('div');
+      div.className = 'chunk-dl-overlay';
+      div.innerHTML = `
+        <div class="chunk-dl-box">
+          <div style="font-size:2rem;margin-bottom:10px;">⚡</div>
+          <h3>${action} Large File</h3>
+          <p style="word-break:break-word;">${escHtml(name)}</p>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;">Reassembling ${totalChunks} chunk${totalChunks!==1?'s':''} into a single unified file…</p>
+          <div class="chunk-dl-bar"><div class="chunk-dl-fill"></div></div>
+          <div class="chunk-dl-pct">0%</div>
+        </div>`;
+      return div;
     }
 
     /* ═══════════════════════════════════════

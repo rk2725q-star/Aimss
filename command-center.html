@@ -148,11 +148,22 @@
     .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .upload-progress { display: none; margin-top: 12px; }
     .upload-progress-bar { width: 100%; height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
-    .upload-progress-fill { height: 100%; width: 0%; background: var(--accent-gradient); border-radius: 999px; transition: width .2s; box-shadow: 0 0 10px rgba(0,229,204,0.5); }
+    .upload-progress-fill { height: 100%; width: 0%; background: var(--accent-gradient); border-radius: 999px; transition: width .35s ease; box-shadow: 0 0 10px rgba(0,229,204,0.5); }
     .upload-progress-label { font-size: .76rem; color: var(--muted); margin-top: 5px; display: flex; justify-content: space-between; }
+    .upload-chunk-info { font-size: .74rem; color: var(--accent); margin-top: 4px; font-weight: 700; display: none; }
     .status-msg { padding: 10px 14px; border-radius: 9px; font-size: .84rem; font-weight: 600; margin-top: 10px; display: none; }
     .status-msg.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80; display: block; }
     .status-msg.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.25);  color: #f87171; display: block; }
+    /* chunked badge on file rows */
+    .chunk-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 5px; font-size: .65rem; font-weight: 800; background: rgba(123,97,255,0.15); border: 1px solid rgba(123,97,255,0.3); color: var(--violet); margin-left: 4px; vertical-align: middle; white-space: nowrap; }
+    /* download overlay for chunked re-assembly */
+    .chunk-dl-overlay { position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px; }
+    .chunk-dl-box { background:var(--surface);border:1px solid var(--line-hard);border-radius:18px;padding:28px 32px;max-width:420px;width:100%;text-align:center; }
+    .chunk-dl-box h3 { margin:0 0 6px;font-size:1rem; }
+    .chunk-dl-box p  { margin:0 0 16px;color:var(--muted);font-size:.82rem; }
+    .chunk-dl-bar { width:100%;height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-bottom:8px; }
+    .chunk-dl-fill { height:100%;width:0%;background:var(--accent-gradient);border-radius:999px;transition:width .3s ease;box-shadow:0 0 12px rgba(0,229,204,0.5); }
+    .chunk-dl-pct { font-size:.8rem;color:var(--accent);font-weight:700; }
 
     /* ═══════════════ STAT CARDS (clickable) ═══════════════ */
     .cmd-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
@@ -515,14 +526,15 @@
         </div>
 
         <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt" />
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt,.mp4,.mp3" />
           <div class="upload-icon">☁️</div>
           <h3>Drag &amp; Drop or Click to Upload</h3>
-          <p>PDF, Word, PPT, Excel, Images, Text · Max 250 MB</p>
+          <p>PDF, Word, PPT, Excel, Images, Video, Audio · <strong style="color:var(--accent)">No size limit</strong> — large files auto-chunked ⚡</p>
         </div>
         <div class="upload-progress" id="uploadProgress">
           <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
           <div class="upload-progress-label"><span id="progressFile">Uploading…</span><span id="progressPct">0%</span></div>
+          <div class="upload-chunk-info" id="chunkInfo"></div>
         </div>
         <div class="status-msg" id="uploadStatus"></div>
       </div>
@@ -818,21 +830,34 @@
         if (files.length > 0) {
           fd.style.display = 'flex';
           fw.style.display = 'block';
-          fb.innerHTML = files.map((f, idx) => `
+          // Store file objects for action lookup
+          window._currentFiles = files;
+          fb.innerHTML = files.map((f, idx) => {
+            const dlUrl   = DrDrive.getDownloadUrl(f.id);
+            const isChunk = f.isChunked;
+            const badge   = isChunk ? `<span class="chunk-badge">⚡ Chunked</span>` : '';
+            const dlBtn   = isChunk
+              ? `<button class="action-btn btn-dl" title="Download (reassemble)" onclick="handleDownload(${idx})">⬇</button>`
+              : `<a class="action-btn btn-dl" href="${escAttr(dlUrl)}" target="_blank" rel="noopener">⬇</a>`;
+            const mvBtn   = isChunk
+              ? `<button class="action-btn btn-move" title="Cannot move chunked files" onclick="alert('Large chunked files cannot be moved. Delete and re-upload in the new location.')" style="opacity:.45;cursor:not-allowed;">📦</button>`
+              : `<button class="action-btn btn-move" onclick="openMoveModal('${escAttr(f.id)}','${escAttr(f.displayName)}')">📦 Move</button>`;
+            return `
             <tr id="frow-${idx}">
-              <td><div class="file-name-cell"><span>${DrDrive.getIcon(f.mimeType)}</span><span class="file-name-text" title="${escAttr(f.displayName)}">${escHtml(f.displayName)}</span></div></td>
+              <td><div class="file-name-cell"><span>${DrDrive.getIcon(f.mimeType)}</span><span class="file-name-text" title="${escAttr(f.displayName)}">${escHtml(f.displayName)}</span>${badge}</div></td>
               <td style="color:var(--muted);white-space:nowrap;">${DrDrive.formatSize(f.size)}</td>
               <td style="color:var(--muted);white-space:nowrap;">${DrDrive.formatDate(f.createdTime)}</td>
               <td>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                  <button class="action-btn btn-view" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.displayName)}')">👁</button>
-                  <a class="action-btn btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇</a>
-                  <button class="action-btn btn-move" onclick="openMoveModal('${escAttr(f.id)}','${escAttr(f.displayName)}')">📦 Move</button>
-                  <button class="action-btn btn-del" onclick="confirmDeleteFile('${escAttr(f.id)}','${escAttr(f.displayName)}')">🗑</button>
+                  <button class="action-btn btn-view" onclick="handlePreview(${idx})">👁</button>
+                  ${dlBtn}
+                  ${mvBtn}
+                  <button class="action-btn btn-del" onclick="confirmDeleteFile('${escAttr(f.id)}','${escAttr(f.displayName)}', ${idx})">🗑</button>
                 </div>
               </td>
             </tr>
-          `).join('');
+          `;
+          }).join('');
         }
 
         if (folders.length === 0 && files.length === 0) emp.style.display = 'block';
@@ -865,7 +890,7 @@
     }
 
     /* ═══════════════════════════════════════
-       UPLOAD
+       UPLOAD  (with chunked upload support)
     ═══════════════════════════════════════ */
     const fileInput    = document.getElementById('fileInput');
     const uploadZone   = document.getElementById('uploadZone');
@@ -873,7 +898,11 @@
     const progressFill = document.getElementById('progressFill');
     const progressFile = document.getElementById('progressFile');
     const progressPct  = document.getElementById('progressPct');
+    const chunkInfo    = document.getElementById('chunkInfo');
     const statusEl     = document.getElementById('uploadStatus');
+
+    const CHUNK_SIZE_MB = 45;
+    const CHUNK_BYTES   = CHUNK_SIZE_MB * 1024 * 1024;
 
     fileInput.addEventListener('change', () => { if (fileInput.files[0]) startUpload(fileInput.files[0]); });
     uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -887,24 +916,58 @@
 
     async function startUpload(file) {
       if (!selectedId) { setStatus('❌ Please select a class or exam first.', 'error'); return; }
-      if (file.size > 250 * 1024 * 1024) { setStatus('❌ File too large. Max 250 MB.', 'error'); return; }
+
+      const isChunked   = file.size > CHUNK_BYTES;
+      const totalChunks = isChunked ? Math.ceil(file.size / CHUNK_BYTES) : 1;
+
       statusEl.className = 'status-msg';
-      progressWrap.style.display = 'block';
-      progressFill.style.width   = '0%';
-      progressFile.textContent   = `Uploading: ${file.name}`;
-      progressPct.textContent    = '0%';
+      progressWrap.style.display  = 'block';
+      progressFill.style.width    = '0%';
+      progressFile.textContent    = `Uploading: ${file.name} (${DrDrive.formatSize(file.size)})`;
+      progressPct.textContent     = '0%';
+
+      if (isChunked) {
+        chunkInfo.style.display   = 'block';
+        chunkInfo.textContent     = `⚡ Large file — splitting into ${totalChunks} chunks of ${CHUNK_SIZE_MB} MB each…`;
+      } else {
+        chunkInfo.style.display   = 'none';
+      }
+
       fileInput.disabled = true;
 
+      // For chunked files, intercept to show per-chunk status
+      let lastChunkShown = 0;
+      const updateProgress = isChunked ? (pct => {
+        progressFill.style.width = pct + '%';
+        progressPct.textContent  = pct + '%';
+        // Estimate which chunk we're on (chunks span 2%–92%)
+        if (pct >= 2 && pct < 95) {
+          const chunksDone = Math.round(((pct - 2) / 90) * totalChunks);
+          if (chunksDone !== lastChunkShown) {
+            lastChunkShown = chunksDone;
+            chunkInfo.textContent = `⚡ Uploading chunk ${Math.min(chunksDone + 1, totalChunks)} of ${totalChunks}… (${pct}%)`;
+          }
+        } else if (pct >= 95) {
+          chunkInfo.textContent = '⚡ Finalising — saving metadata…';
+        }
+      }) : (pct => {
+        progressFill.style.width = pct + '%';
+        progressPct.textContent  = pct + '%';
+      });
+
       try {
-        await DrDrive.uploadFile(file, currentPath, pct => {
-          progressFill.style.width = pct + '%';
-          progressPct.textContent  = pct + '%';
-        });
+        await DrDrive.uploadFile(file, currentPath, updateProgress);
         progressFill.style.width = '100%'; progressPct.textContent = '100%';
-        setStatus(`✅ "${file.name}" uploaded!`, 'success');
-        setTimeout(() => { progressWrap.style.display = 'none'; loadCurrentPath(); }, 1200);
+        if (isChunked) chunkInfo.textContent = `✅ All ${totalChunks} chunks uploaded successfully!`;
+        setStatus(`✅ "${file.name}" uploaded successfully!`, 'success');
+        setTimeout(() => {
+          progressWrap.style.display = 'none';
+          chunkInfo.style.display    = 'none';
+          loadCurrentPath();
+        }, 1800);
       } catch(err) {
         progressWrap.style.display = 'none';
+        chunkInfo.style.display    = 'none';
         setStatus('❌ ' + (err.message || 'Upload failed.'), 'error');
       } finally { fileInput.disabled = false; fileInput.value = ''; }
     }
@@ -942,10 +1005,96 @@
     });
 
     /* ═══════════════════════════════════════
+       PREVIEW / DOWNLOAD HANDLERS
+       Handle both regular and chunked files
+    ═══════════════════════════════════════ */
+    async function handlePreview(fileIdx) {
+      const f = (window._currentFiles || [])[fileIdx];
+      if (!f) return;
+      if (f.isChunked) {
+        await openChunkedPreview(f);
+      } else {
+        openPreview(f.id, f.displayName);
+      }
+    }
+
+    async function handleDownload(fileIdx) {
+      const f = (window._currentFiles || [])[fileIdx];
+      if (!f) return;
+      if (f.isChunked) {
+        await triggerChunkedDownload(f);
+      } else {
+        window.open(DrDrive.getDownloadUrl(f.id), '_blank');
+      }
+    }
+
+    /* Show a reassembly progress overlay then download */
+    async function triggerChunkedDownload(fileObj) {
+      const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?');
+      document.body.appendChild(overlay);
+      const fill = overlay.querySelector('.chunk-dl-fill');
+      const pct  = overlay.querySelector('.chunk-dl-pct');
+      try {
+        await DrDrive.downloadChunkedFile(fileObj, p => {
+          fill.style.width  = p + '%';
+          pct.textContent   = p + '%';
+        });
+        document.body.removeChild(overlay);
+      } catch(err) {
+        document.body.removeChild(overlay);
+        alert('Download failed: ' + err.message);
+      }
+    }
+
+    /* Show reassembly overlay then open blob URL in preview modal */
+    async function openChunkedPreview(fileObj) {
+      const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?', 'Preparing Preview');
+      document.body.appendChild(overlay);
+      const fill = overlay.querySelector('.chunk-dl-fill');
+      const pct  = overlay.querySelector('.chunk-dl-pct');
+      try {
+        const blobUrl = await DrDrive.getChunkedBlobUrl(fileObj);
+        document.body.removeChild(overlay);
+        // Open in preview modal
+        const o = document.createElement('div');
+        o.id = 'previewOverlay';
+        o.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;';
+        o.innerHTML = `
+          <div style="width:100%;max-width:900px;height:85vh;background:var(--surface);border-radius:20px;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);">
+              <span style="font-weight:700;font-size:.92rem;">${escHtml(fileObj.displayName)}</span>
+              <button onclick="document.getElementById('previewOverlay').remove()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit;font-weight:700;">✕ Close</button>
+            </div>
+            <iframe src="${blobUrl}" style="flex:1;border:none;background:#fff;"></iframe>
+          </div>`;
+        document.body.appendChild(o);
+      } catch(err) {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        alert('Preview failed: ' + err.message);
+      }
+    }
+
+    function _buildDlOverlay(name, totalChunks, action = 'Downloading') {
+      const div = document.createElement('div');
+      div.className = 'chunk-dl-overlay';
+      div.innerHTML = `
+        <div class="chunk-dl-box">
+          <div style="font-size:2rem;margin-bottom:10px;">⚡</div>
+          <h3>${action} Large File</h3>
+          <p style="word-break:break-word;">${escHtml(name)}</p>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;">Reassembling ${totalChunks} chunk${totalChunks!==1?'s':''} into a single unified file…</p>
+          <div class="chunk-dl-bar"><div class="chunk-dl-fill"></div></div>
+          <div class="chunk-dl-pct">0%</div>
+        </div>`;
+      return div;
+    }
+
+    /* ═══════════════════════════════════════
        DELETE MODAL
     ═══════════════════════════════════════ */
-    function confirmDeleteFile(fileId, fileName) {
-      pendingDelete = { type: 'file', path: fileId };
+    function confirmDeleteFile(fileId, fileName, fileIdx) {
+      const fileObj = (window._currentFiles || [])[fileIdx];
+      pendingDelete = { type: 'file', path: fileId, fileObj };
       document.getElementById('deleteItemName').textContent = `Delete file "${fileName}"? This cannot be undone.`;
       document.getElementById('deleteModal').classList.add('show');
     }
@@ -961,7 +1110,7 @@
       const item = pendingDelete;
       closeDeleteModal();
       try {
-        if (item.type === 'file') await DrDrive.deleteFile(item.path);
+        if (item.type === 'file') await DrDrive.deleteFile(item.path, item.fileObj);
         else await DrDrive.deleteFolder(item.path);
         loadCurrentPath();
       } catch(err) { alert('Delete failed: ' + err.message); }
@@ -1266,9 +1415,31 @@
         : rootLabel;
     }
 
+    /* Preview / Download directly from the drawer */
+    async function afPreview(idx) {
+      const f = (window._afFiles || [])[idx];
+      if (!f) return;
+      if (f.isChunked) {
+        await openChunkedPreview(f);
+      } else {
+        openPreview(f.id, f.name);
+      }
+    }
+
+    async function afDownload(idx) {
+      const f = (window._afFiles || [])[idx];
+      if (!f) return;
+      if (f.isChunked) {
+        await triggerChunkedDownload(f);
+      } else {
+        window.open(DrDrive.getDownloadUrl(f.id), '_blank');
+      }
+    }
+
     /* Delete directly from the drawer */
-    function afDeleteFile(fileId, fileName) {
-      pendingDelete = { type: 'file', path: fileId };
+    function afDeleteFile(fileId, fileName, fileIdx) {
+      const fileObj = (window._afFiles || [])[fileIdx];
+      pendingDelete = { type: 'file', path: fileId, fileObj };
       document.getElementById('deleteItemName').textContent = `Delete "${fileName}"? This cannot be undone.`;
       document.getElementById('deleteModal').classList.add('show');
       // Override confirm action to also refresh drawer

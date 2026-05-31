@@ -1073,16 +1073,16 @@
         </button>
       `;
 
-      // Position: prefer below-left aligned to button, flip up if near bottom
+      // position: fixed uses VIEWPORT coordinates — no scrollY/scrollX
       const spaceBelow = window.innerHeight - rect.bottom;
-      const menuH = 180; // approx height
+      const menuH = 190;
       let top, left;
       if (spaceBelow < menuH + 12) {
-        top  = rect.top + window.scrollY - menuH - 6;
+        top  = rect.top - menuH - 6;          // flip above button
       } else {
-        top  = rect.bottom + window.scrollY + 6;
+        top  = rect.bottom + 6;               // below button
       }
-      left = Math.max(8, rect.right + window.scrollX - 185); // align right edge to button right
+      left = Math.max(8, rect.right - 186);   // right-align to button edge
 
       menu.style.top  = top  + 'px';
       menu.style.left = left + 'px';
@@ -1090,11 +1090,11 @@
       document.body.appendChild(menu);
       _activeMenu = menu;
 
-      // Close on outside click (next tick so this click doesn't close it)
-      requestAnimationFrame(() => {
+      // Close on any outside click — use setTimeout so this click finishes first
+      setTimeout(() => {
         document.addEventListener('click', closeActionMenu, { once: true });
         document.addEventListener('keydown', _menuKeyClose);
-      });
+      }, 0);
     }
 
     function _menuKeyClose(e) {

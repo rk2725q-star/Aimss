@@ -518,7 +518,7 @@
           <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt" />
           <div class="upload-icon">☁️</div>
           <h3>Drag &amp; Drop or Click to Upload</h3>
-          <p>PDF, Word, PPT, Excel, Images, Text · Max 50 MB</p>
+          <p>PDF, Word, PPT, Excel, Images, Text · Max 250 MB</p>
         </div>
         <div class="upload-progress" id="uploadProgress">
           <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
@@ -887,7 +887,7 @@
 
     async function startUpload(file) {
       if (!selectedId) { setStatus('❌ Please select a class or exam first.', 'error'); return; }
-      if (file.size > 50 * 1024 * 1024) { setStatus('❌ File too large. Max 50 MB.', 'error'); return; }
+      if (file.size > 250 * 1024 * 1024) { setStatus('❌ File too large. Max 250 MB.', 'error'); return; }
       statusEl.className = 'status-msg';
       progressWrap.style.display = 'block';
       progressFill.style.width   = '0%';

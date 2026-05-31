@@ -201,7 +201,7 @@
     if (!role) throw new Error('Not logged in.');
     if (role !== 'teacher') throw new Error('Only teachers can upload files.');
 
-    if (file.size > 50 * 1024 * 1024) throw new Error('File too large. Maximum 50 MB allowed.');
+    if (file.size > 250 * 1024 * 1024) throw new Error('File too large. Maximum 250 MB allowed.');
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
     const prefix   = (folderPath || '').replace(/\/+$/, '');

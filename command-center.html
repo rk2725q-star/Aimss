@@ -227,7 +227,34 @@
       margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
     }
     .af-count { font-size: .82rem; color: var(--muted); font-weight: 600; }
-    /* reuse .file-table + action-btn styles from parent */
+
+    /* ── All-files table (fixed layout, no overflow) ── */
+    .af-table {
+      width: 100%; border-collapse: collapse;
+      table-layout: fixed;   /* KEY: respect column widths */
+      font-size: .82rem;
+    }
+    .af-table th {
+      text-align: left; font-size: .68rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+      padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line);
+      white-space: nowrap; overflow: hidden;
+    }
+    .af-table td {
+      padding: 9px 8px 9px 0;
+      border-bottom: 1px solid rgba(0,229,204,0.05);
+      vertical-align: middle;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .af-table tr:hover td { background: rgba(0,229,204,0.02); }
+    /* column widths: name 28%, location 28%, size 9%, date 12%, actions 23% */
+    .af-col-name     { width: 28%; }
+    .af-col-location { width: 29%; }
+    .af-col-size     { width: 9%;  }
+    .af-col-date     { width: 13%; }
+    .af-col-actions  { width: 21%; }
+    .af-fname-cell { display: flex; align-items: center; gap: 6px; overflow: hidden; }
+    .af-fname-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 
     /* ═══════════════ PATH BANNER ═══════════════ */
     .path-banner {
@@ -557,7 +584,14 @@
 
       <!-- Table -->
       <div id="afTableWrap" style="overflow-x:auto;display:none;">
-        <table class="file-table">
+        <table class="af-table">
+          <colgroup>
+            <col class="af-col-name" />
+            <col class="af-col-location" />
+            <col class="af-col-size" />
+            <col class="af-col-date" />
+            <col class="af-col-actions" />
+          </colgroup>
           <thead>
             <tr>
               <th>File Name</th>
@@ -1188,20 +1222,20 @@
         const loc = afPathLabel(f.path);
         return `
           <tr>
-            <td>
-              <div class="file-name-cell">
-                <span>${DrDrive.getIcon(f.mimeType)}</span>
-                <span class="file-name-text" title="${escAttr(f.name)}" style="max-width:180px;">${escHtml(f.name)}</span>
+            <td title="${escAttr(f.name)}">
+              <div class="af-fname-cell">
+                <span style="flex-shrink:0;">${DrDrive.getIcon(f.mimeType)}</span>
+                <span class="af-fname-text">${escHtml(f.name)}</span>
               </div>
             </td>
-            <td style="color:var(--muted);font-size:.78rem;max-width:160px;white-space:normal;">${escHtml(loc)}</td>
-            <td style="color:var(--muted);white-space:nowrap;">${DrDrive.formatSize(f.size)}</td>
-            <td style="color:var(--muted);white-space:nowrap;font-size:.78rem;">${DrDrive.formatDate(f.createdTime)}</td>
+            <td style="color:var(--muted);font-size:.77rem;" title="${escAttr(loc)}">${escHtml(loc)}</td>
+            <td style="color:var(--muted);font-size:.78rem;">${DrDrive.formatSize(f.size)}</td>
+            <td style="color:var(--muted);font-size:.75rem;">${DrDrive.formatDate(f.createdTime)}</td>
             <td>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                <button class="action-btn btn-view" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.name)}')">👁</button>
-                <a class="action-btn btn-dl" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇</a>
-                <button class="action-btn btn-del" onclick="afDeleteFile('${escAttr(f.id)}','${escAttr(f.name)}')">🗑</button>
+              <div style="display:flex;gap:3px;flex-wrap:nowrap;">
+                <button class="action-btn btn-view" title="View" onclick="openPreview('${escAttr(f.id)}','${escAttr(f.name)}')">👁</button>
+                <a class="action-btn btn-dl" title="Download" href="${DrDrive.getDownloadUrl(f.id)}" target="_blank" rel="noopener">⬇</a>
+                <button class="action-btn btn-del" title="Delete" onclick="afDeleteFile('${escAttr(f.id)}','${escAttr(f.name)}')">🗑</button>
               </div>
             </td>
           </tr>

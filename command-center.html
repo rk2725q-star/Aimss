@@ -165,7 +165,41 @@
     .chunk-dl-fill { height:100%;width:0%;background:var(--accent-gradient);border-radius:999px;box-shadow:0 0 12px rgba(0,229,204,0.5); }
     .chunk-dl-pct { font-size:.8rem;color:var(--accent);font-weight:700; }
 
-    /* ═════════════ THREE-DOTS ACTION MENU ═════════════ */
+    /* ═════════════ BOARD SELECTOR ═════════════ */
+    .board-pills {
+      display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .board-pill {
+      flex: 1; min-width: 140px; max-width: 220px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 14px 18px; border-radius: 14px;
+      border: 2px solid var(--line); background: var(--surface-2);
+      cursor: pointer; transition: all .2s; color: var(--ink);
+    }
+    .board-pill:hover {
+      border-color: var(--accent); background: rgba(0,229,204,0.06);
+      box-shadow: 0 0 22px rgba(0,229,204,0.12);
+      transform: translateY(-2px);
+    }
+    .board-pill.active {
+      border-color: var(--accent); background: rgba(0,229,204,0.1);
+      box-shadow: 0 0 28px rgba(0,229,204,0.18);
+    }
+    .board-pill.cbse-active {
+      border-color: var(--violet); background: rgba(123,97,255,0.1);
+      box-shadow: 0 0 28px rgba(123,97,255,0.18);
+    }
+    .board-pill-name { font-size: .92rem; font-weight: 800; }
+    .board-pill-sub  { font-size: .72rem; color: var(--muted); font-weight: 600; }
+
+    /* active board indicator in browser toolbar */
+    .board-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 7px;
+      font-size: .74rem; font-weight: 800; letter-spacing: .03em;
+    }
+    .board-badge.sb { background: rgba(0,229,204,0.12); border: 1px solid rgba(0,229,204,0.3); color: var(--accent); }
+    .board-badge.cb { background: rgba(123,97,255,0.12); border: 1px solid rgba(123,97,255,0.3); color: var(--violet); }
     .dots-btn {
       width: 34px; height: 34px; border-radius: 9px;
       border: 1px solid var(--line); background: var(--surface-2);
@@ -488,6 +522,24 @@
             <div class="ns-icon">☝️</div>
             <p style="font-size:.86rem;">Select a class above to manage its materials.</p>
           </div>
+          <!-- BOARD SELECTOR — shown after a class is picked -->
+          <div id="boardSelector" style="display:none;margin-top:16px;">
+            <div style="font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;">
+              Select Board for <span id="boardClassLabel" style="color:var(--accent);">Class</span>
+            </div>
+            <div class="board-pills">
+              <button class="board-pill" id="boardStatepill" onclick="selectBoard('stateboard')" data-board="stateboard">
+                <span style="font-size:1.3rem;">🏫</span>
+                <span class="board-pill-name">State Board</span>
+                <span class="board-pill-sub">TN, AP, KA…</span>
+              </button>
+              <button class="board-pill" id="boardCbsepill" onclick="selectBoard('cbse')" data-board="cbse">
+                <span style="font-size:1.3rem;">📘</span>
+                <span class="board-pill-name">CBSE</span>
+                <span class="board-pill-sub">Central Board</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- EXAM SELECTOR -->
@@ -724,7 +776,8 @@
     ═══════════════════════════════════════ */
     let mode          = 'class';   // 'class' | 'exam'
     let selectedId    = null;      // class '6' or exam 'neet'
-    let currentPath   = '';        // e.g. 'class-6/Math' or 'exam-neet/Organic'
+    let selectedBoard = null;      // 'stateboard' | 'cbse' | null (only for class mode)
+    let currentPath   = '';        // e.g. 'class-6/stateboard/Math'
     let pendingDelete = null;
     let moveState     = { filePath: '', browsePath: '' };
 
@@ -763,8 +816,10 @@
       document.getElementById('classSection').style.display = m === 'class' ? 'block' : 'none';
       document.getElementById('examSection').style.display  = m === 'exam'  ? 'block' : 'none';
       // Deselect current
-      selectedId  = null;
-      currentPath = '';
+      selectedId    = null;
+      selectedBoard = null;
+      currentPath   = '';
+      document.getElementById('boardSelector').style.display  = 'none';
       document.getElementById('fileBrowserCard').style.display = 'none';
       document.getElementById('uploadCard').style.display      = 'none';
       document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
@@ -774,9 +829,8 @@
        SELECT CLASS / EXAM
     ═══════════════════════════════════════ */
     function selectItem(itemMode, id) {
-      mode        = itemMode;
-      selectedId  = id;
-      currentPath = itemMode === 'class' ? `class-${id}` : `exam-${id}`;
+      mode       = itemMode;
+      selectedId = id;
 
       document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
       const btnId = itemMode === 'class' ? `clsBtn-${id}` : `examBtn-${id}`;
@@ -784,15 +838,51 @@
 
       document.getElementById('noClassMsg') && (document.getElementById('noClassMsg').style.display = 'none');
       document.getElementById('noExamMsg')  && (document.getElementById('noExamMsg').style.display  = 'none');
+
+      if (itemMode === 'class') {
+        // For classes: show board picker first, hide file browser until board chosen
+        selectedBoard = null;
+        currentPath   = '';
+        document.getElementById('boardClassLabel').textContent = `Class ${id}`;
+        document.getElementById('boardSelector').style.display = 'block';
+        // Reset pill active states
+        document.querySelectorAll('.board-pill').forEach(p => p.classList.remove('active','cbse-active'));
+        document.getElementById('fileBrowserCard').style.display = 'none';
+        document.getElementById('uploadCard').style.display      = 'none';
+      } else {
+        // Exam mode: go straight to file browser
+        selectedBoard = null;
+        currentPath   = `exam-${id}`;
+        document.getElementById('boardSelector').style.display   = 'none';
+        document.getElementById('fileBrowserCard').style.display = 'block';
+        document.getElementById('uploadCard').style.display      = 'block';
+        loadCurrentPath();
+      }
+    }
+
+    /* ═══════════════════════════════════════
+       SELECT BOARD  (State Board / CBSE)
+    ═══════════════════════════════════════ */
+    function selectBoard(board) {
+      selectedBoard = board;
+      currentPath   = `class-${selectedId}/${board}`;
+
+      // Update pill active state
+      document.querySelectorAll('.board-pill').forEach(p => p.classList.remove('active','cbse-active'));
+      const pill = document.getElementById(board === 'stateboard' ? 'boardStatepill' : 'boardCbsepill');
+      pill?.classList.add(board === 'stateboard' ? 'active' : 'cbse-active');
+
+      // Show file browser
       document.getElementById('fileBrowserCard').style.display = 'block';
       document.getElementById('uploadCard').style.display      = 'block';
-
       loadCurrentPath();
     }
 
     /* ═══════════════════════════════════════
        BREADCRUMB
     ═══════════════════════════════════════ */
+    const BOARD_LABELS = { stateboard: '🏫 State Board', cbse: '📘 CBSE' };
+
     function buildBreadcrumb() {
       const bc = document.getElementById('breadcrumb');
       bc.innerHTML = '';
@@ -807,6 +897,8 @@
             const ex = DrDrive.EXAMS.find(e => `exam-${e.id}` === part);
             label = ex ? `${ex.icon} ${ex.label}` : part;
           }
+        } else if (i === 1 && mode === 'class' && BOARD_LABELS[part]) {
+          label = BOARD_LABELS[part];  // Show "🏫 State Board" or "📘 CBSE"
         } else { label = part; }
         const pathSoFar = parts.slice(0, i + 1).join('/');
         const item = document.createElement('span');
@@ -839,7 +931,13 @@
       load.style.display = 'block';
 
       const parts = currentPath.split('/');
-      ttl.textContent = parts.length > 1 ? `📂 ${parts[parts.length - 1]}` : (mode === 'class' ? `🏫 Class ${selectedId}` : `${DrDrive.EXAMS.find(e => e.id === selectedId)?.icon || '📝'} ${selectedId.toUpperCase()}`);
+      if (mode === 'class' && selectedBoard) {
+        const isSB = selectedBoard === 'stateboard';
+        const boardBadge = `<span class="board-badge ${isSB?'sb':'cb'}" style="margin-left:8px;">${isSB?'\ud83c\udfeb State Board':'\ud83d\udcd8 CBSE'}</span>`;
+        ttl.innerHTML = (parts.length > 2 ? `\ud83d\udcc2 ${parts[parts.length-1]}` : `\ud83c\udfeb Class ${selectedId}`) + boardBadge;
+      } else {
+        ttl.textContent = parts.length > 1 ? `\ud83d\udcc2 ${parts[parts.length - 1]}` : (mode === 'class' ? `\ud83c\udfeb Class ${selectedId}` : `${DrDrive.EXAMS.find(e => e.id === selectedId)?.icon || '\ud83d\udcdd'} ${selectedId.toUpperCase()}`);
+      }
 
       try {
         const { folders, files } = await DrDrive.listFolderContents(currentPath);

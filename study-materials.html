@@ -664,39 +664,76 @@
       }
     }
 
-    /* Reassemble chunks → trigger browser download */
+    /* Reassemble chunks → trigger browser download.
+       After done, shows an explicit Open File button that works on mobile. */
     async function triggerChunkedDownload(fileObj) {
       const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?');
       document.body.appendChild(overlay);
       const fill = overlay.querySelector('.chunk-dl-fill');
       const pct  = overlay.querySelector('.chunk-dl-pct');
+      const box  = overlay.querySelector('.chunk-dl-box');
       try {
-        await DrDrive.downloadChunkedFile(fileObj, p => {
+        const result = await DrDrive.downloadChunkedFile(fileObj, p => {
           fill.style.width = p + '%';
           pct.textContent  = p + '%';
         });
-        document.body.removeChild(overlay);
+        // Transition to success state with Open button
+        box.innerHTML = `
+          <div style="font-size:2.2rem;margin-bottom:10px;">✅</div>
+          <h3 style="color:#4ade80;">Download Complete!</h3>
+          <p style="word-break:break-word;margin-bottom:14px;">${escHtml(fileObj.displayName)}</p>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:18px;">
+            Saved to Downloads. On mobile, tap <strong style="color:var(--accent);">Open File</strong> to open now.
+          </p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button onclick="window.open('${result.blobUrl}','_blank')" style="padding:9px 20px;background:var(--accent-gradient);border:none;border-radius:10px;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer;color:#000;">⇗ Open File</button>
+            <button onclick="this.closest('.chunk-dl-overlay').remove()" style="padding:9px 20px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer;color:var(--muted);">✕ Close</button>
+          </div>`;
       } catch(err) {
         document.body.removeChild(overlay);
         alert('Download failed: ' + err.message);
       }
     }
 
-    /* Reassemble chunks → open inline preview */
+    /* Reassemble chunks → open inline preview.
+       Desktop: iframe modal. Mobile: window.open (lets native apps handle it). */
     async function openChunkedPreview(fileObj) {
-      const overlay = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?', 'Preparing Preview');
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const action   = isMobile ? 'Loading File' : 'Preparing Preview';
+      const overlay  = _buildDlOverlay(fileObj.displayName, fileObj.chunkMeta?.totalChunks || '?', action);
       document.body.appendChild(overlay);
       const fill = overlay.querySelector('.chunk-dl-fill');
       const pct  = overlay.querySelector('.chunk-dl-pct');
+      const box  = overlay.querySelector('.chunk-dl-box');
       try {
         const blobUrl = await DrDrive.getChunkedBlobUrl(fileObj, p => {
           fill.style.width = p + '%';
           pct.textContent  = p + '%';
         });
-        document.body.removeChild(overlay);
-        document.getElementById('previewTitle').textContent = fileObj.displayName;
-        document.getElementById('previewFrame').src = blobUrl;
-        document.getElementById('previewModal').style.display = 'flex';
+
+        if (isMobile) {
+          // Open in new tab so device's native app (PDF viewer etc.) handles it
+          document.body.removeChild(overlay);
+          const opened = window.open(blobUrl, '_blank');
+          if (!opened) {
+            // Popup blocked — show manual open button
+            document.body.appendChild(overlay);
+            box.innerHTML = `
+              <div style="font-size:2rem;margin-bottom:10px;">📂</div>
+              <h3>File Ready</h3>
+              <p style="word-break:break-word;margin-bottom:16px;">${escHtml(fileObj.displayName)}</p>
+              <div style="display:flex;gap:10px;justify-content:center;">
+                <a href="${blobUrl}" target="_blank" style="padding:9px 20px;background:var(--accent-gradient);border-radius:10px;font:inherit;font-weight:700;font-size:.88rem;color:#000;text-decoration:none;">⇗ Open File</a>
+                <button onclick="this.closest('.chunk-dl-overlay').remove()" style="padding:9px 20px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer;color:var(--muted);">✕ Close</button>
+              </div>`;
+          }
+        } else {
+          // Desktop: iframe modal with Open button in header
+          document.body.removeChild(overlay);
+          document.getElementById('previewTitle').textContent = fileObj.displayName;
+          document.getElementById('previewFrame').src = blobUrl;
+          document.getElementById('previewModal').style.display = 'flex';
+        }
       } catch(err) {
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
         alert('Preview failed: ' + err.message);

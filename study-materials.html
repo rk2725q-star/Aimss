@@ -445,7 +445,6 @@
     const BOARDS = [
       { id: 'stateboard', label: 'Stateboard', sub: 'Tamil Nadu Board', icon: '🏛️', color: '#00e5cc' },
       { id: 'cbse',       label: 'CBSE',        sub: 'Central Board',    icon: '📘', color: '#a78bfa' },
-      { id: 'icse',       label: 'ICSE',        sub: 'Council Board',    icon: '📗', color: '#f59e0b' },
     ];
 
     // Board picker UI — injected below classSection
@@ -456,7 +455,7 @@
       <div style="margin-bottom:10px;font-weight:800;font-size:.88rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">
         📋 Select Your Board
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="boardGrid"></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;" id="boardGrid"></div>
     `;
     document.getElementById('classSection').after(boardPickerWrap);
 

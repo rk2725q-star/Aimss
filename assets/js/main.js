@@ -1021,22 +1021,56 @@ function initTeacherProgress() {
   const form = document.getElementById('progressForm');
   const body = document.getElementById('progressBody');
   const exportBtn = document.getElementById('exportProgressBtn');
+  const filterClass = document.getElementById('filterClass');
+  const filterBoard = document.getElementById('filterBoard');
   if (!form || !body) return;
   const key = 'student-progress-v1';
 
   const read = () => JSON.parse(localStorage.getItem(key) || '[]');
   const write = (rows) => localStorage.setItem(key, JSON.stringify(rows));
 
+  window.deleteProgressRecord = (index) => {
+    const rows = read();
+    rows.splice(index, 1);
+    write(rows);
+    render();
+  };
+
   const render = () => {
     const rows = read();
     body.innerHTML = '';
-    if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="4">No progress records yet.</td></tr>';
+    const fClass = filterClass ? filterClass.value : 'all';
+    const fBoard = filterBoard ? filterBoard.value : 'all';
+
+    let filtered = rows;
+    if (fClass !== 'all') {
+      filtered = filtered.filter(r => r.classId === fClass);
+    }
+    if (fBoard !== 'all') {
+      filtered = filtered.filter(r => r.board === fBoard);
+    }
+
+    if (!filtered.length) {
+      body.innerHTML = '<tr><td colspan="7">No matching progress records found.</td></tr>';
       return;
     }
-    rows.forEach((r) => {
+
+    filtered.forEach((r) => {
+      const origIdx = rows.indexOf(r);
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.name}</td><td>${r.subject}</td><td><span class="badge-score">${r.score}%</span></td><td>${r.note}</td>`;
+      const classLabel = isNaN(r.classId) ? String(r.classId || '').toUpperCase() : 'Class ' + r.classId;
+      const boardLabel = r.board === 'none' ? 'General' : String(r.board || '').toUpperCase();
+      tr.innerHTML = `
+        <td><strong>${r.name}</strong></td>
+        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${classLabel}</span></td>
+        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${boardLabel}</span></td>
+        <td>${r.subject}</td>
+        <td><span class="badge-score">${r.score}%</span></td>
+        <td><span style="color:var(--muted);font-size:.84rem;">${r.note || '-'}</span></td>
+        <td style="text-align:right;">
+          <button class="action-btn btn-del" onclick="deleteProgressRecord(${origIdx})" style="padding:3px 10px;font-size:.78rem;">🗑 Delete</button>
+        </td>
+      `;
       body.appendChild(tr);
     });
   };
@@ -1046,11 +1080,13 @@ function initTeacherProgress() {
     const fd = new FormData(form);
     const row = {
       name: String(fd.get('name') || '').trim(),
+      classId: String(fd.get('classId') || '').trim(),
+      board: String(fd.get('board') || '').trim(),
       subject: String(fd.get('subject') || '').trim(),
       score: Number(fd.get('score') || 0),
       note: String(fd.get('note') || '').trim()
     };
-    if (!row.name || !row.subject) return;
+    if (!row.name || !row.subject || !row.classId) return;
     const rows = read();
     rows.unshift(row);
     write(rows);
@@ -1058,11 +1094,14 @@ function initTeacherProgress() {
     render();
   });
 
+  if (filterClass) filterClass.addEventListener('change', render);
+  if (filterBoard) filterBoard.addEventListener('change', render);
+
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
       const rows = read();
-      const lines = ['Student,Subject,Score,Note'];
-      rows.forEach((r) => lines.push(`${r.name},${r.subject},${r.score},${r.note}`));
+      const lines = ['Student,Class,Board,Subject,Score,Note'];
+      rows.forEach((r) => lines.push(`"${r.name}","${r.classId}","${r.board}","${r.subject}",${r.score},"${r.note}"`));
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1851,12 +1890,52 @@ function initSidebarMobile() {
 function initTeacherVideo() {
   const form = document.getElementById('lectureVideoForm');
   const status = document.getElementById('lectureVideoStatus');
+  const videoTableBody = document.getElementById('addedVideosBody');
   if (!form || !status) return;
+
+  const key = 'lectureVideosList';
+  const read = () => JSON.parse(localStorage.getItem(key) || '[]');
+  const write = (list) => localStorage.setItem(key, JSON.stringify(list));
+
+  window.deleteVideoRecord = (id) => {
+    let list = read();
+    list = list.filter(v => v.id !== String(id));
+    write(list);
+    renderVideos();
+  };
+
+  const renderVideos = () => {
+    if (!videoTableBody) return;
+    const list = read();
+    videoTableBody.innerHTML = '';
+    
+    if (!list.length) {
+      videoTableBody.innerHTML = '<tr><td colspan="5">No custom lecture videos added yet.</td></tr>';
+      return;
+    }
+
+    list.forEach(v => {
+      const tr = document.createElement('tr');
+      const classLabel = isNaN(v.classLevel) ? String(v.classLevel || '').toUpperCase() : 'Class ' + v.classLevel;
+      const boardLabel = v.board ? String(v.board).toUpperCase() : 'General';
+      tr.innerHTML = `
+        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${classLabel}</span></td>
+        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${boardLabel}</span></td>
+        <td><strong>${v.topic}</strong></td>
+        <td><code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-size:.8rem;color:var(--accent);">${v.videoId}</code></td>
+        <td style="text-align:right;">
+          <button class="action-btn btn-del" onclick="deleteVideoRecord('${v.id}')" style="padding:3px 10px;font-size:.78rem;">🗑 Delete</button>
+        </td>
+      `;
+      videoTableBody.appendChild(tr);
+    });
+  };
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('ytVideoInput').value.trim();
     const vidClass = document.getElementById('vidClass').value;
+    const vidBoard = document.getElementById('vidBoard') ? document.getElementById('vidBoard').value : '';
     const vidTopic = document.getElementById('vidTopic').value.trim();
     if (!input || !vidClass || !vidTopic) return;
 
@@ -1871,6 +1950,7 @@ function initTeacherVideo() {
         }
       } catch (err) {
         status.textContent = "Invalid URL format.";
+        status.style.color = '#e53e3e';
         return;
       }
     }
@@ -1879,23 +1959,27 @@ function initTeacherVideo() {
       const newLecture = {
         id: Date.now().toString(),
         classLevel: vidClass,
+        board: vidBoard,
         topic: vidTopic,
         videoId: videoId,
         addedAt: new Date().toISOString()
       };
-      const list = JSON.parse(localStorage.getItem('lectureVideosList') || '[]');
+      const list = read();
       list.push(newLecture);
-      localStorage.setItem('lectureVideosList', JSON.stringify(list));
+      write(list);
       
       status.textContent = 'Lecture added to library successfully!';
       status.style.color = '#38a169';
       setTimeout(() => status.textContent = '', 3000);
       form.reset();
+      renderVideos();
     } else {
       status.textContent = "Could not extract Video ID.";
       status.style.color = '#e53e3e';
     }
   });
+
+  renderVideos();
 }
 
 initThemeToggle();

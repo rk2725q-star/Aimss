@@ -98,6 +98,26 @@
     return el;
   }
 
+  // Read custom videos from teacher uploads
+  try {
+    const customVideos = JSON.parse(localStorage.getItem('lectureVideosList') || '[]');
+    customVideos.forEach(v => {
+      COURSES.push({
+        id: 'custom-' + v.id,
+        videoId: v.videoId,
+        title: v.topic,
+        subject: 'biology', // Default subject
+        classLevel: v.classLevel === 'neet' || v.classLevel === 'jee' ? v.classLevel : 'class-' + v.classLevel,
+        badge: 'Teacher Upload',
+        rating: 4.8,
+        learners: '1.2k',
+        instructor: 'Dr.AIMSS Faculty'
+      });
+    });
+  } catch (e) {
+    console.error(e);
+  }
+
   /* ── Init ── */
   document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('catalogGrid');

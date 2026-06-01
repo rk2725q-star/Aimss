@@ -47,6 +47,55 @@
       <a class="portal-link" href="mcq-test.html">
         <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
         MCQ Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Teacher Progress Tracker | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Main Page</a><a href="#" data-logout>Logout</a></nav></div></header>
+  <main class="portal-shell">
+    <div class="portal-side-overlay" id="sidebarOverlay"></div>
+    <aside class="portal-side" id="portalSidebar">
+      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width:36px; height:36px; background:linear-gradient(135deg,#00e5cc,#007a70); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">DA</div>
+          <span style="font-size: 1.1rem; font-weight: 800; font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
+        </div>
+        <button id="sidebarCloseBtn" class="btn btn-soft" style="padding: 4px 8px; border: none; display: none;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div style="margin-bottom: 24px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span style="font-size: 0.9rem; font-weight:600;">Personal Workspace</span>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+
+      <div class="portal-title">MAIN</div>
+      <a class="portal-link" href="command-center.html">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Command Center
+      </a>
+
+      <div class="portal-title">CONTENT STUDIO</div>
+      <a class="portal-link" href="ai-pdf-generator.html">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        AI PDF Generator
+      </a>
+
+      <div class="portal-title">ASSESSMENT</div>
+      <a class="portal-link" href="mcq-test.html">
+        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        MCQ Test
       </a>
       <a class="portal-link active" href="teacher-progress.html">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -54,63 +103,122 @@
       </a>
     </aside>
     <section class="portal-main">
+      <!-- ══════════════ TEACHER PROGRESS TRACKER ══════════════ -->
       <div class="glass card">
         <h2>Teacher Progress Tracker</h2>
-        <p style="color:var(--muted);">Add and monitor student academic progress.</p>
-        <form id="progressForm" class="split-2">
-          <input class="field" name="name" placeholder="Student Name" required />
-          <input class="field" name="subject" placeholder="Subject" required />
-          <input class="field" name="score" type="number" min="0" max="100" placeholder="Score %" required />
-          <input class="field" name="note" placeholder="Remark" />
-          <button class="btn" type="submit">Add Record</button>
-          <button class="btn btn-soft" type="button" id="exportProgressBtn">Export CSV</button>
+        <p style="color:var(--muted);margin-bottom:18px;">Add and monitor student academic progress.</p>
+        <form id="progressForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;">
+          <input class="field" name="name" placeholder="Student Name" required style="margin:0;" />
+          <select class="field" name="classId" required style="margin:0;">
+            <option value="">Select Class</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="neet">NEET Prep</option>
+            <option value="jee">JEE Prep</option>
+          </select>
+          <select class="field" name="board" required style="margin:0;">
+            <option value="stateboard">Stateboard</option>
+            <option value="cbse">CBSE</option>
+            <option value="none">General / Prep</option>
+          </select>
+          <input class="field" name="subject" placeholder="Subject" required style="margin:0;" />
+          <input class="field" name="score" type="number" min="0" max="100" placeholder="Score %" required style="margin:0;" />
+          <input class="field" name="note" placeholder="Remark" style="margin:0;" />
+          <button class="btn" type="submit" style="margin:0;">Add Record</button>
+          <button class="btn btn-soft" type="button" id="exportProgressBtn" style="margin:0;">Export CSV</button>
         </form>
+
+        <!-- Filters -->
+        <div style="display:flex;align-items:center;gap:12px;margin:24px 0 12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;">
+          <span style="font-weight:700;font-size:.84rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🔍 Filter Records:</span>
+          <select class="field" id="filterClass" style="width:auto;min-width:140px;margin:0;">
+            <option value="all">All Classes</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="neet">NEET Prep</option>
+            <option value="jee">JEE Prep</option>
+          </select>
+          <select class="field" id="filterBoard" style="width:auto;min-width:140px;margin:0;">
+            <option value="all">All Boards</option>
+            <option value="stateboard">Stateboard</option>
+            <option value="cbse">CBSE</option>
+            <option value="none">General / Prep</option>
+          </select>
+        </div>
+
         <div style="margin-top:14px;overflow:auto;">
           <table class="tracker-table">
-            <thead><tr><th>Student</th><th>Subject</th><th>Score</th><th>Remark</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Class</th>
+                <th>Board</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Remark</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
             <tbody id="progressBody"></tbody>
           </table>
         </div>
       </div>
 
-      <div class="glass card" style="margin-top: 24px;">
-        <h2>Add MCQ Question</h2>
-        <p style="color:var(--muted);">Add custom MCQ questions for students to answer.</p>
-        <form id="mcqCreatorForm">
-          <input class="field" id="mcqQuestion" placeholder="Enter Question" required style="margin-bottom: 10px; width: 100%;" />
-          <div class="split-2" style="margin-bottom: 10px;">
-            <input class="field" id="mcqOpt0" placeholder="Option 1" required />
-            <input class="field" id="mcqOpt1" placeholder="Option 2" required />
-            <input class="field" id="mcqOpt2" placeholder="Option 3" required />
-            <input class="field" id="mcqOpt3" placeholder="Option 4" required />
-          </div>
-          <div style="margin-bottom: 10px;">
-            <label style="color:var(--muted); font-size: 0.9rem; margin-right: 10px;">Correct Option:</label>
-            <select class="field" id="mcqCorrect" style="width: auto; display: inline-block;">
-              <option value="0">Option 1</option>
-              <option value="1">Option 2</option>
-              <option value="2">Option 3</option>
-              <option value="3">Option 4</option>
-            </select>
-          </div>
-          <button class="btn" type="submit">Add Question</button>
-          <p id="mcqCreatorStatus" class="status"></p>
-        </form>
+      <!-- ══════════════ ADD LECTURE VIDEO ══════════════ -->
       <div class="glass card" style="margin-top: 24px;">
         <h2>Add Lecture Video</h2>
-        <p style="color:var(--muted);">Add a YouTube lecture to the Video Library.</p>
-        <form id="lectureVideoForm">
-          <select class="field" id="vidClass" required style="margin-bottom: 10px; width: 100%;">
+        <p style="color:var(--muted);margin-bottom:18px;">Add a YouTube lecture to the Video Library for Class-wise students.</p>
+        <form id="lectureVideoForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px;">
+          <select class="field" id="vidClass" required style="margin:0;">
             <option value="">Select Class Level</option>
-            <option value="Foundation (Class 6-8)">Foundation (Class 6-8)</option>
-            <option value="Intermediate (Class 9-10)">Intermediate (Class 9-10)</option>
-            <option value="NEET Intensive (Class 11-12)">NEET Intensive (Class 11-12)</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="neet">NEET Prep</option>
+            <option value="jee">JEE Prep</option>
           </select>
-          <input class="field" id="vidTopic" placeholder="Topic Name (e.g. Biology: Human Eye)" required style="margin-bottom: 10px; width: 100%;" />
-          <input class="field" id="ytVideoInput" placeholder="YouTube Video ID or URL" required style="margin-bottom: 10px; width: 100%;" />
-          <button class="btn" type="submit">Add Video</button>
-          <p id="lectureVideoStatus" class="status"></p>
+          <select class="field" id="vidBoard" style="margin:0;">
+            <option value="">Select Board (if applicable)</option>
+            <option value="stateboard">Stateboard</option>
+            <option value="cbse">CBSE</option>
+          </select>
+          <input class="field" id="vidTopic" placeholder="Topic Name (e.g. Biology: Human Eye)" required style="margin:0;" />
+          <input class="field" id="ytVideoInput" placeholder="YouTube Video ID or URL" required style="margin:0;" />
+          <button class="btn" type="submit" style="grid-column:1/-1;">Add Video</button>
+          <p id="lectureVideoStatus" class="status" style="grid-column:1/-1;margin:0;"></p>
         </form>
+
+        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">🎬 Managed Lecture Videos</h3>
+        <div style="overflow:auto;">
+          <table class="tracker-table">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Board</th>
+                <th>Topic Name</th>
+                <th>Video ID</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="addedVideosBody">
+              <tr><td colspan="5">No custom lecture videos added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>

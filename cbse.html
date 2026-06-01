@@ -247,6 +247,29 @@
     });
   });
 
+  // Read custom videos from teacher uploads
+  try {
+    const customVideos = JSON.parse(localStorage.getItem('lectureVideosList') || '[]');
+    customVideos.forEach(v => {
+      if (v.board === 'cbse') {
+        const clsNum = parseInt(v.classLevel);
+        if (!isNaN(clsNum)) {
+          CBSE_COURSES.push({
+            cls: clsNum,
+            subject: 'Science',
+            title: v.topic,
+            videoId: v.videoId,
+            rating: 4.8,
+            learners: '1.2k',
+            progress: 0
+          });
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+
   renderCourses('all');
   </script>
 </body>

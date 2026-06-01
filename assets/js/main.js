@@ -1136,27 +1136,94 @@ Keep it concise and exam oriented.`;
 
 /** Parse raw AI MCQ text into [{q, a[], c}] array */
 function parseMcqText(raw) {
+  // Normalize the raw text: strip markdown bold/italic, clean up
+  const text = raw.replace(/\*\*/g, '').replace(/\*/g, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
   const questions = [];
-  // Split on Q1. / Q2. ... pattern
-  const blocks = raw.split(/Q\d+[\.\)]\s+/i).filter(b => b.trim().length > 0);
+
+  // ── Strategy 1: Split on "Q<N>." or "<N>." question markers ──
+  // This handles both "Q1." and "1." numbered formats
+  const rawBlocks = [];
+  let lastIdx = 0;
+  let match;
+  const splitRe = /(?:^|\n)\s*(?:Q\s*)?(\d+)\s*[\.\)]\s+/gi;
+  while ((match = splitRe.exec(text)) !== null) {
+    if (lastIdx < match.index) rawBlocks.push(text.slice(lastIdx, match.index));
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < text.length) rawBlocks.push(text.slice(lastIdx));
+  const blocks = rawBlocks.filter(b => b.trim().length > 0);
+
   blocks.forEach(block => {
-    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return;
-    const qText = lines[0].replace(/^[\*\#]+/, '').trim();
+    // ── Try to extract question text, options, answer from block ──
+
+    // Split options by detecting "A)" / "A." at start of line or after whitespace
+    // This works for BOTH multi-line AND inline format (no lookbehind for broad browser compat)
+    const optRe = /(?:(?:^|\n)\s*|\s)([A-Da-d])\s*[\.\)]\s+/g;
+    const optPositions = [];
+    let om;
+    while ((om = optRe.exec(block)) !== null) {
+      optPositions.push({ idx: om.index, label: om[1].toUpperCase(), end: om.index + om[0].length });
+    }
+
+    // Extract question text = everything before first option marker
+    let qText = '';
+    if (optPositions.length >= 2) {
+      qText = block.slice(0, optPositions[0].idx).replace(/\n/g, ' ').trim();
+    } else {
+      // Fallback: first line is question
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      qText = lines[0] || '';
+    }
+    qText = qText.replace(/^[\*\#\-]+/, '').trim();
+    if (!qText) return;
+
+    // Extract options text
     const opts = [];
+    for (let i = 0; i < optPositions.length && i < 4; i++) {
+      const start = optPositions[i].end;
+      const end = i + 1 < optPositions.length ? optPositions[i + 1].idx : block.length;
+      let optText = block.slice(start, end).replace(/\n/g, ' ').trim();
+      // Strip trailing "Answer: X" if it got merged into last option
+      optText = optText.replace(/\s*[Aa]nswer\s*[:\-]\s*[A-Da-d]\s*$/, '').trim();
+      if (optText) opts.push(optText);
+    }
+
+    // Extract answer
     let correctIdx = 0;
-    let answerLine = '';
-    lines.slice(1).forEach(line => {
-      const optMatch = line.match(/^[A-Da-d][\.\)]\s+(.+)/);
-      if (optMatch) opts.push(optMatch[1].trim());
-      const ansMatch = line.match(/^[Aa]nswer\s*[:\-]\s*([A-Da-d])/);
-      if (ansMatch) answerLine = ansMatch[1].toUpperCase();
-    });
-    if (opts.length >= 2 && qText) {
-      if (answerLine) correctIdx = Math.max(0, 'ABCD'.indexOf(answerLine));
+    const ansMatch = block.match(/[Aa]nswer\s*[:\-]\s*([A-Da-d])/);
+    if (ansMatch) correctIdx = Math.max(0, 'ABCD'.indexOf(ansMatch[1].toUpperCase()));
+
+    if (opts.length >= 2) {
       questions.push({ q: qText, a: opts.slice(0, 4), c: correctIdx });
     }
   });
+
+  // ── Strategy 2 fallback: if Strategy 1 yielded nothing, try line-by-line ──
+  if (questions.length === 0) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    let curQ = null, curOpts = [], curAns = '';
+    const flush = () => {
+      if (curQ && curOpts.length >= 2) {
+        const ci = curAns ? Math.max(0, 'ABCD'.indexOf(curAns)) : 0;
+        questions.push({ q: curQ, a: curOpts.slice(0, 4), c: ci });
+      }
+      curQ = null; curOpts = []; curAns = '';
+    };
+    lines.forEach(line => {
+      if (/^(?:Q\s*)?\d+[\.\)]\s+/.test(line)) {
+        flush();
+        curQ = line.replace(/^(?:Q\s*)?\d+[\.\)]\s+/, '').replace(/^[\*\#]+/, '').trim();
+      } else if (/^[A-Da-d][\.\)]\s+/.test(line)) {
+        curOpts.push(line.replace(/^[A-Da-d][\.\)]\s+/, '').trim());
+      } else if (/^[Aa]nswer\s*[:\-]\s*([A-Da-d])/.test(line)) {
+        const m = line.match(/^[Aa]nswer\s*[:\-]\s*([A-Da-d])/);
+        if (m) curAns = m[1].toUpperCase();
+      }
+    });
+    flush();
+  }
+
   return questions;
 }
 

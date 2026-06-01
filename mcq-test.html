@@ -39,13 +39,8 @@
     .mcq-bank-meta span { display: flex; align-items: center; gap: 4px; }
 
     /* ── Quiz area ── */
-    #mcqTestArea .mcq-q-header {
-      margin-bottom: 18px;
-    }
-    #mcqBankTitle {
-      font-size: .82rem; font-weight: 700; color: var(--accent);
-      margin-bottom: 6px; display: block;
-    }
+    #mcqTestArea .mcq-q-header { margin-bottom: 18px; }
+    #mcqBankTitle { font-size: .82rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; display: block; }
 
     /* ── MCQ options ── */
     .mcq-option {
@@ -106,6 +101,171 @@
       .mcq-class-select { max-width: 100%; }
       .mcq-bank-card { flex-direction: column; align-items: flex-start; }
     }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3D ANSWER ANIMATIONS
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ── Correct answer overlay ── */
+    #mcqCorrectOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      perspective: 1200px;
+    }
+    .mcq-correct-card {
+      background: linear-gradient(135deg, #052e1a 0%, #0a4a2a 50%, #062013 100%);
+      border: 2px solid #4ade80;
+      border-radius: 24px;
+      padding: 32px 48px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(74,222,128,0.5), 0 0 120px rgba(74,222,128,0.2), inset 0 1px 0 rgba(74,222,128,0.3);
+      transform: scale(0) rotateX(-90deg);
+      opacity: 0;
+      transition: none;
+      will-change: transform, opacity;
+    }
+    .mcq-correct-card.pop-in {
+      animation: correctCardPop 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .mcq-correct-card.pop-out {
+      animation: correctCardOut 0.35s ease-in forwards;
+    }
+    @keyframes correctCardPop {
+      0%   { transform: scale(0.3) rotateX(-90deg); opacity: 0; }
+      60%  { transform: scale(1.08) rotateX(6deg);  opacity: 1; }
+      80%  { transform: scale(0.96) rotateX(-3deg); opacity: 1; }
+      100% { transform: scale(1)    rotateX(0deg);  opacity: 1; }
+    }
+    @keyframes correctCardOut {
+      0%   { transform: scale(1) translateY(0); opacity: 1; }
+      100% { transform: scale(1.1) translateY(-30px); opacity: 0; }
+    }
+    .mcq-correct-icon {
+      font-size: 3.2rem;
+      line-height: 1;
+      animation: iconBounce 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes iconBounce {
+      0%   { transform: scale(0) rotate(-30deg); }
+      70%  { transform: scale(1.2) rotate(10deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .mcq-correct-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.9rem; font-weight: 900;
+      color: #4ade80;
+      text-shadow: 0 0 20px rgba(74,222,128,0.8);
+      letter-spacing: 0.05em;
+      margin: 8px 0 4px;
+    }
+    .mcq-correct-sub {
+      font-size: 0.9rem; font-weight: 700;
+      color: rgba(255,255,255,0.7);
+    }
+    .mcq-pts-badge {
+      display: inline-block;
+      margin-top: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000; font-weight: 900; font-size: 1.1rem;
+      padding: 6px 20px; border-radius: 999px;
+      animation: ptsBadgePop 0.5s 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+      box-shadow: 0 4px 20px rgba(245,158,11,0.5);
+    }
+    @keyframes ptsBadgePop {
+      0%   { transform: scale(0) translateY(10px); opacity: 0; }
+      100% { transform: scale(1) translateY(0);    opacity: 1; }
+    }
+
+    /* ── Floating +pts text ── */
+    .mcq-float-pts {
+      position: fixed;
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem; font-weight: 900;
+      color: #f59e0b;
+      text-shadow: 0 0 20px rgba(245,158,11,0.9);
+      pointer-events: none;
+      z-index: 99999;
+      animation: floatPtsUp 1.4s ease-out forwards;
+    }
+    @keyframes floatPtsUp {
+      0%   { transform: translateY(0) scale(0.5); opacity: 1; }
+      60%  { transform: translateY(-80px) scale(1.1); opacity: 1; }
+      100% { transform: translateY(-140px) scale(0.8); opacity: 0; }
+    }
+
+    /* ── Wrong answer animation ── */
+    #mcqWrongOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      background: rgba(248,113,113,0.08);
+      opacity: 0;
+    }
+    #mcqWrongOverlay.flash-in {
+      animation: wrongFlash 0.7s ease-out forwards;
+    }
+    @keyframes wrongFlash {
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      60%  { opacity: 0.6; }
+      100% { opacity: 0; }
+    }
+    .mcq-wrong-card {
+      background: linear-gradient(135deg, #1a0505 0%, #2a0a0a 100%);
+      border: 2px solid #f87171;
+      border-radius: 20px;
+      padding: 28px 44px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(248,113,113,0.4), inset 0 1px 0 rgba(248,113,113,0.2);
+      animation: wrongCardAnim 0.65s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+    }
+    @keyframes wrongCardAnim {
+      0%   { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      20%  { transform: scale(1.05) rotate(3deg); opacity: 1; }
+      35%  { transform: scale(0.98) rotate(-6deg) translateX(-8px); }
+      50%  { transform: scale(1) rotate(5deg) translateX(8px); }
+      65%  { transform: scale(1) rotate(-3deg) translateX(-5px); }
+      80%  { transform: scale(1) rotate(2deg) translateX(3px); }
+      92%  { transform: scale(1) rotate(0deg) translateX(0); opacity: 1; }
+      100% { transform: scale(0.9) translateY(10px); opacity: 0; }
+    }
+    .mcq-wrong-icon { font-size: 2.8rem; line-height: 1; }
+    .mcq-wrong-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.7rem; font-weight: 900;
+      color: #f87171;
+      text-shadow: 0 0 16px rgba(248,113,113,0.8);
+      margin: 8px 0 4px;
+    }
+    .mcq-wrong-sub { font-size: .85rem; font-weight: 700; color: rgba(255,255,255,0.6); }
+
+    /* ── MCQ box shake for wrong ── */
+    @keyframes mcqBoxShake {
+      0%,100% { transform: translateX(0); }
+      15% { transform: translateX(-10px) rotate(-1.5deg); }
+      30% { transform: translateX(10px) rotate(1.5deg); }
+      45% { transform: translateX(-8px) rotate(-1deg); }
+      60% { transform: translateX(8px) rotate(1deg); }
+      75% { transform: translateX(-4px); }
+      90% { transform: translateX(4px); }
+    }
+    .mcq-shake { animation: mcqBoxShake 0.6s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+
+    /* ── Confetti particles ── */
+    .mcq-confetti-piece {
+      position: fixed;
+      width: 10px; height: 14px;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: 99998;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg) scaleX(-1); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -150,6 +310,11 @@
       <a class="portal-link active" href="mcq-test.html">
         <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
         MCQ Test
+      </a>
+      <a class="portal-link" href="mcq-store.html" style="position:relative;">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
+        🏪 Store
+        <span id="sideStorePts" style="margin-left:auto;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:999px;">0 pts</span>
       </a>
 
       <div class="sidebar-footer" style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line);">
@@ -219,33 +384,49 @@
     </section>
   </main>
 
+  <!-- 3D Correct Answer Overlay -->
+  <div id="mcqCorrectOverlay" style="display:none;">
+    <div class="mcq-correct-card" id="mcqCorrectCard">
+      <div class="mcq-correct-icon">✅</div>
+      <div class="mcq-correct-text">CORRECT!</div>
+      <div class="mcq-correct-sub">Great job, keep it up!</div>
+      <div class="mcq-pts-badge" id="mcqPtsBadge">+5 pts</div>
+    </div>
+  </div>
+
+  <!-- Wrong Answer Overlay -->
+  <div id="mcqWrongOverlay" style="display:none;">
+    <div class="mcq-wrong-card">
+      <div class="mcq-wrong-icon">❌</div>
+      <div class="mcq-wrong-text">WRONG!</div>
+      <div class="mcq-wrong-sub">Study harder &amp; try again!</div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js"></script>
-  <script src="assets/js/main.js?v=4"></script>
+  <script src="assets/js/main.js?v=6"></script>
   <script>
-    /* ── wire progress bar to quiz flow ── */
-    const _origStart = window.startMcqBank;
-    window.startMcqBank = function(bankId) {
-      _origStart && _origStart(bankId);
-      // update progress bar on each Next click
-      const nextBtn = document.getElementById('mcqNext');
-      if (!nextBtn) return;
-      const orig = nextBtn.onclick;
-    };
+    // Sync store points badge in sidebar
+    (function() {
+      const pts = parseInt(localStorage.getItem('student-points') || '0');
+      const el = document.getElementById('sideStorePts');
+      if (el) el.textContent = pts + ' pts';
+      const sp = document.getElementById('sidePointsText');
+      if (sp) sp.textContent = pts + ' pts';
+      const bar = document.getElementById('sidePointsBar');
+      if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
+    })();
 
-    // Enhance progress display after bank loads
+    /* ── wire progress bar to quiz flow ── */
     const mcqNextBtn = document.getElementById('mcqNext');
     if (mcqNextBtn) {
-      let _qIdx = 0, _qTotal = 0;
-      const origClick = mcqNextBtn.addEventListener.bind(mcqNextBtn);
-      // We hook into the bank start via MutationObserver on the box
       const observer = new MutationObserver(() => {
         const fill = document.getElementById('mcqProgressFill');
         const lbl  = document.getElementById('mcqProgressLabel');
         const rhs  = document.getElementById('mcqProgressRight');
         const scoreEl = document.getElementById('mcqScore');
         if (!fill) return;
-        // figure out current Q index from score text
         const scoreText = scoreEl ? scoreEl.textContent : '';
         const match = scoreText.match(/Score: (\d+)\/(\d+)/);
         if (match) {

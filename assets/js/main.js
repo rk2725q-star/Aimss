@@ -681,6 +681,12 @@ Requirements:
             const classId = uploadRow.querySelector('#mcqChatClassPicker').value;
             const statusEl = uploadRow.querySelector('#mcqChatUploadStatus');
             if (!classId) { statusEl.textContent = '⚠️ Pick a class first'; return; }
+            // ── Teacher-only gate ──
+            const role = (window.DrAuth && window.DrAuth.getRole()) || null;
+            if (role !== 'teacher') {
+              statusEl.innerHTML = `<span style="color:#f87171">⛔ Only teacher accounts can publish tests to classes.</span>`;
+              return;
+            }
             const qs = parseMcqText(rawText);
             if (!qs.length) { statusEl.textContent = '❌ Could not parse questions'; return; }
             const topicGuess = msg.length < 80 ? msg : msg.slice(0, 60) + '…';
@@ -1131,6 +1137,112 @@ Keep it concise and exam oriented.`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   3D MCQ ANSWER ANIMATIONS
+═══════════════════════════════════════════════════════════════ */
+
+/** Spawn floating confetti particles */
+function spawnConfetti(count) {
+  const colors = ['#4ade80','#00e5cc','#f59e0b','#a78bfa','#fb923c','#67e8f9','#fde68a'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'mcq-confetti-piece';
+    const x = Math.random() * 100;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const dur = 1.2 + Math.random() * 1.4;
+    const delay = Math.random() * 0.4;
+    const size = 6 + Math.random() * 10;
+    p.style.cssText = `left:${x}vw;top:-20px;width:${size}px;height:${size*1.4}px;background:${color};animation-duration:${dur}s;animation-delay:${delay}s;border-radius:${Math.random()>0.5?'50%':'3px'};`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), (dur + delay) * 1000 + 200);
+  }
+}
+
+/** Trigger correct answer 3D animation */
+function triggerCorrectAnim(pts) {
+  pts = pts || 5;
+  const overlay = document.getElementById('mcqCorrectOverlay');
+  const card    = document.getElementById('mcqCorrectCard');
+  const badge   = document.getElementById('mcqPtsBadge');
+  if (!overlay || !card) return;
+
+  // Update badge text
+  if (badge) badge.textContent = `+${pts} pts`;
+
+  // Show overlay
+  overlay.style.display = 'flex';
+  card.classList.remove('pop-out');
+  void card.offsetWidth; // reflow
+  card.classList.add('pop-in');
+
+  // Spawn confetti
+  spawnConfetti(32);
+
+  // Floating +pts text near center
+  const floatEl = document.createElement('div');
+  floatEl.className = 'mcq-float-pts';
+  floatEl.textContent = `+${pts} pts`;
+  floatEl.style.cssText = `left:calc(50% - 60px);top:45vh;`;
+  document.body.appendChild(floatEl);
+  setTimeout(() => floatEl.remove(), 1500);
+
+  // Auto-hide
+  setTimeout(() => {
+    card.classList.remove('pop-in');
+    card.classList.add('pop-out');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      card.classList.remove('pop-out');
+    }, 380);
+  }, 1400);
+}
+
+/** Trigger wrong answer animation */
+function triggerWrongAnim() {
+  const overlay = document.getElementById('mcqWrongOverlay');
+  const box     = document.getElementById('mcqBox');
+  if (!overlay) return;
+
+  overlay.style.display = 'flex';
+  overlay.classList.remove('flash-in');
+  void overlay.offsetWidth;
+  overlay.classList.add('flash-in');
+
+  if (box) {
+    box.classList.remove('mcq-shake');
+    void box.offsetWidth;
+    box.classList.add('mcq-shake');
+    setTimeout(() => box.classList.remove('mcq-shake'), 700);
+  }
+
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.classList.remove('flash-in');
+  }, 750);
+}
+
+/** Enhanced awardPoints — also tracks history & badges */
+function awardPointsTracked(pts, label, type) {
+  type  = type  || 'mcq';
+  label = label || `MCQ test completed`;
+  const cur = parseInt(localStorage.getItem('student-points') || '0');
+  const next = cur + pts;
+  localStorage.setItem('student-points', String(next));
+
+  // Append to history
+  const history = JSON.parse(localStorage.getItem('student-points-history') || '[]');
+  history.push({ pts, label, type, ts: Date.now() });
+  localStorage.setItem('student-points-history', JSON.stringify(history));
+
+  // Sync sidebar pts
+  ['sideStorePts', 'sidePointsText'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = next + ' pts';
+  });
+  const bar = document.getElementById('sidePointsBar');
+  if (bar) bar.style.width = Math.min(100, Math.round(next / 10)) + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
    MCQ BANK HELPERS  — teacher-published, class-keyed
 ═══════════════════════════════════════════════════════════════ */
 
@@ -1576,7 +1688,20 @@ function initMcqTest() {
             if (bi === cur.c) btn.classList.add('correct');
             else if (bi === i && i !== cur.c) btn.classList.add('wrong');
           });
-          if (i === cur.c) score++;
+          if (i === cur.c) {
+            score++;
+            // Track per-answer correct count & badge
+            const cc = parseInt(localStorage.getItem('student-correct-total') || '0') + 1;
+            localStorage.setItem('student-correct-total', String(cc));
+            if (cc === 1) {
+              const badges = JSON.parse(localStorage.getItem('student-badges') || '[]');
+              if (!badges.includes('first-correct')) { badges.push('first-correct'); localStorage.setItem('student-badges', JSON.stringify(badges)); }
+            }
+            awardPointsTracked(5, `Correct answer — Q${idx+1}`, 'mcq');
+            triggerCorrectAnim(5);
+          } else {
+            triggerWrongAnim();
+          }
           scoreEl.textContent = `Score: ${score}/${activeQuestions.length}`;
         });
         box.appendChild(b);
@@ -1588,6 +1713,15 @@ function initMcqTest() {
       if (idx >= activeQuestions.length) {
         const pct = Math.round((score / activeQuestions.length) * 100);
         localStorage.setItem('latest-mcq-score', String(pct));
+        // Track tests taken
+        const tt = parseInt(localStorage.getItem('student-tests-taken') || '0') + 1;
+        localStorage.setItem('student-tests-taken', String(tt));
+        if (tt === 1) {
+          const badges = JSON.parse(localStorage.getItem('student-badges') || '[]');
+          if (!badges.includes('test')) { badges.push('test'); localStorage.setItem('student-badges', JSON.stringify(badges)); }
+        }
+        // Final bonus for test completion logged in history
+        awardPointsTracked(0, `Test completed — ${score}/${activeQuestions.length} (${pct}%)`, 'mcq');
         awardPoints(score * 5);
         initStudentRewards && initStudentRewards();
         box.innerHTML = `

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>My Store | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="View your earned points, achievement badges, and rewards at Dr.AIMSS Educational Academy." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ── Points Hero ── */
+    .store-hero {
+      text-align: center;
+      padding: 40px 24px 32px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,229,204,0.14) 0%, transparent 70%);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .store-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,229,204,0.03) 0%, rgba(245,158,11,0.04) 100%);
+      pointer-events: none;
+    }
+    .store-coin {
+      width: 110px; height: 110px;
+      margin: 0 auto 20px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: coinSpin 4s linear infinite;
+    }
+    @keyframes coinSpin {
+      0%   { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+    .store-coin-face {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.6rem;
+      position: absolute;
+      backface-visibility: hidden;
+    }
+    .store-coin-front {
+      background: radial-gradient(circle at 35% 35%, #fde68a, #f59e0b, #92400e);
+      box-shadow: 0 0 40px rgba(245,158,11,0.6), inset -4px -4px 12px rgba(0,0,0,0.3), inset 2px 2px 8px rgba(255,255,255,0.3);
+    }
+    .store-coin-back {
+      background: radial-gradient(circle at 35% 35%, #d97706, #b45309, #78350f);
+      box-shadow: 0 0 30px rgba(180,83,9,0.5);
+      transform: rotateY(180deg);
+    }
+    .store-pts-big {
+      font-family: 'Outfit', sans-serif;
+      font-size: 4rem; font-weight: 900;
+      background: linear-gradient(135deg, #f59e0b, #fde68a, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .store-pts-label {
+      font-size: 1rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .store-level-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, rgba(0,229,204,0.12), rgba(0,229,204,0.06));
+      border: 1px solid rgba(0,229,204,0.3);
+      border-radius: 999px;
+      padding: 8px 20px;
+      font-weight: 800; font-size: 1rem; color: var(--accent);
+    }
+
+    /* ── Badge Grid ── */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .badge-card {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .badge-card.unlocked {
+      border-color: var(--badge-color, #f59e0b);
+      box-shadow: 0 0 20px rgba(var(--badge-rgb, 245,158,11), 0.2);
+      transform: translateY(-2px);
+    }
+    .badge-card.locked { filter: grayscale(0.8); opacity: 0.55; }
+    .badge-icon { font-size: 2.6rem; margin-bottom: 10px; }
+    .badge-name { font-weight: 800; font-size: .88rem; color: var(--ink); margin-bottom: 4px; }
+    .badge-req  { font-size: .76rem; color: var(--muted); }
+    .badge-unlocked-tag {
+      position: absolute; top: 10px; right: 10px;
+      background: linear-gradient(135deg, #4ade80, #16a34a);
+      color: #000; font-size: .62rem; font-weight: 900;
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .badge-progress-bar {
+      width: 100%; height: 4px;
+      background: var(--surface-2); border-radius: 999px;
+      overflow: hidden; margin-top: 8px;
+    }
+    .badge-progress-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      transition: width 0.8s ease;
+    }
+
+    /* ── Points History ── */
+    .history-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .history-item:hover { border-color: var(--accent); transform: translateX(4px); }
+    .history-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .history-label { flex: 1; font-weight: 600; font-size: .88rem; }
+    .history-date { font-size: .76rem; color: var(--muted); }
+    .history-pts { font-weight: 900; font-size: 1rem; color: #4ade80; white-space: nowrap; }
+
+    /* ── Stats Strip ── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 14px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem; font-weight: 900;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: .76rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+
+    /* ── Section headers ── */
+    .store-section-head {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .store-pts-big { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="student-dashboard.html">Dashboard</a></nav></div></header>
+  <main class="portal-shell">
+    <div class="portal-side-overlay" id="sidebarOverlay"></div>
+    <aside class="portal-side" id="portalSidebar">
+      <div class="sidebar-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#00e5cc,#007a70);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">DA</div>
+          <span style="font-size:1.1rem;font-weight:800;font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
+        </div>
+        <button id="sidebarCloseBtn" class="btn btn-soft" style="padding:4px 8px;border:none;display:none;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div style="margin-bottom:24px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span style="font-size:0.9rem;font-weight:600;">Personal Workspace</span>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="portal-title">MAIN</div>
+      <a class="portal-link" href="student-dashboard.html">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Student Profile
+      </a>
+      <div class="portal-title">CONTENT STUDIO</div>
+      <a class="portal-link" href="study-materials.html">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        Study Materials
+      </a>
+      <a class="portal-link" href="ai-pdf-generator.html">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        ePDF Generator
+      </a>
+      <div class="portal-title">ASSESSMENT</div>
+      <a class="portal-link" href="mcq-test.html">
+        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        MCQ Test
+      </a>
+      <a class="portal-link active" href="mcq-store.html" style="position:relative;">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
+        🏪 Store
+        <span id="sideStorePts" style="margin-left:auto;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:999px;">0 pts</span>
+      </a>
+      <div class="sidebar-footer" style="margin-top:auto;padding-top:24px;border-top:1px solid var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-weight:700;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span id="sidePointsText">0 pts</span>
+          </span>
+        </div>
+        <div style="width:100%;height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
+          <div id="sidePointsBar" style="width:0%;height:100%;background:#38a169;border-radius:4px;"></div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:6px;">Free Plan</div>
+      </div>
+    </aside>
+
+    <section class="portal-main">
+
+      <!-- Points Hero -->
+      <div class="store-hero glass card" style="margin-bottom:24px;">
+        <div class="store-coin">
+          <div class="store-coin-face store-coin-front">🪙</div>
+          <div class="store-coin-face store-coin-back">★</div>
+        </div>
+        <div class="store-pts-big" id="heroPts">0</div>
+        <div class="store-pts-label">Total Points Earned</div>
+        <div class="store-level-badge" id="heroLevel">⚡ Level 1 — Beginner</div>
+      </div>
+
+      <!-- Stats Strip -->
+      <div class="stats-strip">
+        <div class="stat-box glass">
+          <div class="stat-num" id="statCorrect">0</div>
+          <div class="stat-label">Correct Answers</div>
+        </div>
+        <div class="stat-box glass">
+          <div class="stat-num" id="statTests">0</div>
+          <div class="stat-label">Tests Taken</div>
+        </div>
+        <div class="stat-box glass">
+          <div class="stat-num" id="statBadges">0</div>
+          <div class="stat-label">Badges Earned</div>
+        </div>
+      </div>
+
+      <!-- Achievement Badges -->
+      <div class="glass card" style="padding:24px;margin-bottom:24px;">
+        <h2 class="store-section-head">🏅 Achievement Badges</h2>
+        <div class="badge-grid" id="badgeGrid">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Points History -->
+      <div class="glass card" style="padding:24px;">
+        <h2 class="store-section-head">📜 Points History</h2>
+        <div id="historyList">
+          <p style="color:var(--muted);text-align:center;padding:20px 0;">Take your first MCQ test to earn points!</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/main.js?v=6"></script>
+  <script>
+  (function() {
+    /* ── Data from localStorage ── */
+    const pts      = parseInt(localStorage.getItem('student-points') || '0');
+    const history  = JSON.parse(localStorage.getItem('student-points-history') || '[]');
+    const correct  = parseInt(localStorage.getItem('student-correct-total') || '0');
+    const tests    = parseInt(localStorage.getItem('student-tests-taken') || '0');
+
+    /* ── Sidebar sync ── */
+    ['sideStorePts', 'sidePointsText'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = pts + ' pts';
+    });
+    const bar = document.getElementById('sidePointsBar');
+    if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
+
+    /* ── Hero ── */
+    document.getElementById('heroPts').textContent = pts.toLocaleString();
+    document.getElementById('statCorrect').textContent = correct.toLocaleString();
+    document.getElementById('statTests').textContent   = tests.toLocaleString();
+
+    /* ── Level system ── */
+    const levels = [
+      { min: 0,    label: 'Beginner',     icon: '⚡' },
+      { min: 50,   label: 'Scholar',      icon: '📚' },
+      { min: 150,  label: 'Achiever',     icon: '🌟' },
+      { min: 300,  label: 'Expert',       icon: '🔥' },
+      { min: 600,  label: 'Champion',     icon: '🏆' },
+      { min: 1000, label: 'Grandmaster',  icon: '💎' },
+    ];
+    let curLevel = levels[0];
+    for (const lv of levels) { if (pts >= lv.min) curLevel = lv; }
+    document.getElementById('heroLevel').textContent = `${curLevel.icon} Level ${levels.indexOf(curLevel)+1} — ${curLevel.label}`;
+
+    /* ── Badges ── */
+    const badges = [
+      { icon:'🥉', name:'Bronze Scholar',  req:50,   color:'#cd7f32', rgb:'205,127,50',  desc:'Earn 50 points' },
+      { icon:'🥈', name:'Silver Achiever', req:200,  color:'#aab8c2', rgb:'170,184,194', desc:'Earn 200 points' },
+      { icon:'🥇', name:'Gold Champion',   req:500,  color:'#f59e0b', rgb:'245,158,11',  desc:'Earn 500 points' },
+      { icon:'💎', name:'Diamond Master',  req:1000, color:'#67e8f9', rgb:'103,232,249', desc:'Earn 1000 points' },
+      { icon:'🎯', name:'Sharp Shooter',   req:null, special:'first-correct', color:'#4ade80', rgb:'74,222,128', desc:'Get first correct answer' },
+      { icon:'🔥', name:'On Fire',         req:null, special:'streak', color:'#fb923c', rgb:'251,146,60', desc:'Answer 5 in a row correctly' },
+      { icon:'🎓', name:'Test Taker',      req:null, special:'test', color:'#a78bfa', rgb:'167,139,250', desc:'Complete first test' },
+      { icon:'⚡', name:'Speed Demon',     req:null, special:'fast', color:'#facc15', rgb:'250,204,21', desc:'Complete a test in under 2 min' },
+    ];
+    let earnedBadges = 0;
+    const grid = document.getElementById('badgeGrid');
+    const earnedSet = JSON.parse(localStorage.getItem('student-badges') || '[]');
+    badges.forEach(b => {
+      let unlocked = false;
+      if (b.req !== null && pts >= b.req) unlocked = true;
+      if (b.special && earnedSet.includes(b.special)) unlocked = true;
+      if (unlocked) earnedBadges++;
+      const pct = b.req ? Math.min(100, Math.round((pts / b.req) * 100)) : (unlocked ? 100 : 0);
+      const card = document.createElement('div');
+      card.className = 'badge-card ' + (unlocked ? 'unlocked' : 'locked');
+      card.style.setProperty('--badge-color', b.color);
+      card.style.setProperty('--badge-rgb', b.rgb);
+      card.innerHTML = `
+        ${unlocked ? '<span class="badge-unlocked-tag">✓ EARNED</span>' : ''}
+        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-req">${b.desc}</div>
+        ${b.req ? `
+          <div class="badge-progress-bar">
+            <div class="badge-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${b.color},${b.color}88);"></div>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:4px;font-weight:700;">${pts}/${b.req}</div>
+        ` : ''}
+      `;
+      grid.appendChild(card);
+    });
+    document.getElementById('statBadges').textContent = earnedBadges;
+
+    /* ── Points History ── */
+    const histEl = document.getElementById('historyList');
+    if (history.length === 0) {
+      histEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px 0;">Take your first MCQ test to earn points!</p>';
+    } else {
+      const icons = { mcq:'📊', pdf:'📄', login:'🔐', bonus:'🎁' };
+      histEl.innerHTML = [...history].reverse().slice(0, 30).map(h => `
+        <div class="history-item">
+          <div class="history-icon">${icons[h.type] || '⭐'}</div>
+          <div>
+            <div class="history-label">${h.label}</div>
+            <div class="history-date">${new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          <div class="history-pts">+${h.pts} pts</div>
+        </div>
+      `).join('');
+    }
+
+  })();
+  </script>
+</body>
+</html>

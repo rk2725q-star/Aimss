@@ -421,8 +421,14 @@
       document.getElementById('tabExam').classList.toggle('active',  m === 'exam');
       document.getElementById('classSection').style.display = m === 'class' ? 'block' : 'none';
       document.getElementById('examSection').style.display  = m === 'exam'  ? 'block' : 'none';
-      selectedId  = null;
-      currentPath = '';
+      // Hide board picker when switching modes
+      if (document.getElementById('boardPickerWrap')) {
+        document.getElementById('boardPickerWrap').style.display = 'none';
+      }
+      selectedId    = null;
+      selectedClass = null;
+      selectedBoard = null;
+      currentPath   = '';
       document.getElementById('browserSection').style.display = 'none';
       document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(m === 'class' ? 'noClassMsg' : 'noExamMsg').style.display = 'block';
@@ -431,20 +437,102 @@
     /* ═══════════════════════════════════════
        SELECT CLASS / EXAM
     ═══════════════════════════════════════ */
+    // Board picker state
+    let selectedClass = null;
+    let selectedBoard = null;
+
+    // Boards available for class mode
+    const BOARDS = [
+      { id: 'stateboard', label: 'Stateboard', sub: 'Tamil Nadu Board', icon: '🏛️', color: '#00e5cc' },
+      { id: 'cbse',       label: 'CBSE',        sub: 'Central Board',    icon: '📘', color: '#a78bfa' },
+      { id: 'icse',       label: 'ICSE',        sub: 'Council Board',    icon: '📗', color: '#f59e0b' },
+    ];
+
+    // Board picker UI — injected below classSection
+    const boardPickerWrap = document.createElement('div');
+    boardPickerWrap.id = 'boardPickerWrap';
+    boardPickerWrap.style.cssText = 'display:none;margin-bottom:20px;';
+    boardPickerWrap.innerHTML = `
+      <div style="margin-bottom:10px;font-weight:800;font-size:.88rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">
+        📋 Select Your Board
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="boardGrid"></div>
+    `;
+    document.getElementById('classSection').after(boardPickerWrap);
+
+    // Build board cards
+    (function buildBoards() {
+      const savedBoard = localStorage.getItem('student-board') || '';
+      const grid = document.getElementById('boardGrid');
+      BOARDS.forEach(b => {
+        const card = document.createElement('button');
+        card.id = `boardBtn-${b.id}`;
+        card.className = 'sel-btn';
+        card.style.cssText = `--board-color:${b.color};`;
+        card.innerHTML = `<span class="sel-icon">${b.icon}</span><span>${b.label}</span><span class="sel-sub">${b.sub}</span>`;
+        if (savedBoard === b.id) card.classList.add('active');
+        card.onclick = () => selectBoard(b.id);
+        grid.appendChild(card);
+      });
+    })();
+
     function selectItem(itemMode, id) {
-      mode        = itemMode;
-      selectedId  = id;
-      currentPath = itemMode === 'class' ? `class-${id}` : `exam-${id}`;
-      activeFilter = 'all';
+      if (itemMode === 'class') {
+        // Show board picker for classes
+        selectedClass = id;
+        selectedBoard = null;
 
-      document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
-      const btnId = itemMode === 'class' ? `clsBtn-${id}` : `examBtn-${id}`;
-      document.getElementById(btnId)?.classList.add('active');
+        document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`clsBtn-${id}`)?.classList.add('active');
+        document.getElementById('noClassMsg').style.display = 'none';
 
-      document.getElementById('noClassMsg') && (document.getElementById('noClassMsg').style.display = 'none');
-      document.getElementById('noExamMsg')  && (document.getElementById('noExamMsg').style.display  = 'none');
+        // Show board picker
+        boardPickerWrap.style.display = 'block';
+
+        // Hide browser section until board is picked
+        document.getElementById('browserSection').style.display = 'none';
+
+        // Auto-select board if saved from signup
+        const savedBoard = localStorage.getItem('student-board') || '';
+        const knownBoardIds = BOARDS.map(b => b.id);
+        if (savedBoard && knownBoardIds.includes(savedBoard)) {
+          // Highlight the saved board card
+          document.querySelectorAll('#boardGrid .sel-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById(`boardBtn-${savedBoard}`)?.classList.add('active');
+          // Auto-navigate after short delay so user sees the pre-selection
+          setTimeout(() => selectBoard(savedBoard), 300);
+        }
+      } else {
+        // Exam mode — no board step
+        mode       = itemMode;
+        selectedId = id;
+        currentPath = `exam-${id}`;
+        activeFilter = 'all';
+        boardPickerWrap.style.display = 'none';
+
+        document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`examBtn-${id}`)?.classList.add('active');
+        document.getElementById('noExamMsg')?.style && (document.getElementById('noExamMsg').style.display = 'none');
+        document.getElementById('browserSection').style.display = 'block';
+        loadCurrentPath();
+      }
+    }
+
+    function selectBoard(boardId) {
+      selectedBoard = boardId;
+      mode          = 'class';
+      selectedId    = selectedClass;
+      currentPath   = `class-${selectedClass}/${boardId}`;
+      activeFilter  = 'all';
+
+      // Update board button highlight
+      document.querySelectorAll('#boardGrid .sel-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`boardBtn-${boardId}`)?.classList.add('active');
+
+      // Save selection for next time
+      localStorage.setItem('student-board', boardId);
+
       document.getElementById('browserSection').style.display = 'block';
-
       loadCurrentPath();
     }
 
@@ -471,6 +559,10 @@
             const ex = DrDrive.EXAMS.find(e => `exam-${e.id}` === part);
             label = ex ? `${ex.icon} ${ex.label}` : part;
           }
+        } else if (i === 1 && mode === 'class' && selectedBoard) {
+          // Board label (second segment)
+          const boardObj = BOARDS.find(b => b.id === selectedBoard);
+          label = boardObj ? `${boardObj.icon} ${boardObj.label}` : part;
         } else {
           label = part;
         }

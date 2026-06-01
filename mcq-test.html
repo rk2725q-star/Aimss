@@ -4,10 +4,109 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>MCQ Test | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Take class-wise MCQ tests published by your teacher at Dr.AIMSS Educational Academy." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ── Class Selector Row ── */
+    .mcq-class-row {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 16px 20px; background: rgba(0,229,204,0.04);
+      border: 1px solid var(--line); border-radius: 12px; margin-bottom: 18px;
+    }
+    .mcq-class-row label { font-weight: 800; font-size: .92rem; color: var(--muted); white-space: nowrap; }
+    .mcq-class-select {
+      flex: 1; min-width: 180px; max-width: 260px;
+      background: var(--surface-2); border: 1.5px solid var(--line-hard);
+      border-radius: 10px; padding: 9px 14px; color: var(--ink);
+      font: inherit; font-size: .92rem; font-weight: 700; outline: none;
+      cursor: pointer; transition: border-color .2s;
+    }
+    .mcq-class-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.12); }
+
+    /* ── Bank Cards ── */
+    .mcq-bank-card {
+      background: var(--surface); border: 1.5px solid var(--line);
+      border-radius: 14px; padding: 18px 20px; cursor: pointer;
+      transition: all .2s; display: flex; align-items: center;
+      justify-content: space-between; gap: 14px; margin-bottom: 12px;
+    }
+    .mcq-bank-card:hover { border-color: var(--accent); box-shadow: 0 0 28px rgba(0,229,204,0.12); transform: translateY(-2px); }
+    .mcq-bank-title { font-weight: 800; font-size: .96rem; color: var(--ink); margin-bottom: 4px; }
+    .mcq-bank-meta { font-size: .78rem; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+    .mcq-bank-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Quiz area ── */
+    #mcqTestArea .mcq-q-header {
+      margin-bottom: 18px;
+    }
+    #mcqBankTitle {
+      font-size: .82rem; font-weight: 700; color: var(--accent);
+      margin-bottom: 6px; display: block;
+    }
+
+    /* ── MCQ options ── */
+    .mcq-option {
+      display: block; width: 100%; text-align: left;
+      padding: 13px 18px; margin-bottom: 10px;
+      background: var(--surface-2); border: 1.5px solid var(--line);
+      border-radius: 11px; color: var(--ink); font: inherit;
+      font-size: .92rem; font-weight: 600; cursor: pointer;
+      transition: all .18s; position: relative; overflow: hidden;
+    }
+    .mcq-option::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--accent-gradient); opacity: 0; transition: opacity .18s;
+    }
+    .mcq-option:hover { border-color: var(--accent); transform: translateX(4px); }
+    .mcq-option:hover::before { opacity: 0.06; }
+    .mcq-option.correct { border-color: #4ade80; background: rgba(74,222,128,0.12); color: #4ade80; font-weight: 800; }
+    .mcq-option.wrong   { border-color: #f87171; background: rgba(248,113,113,0.1);  color: #f87171; }
+
+    /* ── Progress bar ── */
+    .mcq-progress-wrap { margin-bottom: 16px; }
+    .mcq-progress-track { width: 100%; height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+    .mcq-progress-fill { height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width .4s ease; box-shadow: 0 0 10px rgba(0,229,204,0.4); }
+    .mcq-progress-label { display: flex; justify-content: space-between; font-size: .76rem; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+
+    /* ── Score result ── */
+    .mcq-score-ring {
+      width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Outfit', sans-serif; font-size: 1.9rem; font-weight: 800;
+      position: relative;
+    }
+    .mcq-score-ring::before {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(var(--accent) 0%, transparent 0%);
+      transition: background 1s ease;
+    }
+    .mcq-score-ring-inner {
+      position: relative; z-index: 1; width: 90px; height: 90px;
+      background: var(--surface); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .mcq-score-ring-inner .pct { font-size: 1.4rem; color: var(--accent); line-height: 1; }
+    .mcq-score-ring-inner .lbl { font-size: .6rem; color: var(--muted); }
+
+    /* ── Review table ── */
+    .mcq-review-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: .84rem; }
+    .mcq-review-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .mcq-review-table td { padding: 10px 10px; border-bottom: 1px solid rgba(0,229,204,0.05); vertical-align: top; }
+    .mcq-review-table tr:hover td { background: rgba(0,229,204,0.02); }
+    .ans-correct { color: #4ade80; font-weight: 700; }
+    .ans-wrong   { color: #f87171; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .mcq-class-row { flex-direction: column; align-items: stretch; }
+      .mcq-class-select { max-width: 100%; }
+      .mcq-bank-card { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
   <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="student-dashboard.html">Main Page</a></nav></div></header>
@@ -43,7 +142,7 @@
         Study Materials
       </a>
       <a class="portal-link" href="ai-pdf-generator.html">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
         ePDF Generator
       </a>
 
@@ -66,12 +165,106 @@
         <div style="font-size:0.8rem; color:var(--muted); margin-top:6px;">Free Plan</div>
       </div>
     </aside>
+
     <section class="portal-main">
-      <div class="glass card"><h2>MCQ Test</h2><p id="mcqScore" class="status">Score: 0/4</p><div id="mcqBox"></div><div style="margin-top:14px;"><button id="mcqNext" class="btn" type="button">Next Question</button></div></div>
+      <div class="glass card" style="padding:24px;">
+
+        <!-- Header -->
+        <div style="margin-bottom:20px;">
+          <h2 style="margin:0 0 6px;">📊 MCQ Test</h2>
+          <p style="color:var(--muted);margin:0;font-size:.86rem;">Select your class to see tests published by your teacher.</p>
+        </div>
+
+        <!-- Class selector row -->
+        <div class="mcq-class-row">
+          <label for="mcqClassSelect">🎓 Your Class:</label>
+          <select id="mcqClassSelect" class="mcq-class-select">
+            <option value="">— Choose your class —</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="neet">NEET Preparation</option>
+            <option value="jee">JEE Preparation</option>
+          </select>
+          <span id="mcqScore" style="font-size:.88rem;font-weight:700;color:var(--accent);margin-left:auto;"></span>
+        </div>
+
+        <!-- Bank list (shown when class is selected) -->
+        <div id="mcqBankList2" style="min-height:80px;"></div>
+
+        <!-- Quiz test area (shown during active test) -->
+        <div id="mcqTestArea" style="display:none;">
+          <div class="mcq-q-header">
+            <span id="mcqBankTitle"></span>
+            <div class="mcq-progress-wrap">
+              <div class="mcq-progress-label">
+                <span id="mcqProgressLabel">Question 1</span>
+                <span id="mcqProgressRight"></span>
+              </div>
+              <div class="mcq-progress-track"><div class="mcq-progress-fill" id="mcqProgressFill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div id="mcqBox"></div>
+        </div>
+
+        <!-- Next button -->
+        <div style="margin-top:18px;">
+          <button id="mcqNext" class="btn" type="button" style="display:none;padding:11px 28px;">Next Question →</button>
+        </div>
+      </div>
     </section>
   </main>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js"></script>
-  <script src="assets/js/main.js?v=3"></script>
+  <script src="assets/js/main.js?v=4"></script>
+  <script>
+    /* ── wire progress bar to quiz flow ── */
+    const _origStart = window.startMcqBank;
+    window.startMcqBank = function(bankId) {
+      _origStart && _origStart(bankId);
+      // update progress bar on each Next click
+      const nextBtn = document.getElementById('mcqNext');
+      if (!nextBtn) return;
+      const orig = nextBtn.onclick;
+    };
+
+    // Enhance progress display after bank loads
+    const mcqNextBtn = document.getElementById('mcqNext');
+    if (mcqNextBtn) {
+      let _qIdx = 0, _qTotal = 0;
+      const origClick = mcqNextBtn.addEventListener.bind(mcqNextBtn);
+      // We hook into the bank start via MutationObserver on the box
+      const observer = new MutationObserver(() => {
+        const fill = document.getElementById('mcqProgressFill');
+        const lbl  = document.getElementById('mcqProgressLabel');
+        const rhs  = document.getElementById('mcqProgressRight');
+        const scoreEl = document.getElementById('mcqScore');
+        if (!fill) return;
+        // figure out current Q index from score text
+        const scoreText = scoreEl ? scoreEl.textContent : '';
+        const match = scoreText.match(/Score: (\d+)\/(\d+)/);
+        if (match) {
+          const total = parseInt(match[2]);
+          const h3 = document.querySelector('#mcqBox h3');
+          if (h3) {
+            const qMatch = h3.textContent.match(/^Q(\d+)\./);
+            if (qMatch) {
+              const qi = parseInt(qMatch[1]);
+              const pct = ((qi - 1) / total) * 100;
+              fill.style.width = pct + '%';
+              if (lbl) lbl.textContent = `Question ${qi} of ${total}`;
+              if (rhs) rhs.textContent = `${Math.round(pct)}% complete`;
+            }
+          }
+        }
+      });
+      observer.observe(document.getElementById('mcqBox') || document.body, { childList: true, subtree: true });
+    }
+  </script>
 </body>
 </html>

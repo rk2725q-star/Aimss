@@ -659,6 +659,39 @@ Requirements:
           ? `<span class="ai-mode-badge" style="--mode-color:${mode.color}">${mode.icon} ${mode.label}</span>`
           : '';
         bubble.innerHTML = `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${prov.label}</span>`;
+
+        // ── MCQ mode: add "Upload to Class" button ──
+        if (ACTIVE_CHAT_MODE === 'mcq') {
+          const rawText = result.text;
+          const uploadRow = document.createElement('div');
+          uploadRow.style.cssText = 'margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+          uploadRow.innerHTML = `
+            <select id="mcqChatClassPicker" style="background:var(--surface-2);border:1px solid var(--line-hard);border-radius:8px;padding:6px 12px;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;outline:none;cursor:pointer;">
+              <option value="">Select class to publish…</option>
+              <option value="6">Class 6</option><option value="7">Class 7</option>
+              <option value="8">Class 8</option><option value="9">Class 9</option>
+              <option value="10">Class 10</option><option value="11">Class 11</option>
+              <option value="12">Class 12</option>
+              <option value="neet">NEET</option><option value="jee">JEE</option>
+            </select>
+            <button id="mcqChatUploadBtn" style="background:linear-gradient(135deg,#4ade80,#16a34a);border:none;border-radius:8px;padding:6px 14px;color:#000;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;">📤 Upload to Class</button>
+            <span id="mcqChatUploadStatus" style="font-size:.78rem;color:var(--accent);"></span>
+          `;
+          uploadRow.querySelector('#mcqChatUploadBtn').addEventListener('click', () => {
+            const classId = uploadRow.querySelector('#mcqChatClassPicker').value;
+            const statusEl = uploadRow.querySelector('#mcqChatUploadStatus');
+            if (!classId) { statusEl.textContent = '⚠️ Pick a class first'; return; }
+            const qs = parseMcqText(rawText);
+            if (!qs.length) { statusEl.textContent = '❌ Could not parse questions'; return; }
+            const topicGuess = msg.length < 80 ? msg : msg.slice(0, 60) + '…';
+            saveMcqBank(classId, `${topicGuess} — Class ${classId}`, qs);
+            renderMcqBankManager && renderMcqBankManager();
+            statusEl.innerHTML = `<span style="color:#4ade80">✅ Published ${qs.length} Qs to Class ${classId}!</span>`;
+            showMcqToast && showMcqToast(`✅ ${qs.length} MCQs published to Class ${classId}`);
+          });
+          bubble.appendChild(uploadRow);
+        }
+
         log.appendChild(bubble);
         log.scrollTop = log.scrollHeight;
         setStatus(prov.icon + ' ' + prov.label);
@@ -1097,69 +1130,466 @@ Keep it concise and exam oriented.`;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   MCQ BANK HELPERS  — teacher-published, class-keyed
+═══════════════════════════════════════════════════════════════ */
+
+/** Parse raw AI MCQ text into [{q, a[], c}] array */
+function parseMcqText(raw) {
+  const questions = [];
+  // Split on Q1. / Q2. ... pattern
+  const blocks = raw.split(/Q\d+[\.\)]\s+/i).filter(b => b.trim().length > 0);
+  blocks.forEach(block => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return;
+    const qText = lines[0].replace(/^[\*\#]+/, '').trim();
+    const opts = [];
+    let correctIdx = 0;
+    let answerLine = '';
+    lines.slice(1).forEach(line => {
+      const optMatch = line.match(/^[A-Da-d][\.\)]\s+(.+)/);
+      if (optMatch) opts.push(optMatch[1].trim());
+      const ansMatch = line.match(/^[Aa]nswer\s*[:\-]\s*([A-Da-d])/);
+      if (ansMatch) answerLine = ansMatch[1].toUpperCase();
+    });
+    if (opts.length >= 2 && qText) {
+      if (answerLine) correctIdx = Math.max(0, 'ABCD'.indexOf(answerLine));
+      questions.push({ q: qText, a: opts.slice(0, 4), c: correctIdx });
+    }
+  });
+  return questions;
+}
+
+/** Save a named MCQ bank for a class */
+function saveMcqBank(classId, title, questions) {
+  const id = `mcqbank-${Date.now()}`;
+  const bank = { id, classId, title, questions, createdAt: new Date().toISOString() };
+  const raw = JSON.parse(localStorage.getItem('mcq-banks-index') || '[]');
+  raw.unshift({ id, classId, title, count: questions.length, createdAt: bank.createdAt });
+  localStorage.setItem('mcq-banks-index', JSON.stringify(raw));
+  localStorage.setItem(`mcq-bank-${id}`, JSON.stringify(bank));
+  return id;
+}
+
+/** Load index of all banks, optionally filtered by classId */
+function loadMcqBankIndex(classId = null) {
+  const raw = JSON.parse(localStorage.getItem('mcq-banks-index') || '[]');
+  if (!classId) return raw;
+  return raw.filter(b => b.classId === classId);
+}
+
+/** Load a single bank by id */
+function loadMcqBank(id) {
+  return JSON.parse(localStorage.getItem(`mcq-bank-${id}`) || 'null');
+}
+
+/** Delete a bank */
+function deleteMcqBank(id) {
+  const raw = JSON.parse(localStorage.getItem('mcq-banks-index') || '[]');
+  localStorage.setItem('mcq-banks-index', JSON.stringify(raw.filter(b => b.id !== id)));
+  localStorage.removeItem(`mcq-bank-${id}`);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TEACHER MCQ MANAGER — Command Center
+═══════════════════════════════════════════════════════════════ */
+function initTeacherMcqManager() {
+  /* ── Tab switcher ── */
+  const tabAI   = document.getElementById('mcqTabAI');
+  const tabFile = document.getElementById('mcqTabFile');
+  const panelAI   = document.getElementById('mcqPanelAI');
+  const panelFile = document.getElementById('mcqPanelFile');
+  if (!tabAI || !tabFile) return;
+
+  const switchMcqTab = (tab) => {
+    tabAI.classList.toggle('active', tab === 'ai');
+    tabFile.classList.toggle('active', tab === 'file');
+    panelAI.style.display   = tab === 'ai'   ? '' : 'none';
+    panelFile.style.display = tab === 'file' ? '' : 'none';
+  };
+  tabAI.addEventListener('click',   () => switchMcqTab('ai'));
+  tabFile.addEventListener('click', () => switchMcqTab('file'));
+
+  /* ── Shared preview state ── */
+  let pendingQuestions = [];
+  let pendingClass = '';
+  let pendingTitle = '';
+
+  const previewWrap   = document.getElementById('mcqPreviewWrap');
+  const previewBody   = document.getElementById('mcqPreviewBody');
+  const publishBtn    = document.getElementById('mcqPublishBtn');
+  const previewCount  = document.getElementById('mcqPreviewCount');
+
+  function showPreview(questions, classId, title) {
+    pendingQuestions = questions;
+    pendingClass     = classId;
+    pendingTitle     = title;
+    previewCount.textContent = `${questions.length} question${questions.length !== 1 ? 's' : ''} ready`;
+    previewBody.innerHTML = '';
+    questions.forEach((q, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--accent);font-weight:700;width:32px">${i+1}</td>
+        <td style="font-weight:600">${q.q}</td>
+        <td>${q.a.map((opt, ai) => `<span style="color:${ai===q.c?'#4ade80':'var(--muted)'}${ai===q.c?';font-weight:700':''}">${'ABCD'[ai]}) ${opt}</span>`).join(' ')}</td>
+      `;
+      previewBody.appendChild(tr);
+    });
+    previewWrap.style.display = '';
+    publishBtn.disabled = questions.length === 0;
+    previewWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /* Publish button */
+  publishBtn && publishBtn.addEventListener('click', () => {
+    if (!pendingQuestions.length) return;
+    saveMcqBank(pendingClass, pendingTitle, pendingQuestions);
+    renderMcqBankManager();
+    showMcqToast(`✅ Published "${pendingTitle}" to Class ${pendingClass} (${pendingQuestions.length} Qs)`);
+    previewWrap.style.display = 'none';
+    pendingQuestions = [];
+    // Reset forms
+    const aiForm   = document.getElementById('mcqAiForm');
+    const fileForm = document.getElementById('mcqFileForm');
+    if (aiForm)   aiForm.reset();
+    if (fileForm) fileForm.reset();
+    document.getElementById('mcqFileStatusMsg') && (document.getElementById('mcqFileStatusMsg').textContent = '');
+  });
+
+  /* ── AI GENERATE panel ── */
+  const aiForm   = document.getElementById('mcqAiForm');
+  const aiStatus = document.getElementById('mcqAiStatus');
+  aiForm && aiForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const topic   = document.getElementById('mcqAiTopic').value.trim();
+    const classId = document.getElementById('mcqAiClass').value;
+    const count   = parseInt(document.getElementById('mcqAiCount').value) || 10;
+    const diff    = document.getElementById('mcqAiDiff').value;
+    if (!topic || !classId) { aiStatus.textContent = 'Please fill all fields.'; return; }
+
+    aiStatus.innerHTML = '<span style="color:var(--accent)">⏳ Generating questions with AI…</span>';
+    const genBtn = document.getElementById('mcqAiGenBtn');
+    genBtn.disabled = true;
+
+    const prompt = `You are Dr.AIMSS MCQ expert. Generate exactly ${count} ${diff} difficulty MCQ questions on: "${topic}" for Class ${classId} students (NEET/CBSE/Stateboard).
+
+Format each question EXACTLY like this (no extra text before or after):
+Q1. [Question text]
+A) option1 B) option2 C) option3 D) option4
+Answer: [Letter]
+
+Q2. [Question text]
+...
+
+Generate all ${count} questions now. Make them exam-quality. Plain text only.`;
+
+    try {
+      const result = await callAIWithFallback([{ role: 'user', content: prompt }], 4000);
+      if (!result) throw new Error('AI unavailable');
+      const qs = parseMcqText(result.text);
+      if (qs.length === 0) throw new Error('Could not parse questions');
+      const title = `${topic} — Class ${classId}`;
+      showPreview(qs, classId, title);
+      aiStatus.innerHTML = `<span style="color:#4ade80">✅ ${qs.length} questions generated!</span>`;
+    } catch (err) {
+      aiStatus.innerHTML = `<span style="color:#f87171">❌ ${err.message}. Try again.</span>`;
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+
+  /* ── FILE UPLOAD panel ── */
+  const fileForm   = document.getElementById('mcqFileForm');
+  const fileInput  = document.getElementById('mcqFileInput');
+  const fileStatus = document.getElementById('mcqFileStatusMsg');
+
+  fileForm && fileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const classId = document.getElementById('mcqFileClass').value;
+    const count   = parseInt(document.getElementById('mcqFileCount').value) || 10;
+    const file    = fileInput && fileInput.files[0];
+    if (!file || !classId) { fileStatus.textContent = 'Please select a file and class.'; return; }
+
+    fileStatus.innerHTML = '<span style="color:var(--accent)">⏳ Reading file…</span>';
+    const uploadBtn = document.getElementById('mcqFileUploadBtn');
+    uploadBtn.disabled = true;
+
+    try {
+      let text = '';
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (ext === 'txt') {
+        text = await file.text();
+      } else if (ext === 'pdf') {
+        // Use PDF.js if available
+        if (window.pdfjsLib) {
+          const buf = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+          const pages = [];
+          for (let p = 1; p <= Math.min(pdf.numPages, 15); p++) {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            pages.push(content.items.map(i => i.str).join(' '));
+          }
+          text = pages.join('\n\n');
+        } else {
+          throw new Error('PDF reading requires PDF.js. Please upload a .txt or .docx file instead.');
+        }
+      } else if (ext === 'docx') {
+        // Basic DOCX text extraction (reads raw XML text)
+        const buf = await file.arrayBuffer();
+        const uint8 = new Uint8Array(buf);
+        // Look for word/document.xml in the zip
+        const decoder = new TextDecoder('utf-8');
+        const str = decoder.decode(uint8);
+        // Extract text between XML tags
+        const xmlMatches = str.match(/<w:t[^>]*>([^<]+)<\/w:t>/g) || [];
+        text = xmlMatches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
+        if (!text.trim()) throw new Error('Could not extract text from DOCX. Try saving as .txt first.');
+      } else {
+        // Try to read as plain text
+        text = await file.text();
+      }
+
+      if (!text || text.trim().length < 30) throw new Error('File appears to be empty or unreadable.');
+
+      fileStatus.innerHTML = '<span style="color:var(--accent)">🤖 AI converting to MCQ format…</span>';
+      // Truncate if too long
+      const trimmed = text.slice(0, 6000);
+      const prompt = `You are Dr.AIMSS MCQ expert. Read the following educational content and generate exactly ${count} MCQ questions from it for Class ${classId} students.
+
+CONTENT:
+${trimmed}
+
+Format each question EXACTLY like this:
+Q1. [Question text]
+A) option1 B) option2 C) option3 D) option4
+Answer: [Letter]
+
+Q2. [Question text]
+...
+
+Generate all ${count} questions now. Questions must be based strictly on the content above. Plain text only.`;
+
+      const result = await callAIWithFallback([{ role: 'user', content: prompt }], 4000);
+      if (!result) throw new Error('AI unavailable');
+      const qs = parseMcqText(result.text);
+      if (qs.length === 0) throw new Error('Could not parse questions from AI response');
+      const title = `${file.name.replace(/\.[^\.]+$/, '')} — Class ${classId}`;
+      showPreview(qs, classId, title);
+      fileStatus.innerHTML = `<span style="color:#4ade80">✅ ${qs.length} questions extracted from file!</span>`;
+    } catch (err) {
+      fileStatus.innerHTML = `<span style="color:#f87171">❌ ${err.message}</span>`;
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  });
+
+  /* ── MCQ Bank Manager ── */
+  renderMcqBankManager();
+}
+
+function renderMcqBankManager() {
+  const wrap = document.getElementById('mcqBankList');
+  if (!wrap) return;
+  const banks = loadMcqBankIndex();
+  if (!banks.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><h3>No Tests Published Yet</h3><p>Generate or upload MCQs above to publish tests.</p></div>`;
+    return;
+  }
+  const classColors = { '6':'#06b6d4','7':'#8b5cf6','8':'#f59e0b','9':'#10b981','10':'#ef4444','11':'#00e5cc','12':'#ffd700','neet':'#f97316','jee':'#a78bfa' };
+  wrap.innerHTML = `
+    <table class="file-table" style="margin-top:4px">
+      <thead><tr>
+        <th>Test Title</th><th>Class</th><th>Questions</th><th>Created</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${banks.map(b => `
+          <tr>
+            <td><div class="file-name-cell"><span style="font-size:1.1rem">📝</span><span class="file-name-text" title="${b.title}">${b.title}</span></div></td>
+            <td><span style="background:${classColors[b.classId]||'#00e5cc'}22;border:1px solid ${classColors[b.classId]||'#00e5cc'}44;color:${classColors[b.classId]||'#00e5cc'};padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:800">Class ${b.classId}</span></td>
+            <td style="font-weight:700;color:var(--accent)">${b.count}</td>
+            <td style="color:var(--muted);font-size:.8rem">${new Date(b.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
+            <td>
+              <button class="action-btn btn-del" onclick="deleteMcqBank('${b.id}');renderMcqBankManager();showMcqToast('🗑️ Test deleted.')">🗑 Delete</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function showMcqToast(msg) {
+  let toast = document.getElementById('mcqToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'mcqToast';
+    toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:linear-gradient(135deg,#080810,#0d0d18);border:1px solid var(--line-hard);border-radius:12px;padding:12px 22px;font-size:.88rem;font-weight:700;color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,0.8);z-index:99999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;white-space:nowrap';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  requestAnimationFrame(() => { toast.style.transform = 'translateX(-50%) translateY(0)'; toast.style.opacity = '1'; });
+  clearTimeout(toast._to);
+  toast._to = setTimeout(() => { toast.style.transform = 'translateX(-50%) translateY(60px)'; toast.style.opacity = '0'; }, 3200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STUDENT MCQ TEST — class-picker + bank-picker + quiz flow
+═══════════════════════════════════════════════════════════════ */
 function initMcqTest() {
-  const box = document.getElementById('mcqBox');
+  const box     = document.getElementById('mcqBox');
   const nextBtn = document.getElementById('mcqNext');
   const scoreEl = document.getElementById('mcqScore');
   if (!box || !nextBtn || !scoreEl) return;
 
-  const defaultQuestions = [
-    { q: 'What is the SI unit of force?', a: ['Newton', 'Joule', 'Watt', 'Pascal'], c: 0 },
-    { q: 'DNA full form is?', a: ['Deoxyribo Nucleic Acid', 'Dynamic Nuclear Acid', 'Double Nitrogen Atom', 'None'], c: 0 },
-    { q: '2 + 3 x 4 = ?', a: ['20', '14', '24', '11'], c: 1 },
-    { q: 'Plant food preparation process?', a: ['Respiration', 'Photosynthesis', 'Transpiration', 'Digestion'], c: 1 }
-  ];
-  const custom = JSON.parse(localStorage.getItem('custom-mcqs-v1') || '[]');
-  const questions = [...defaultQuestions, ...custom];
-  let idx = 0;
-  let score = 0;
-  let locked = false;
+  // Detect new-style page with class/bank selectors
+  const classSelect = document.getElementById('mcqClassSelect');
+  const bankList    = document.getElementById('mcqBankList2');
+  const testArea    = document.getElementById('mcqTestArea');
 
-  const render = () => {
-    locked = false;
-    const cur = questions[idx];
-    box.innerHTML = `<h3>Q${idx + 1}. ${cur.q}</h3>`;
-    cur.a.forEach((opt, i) => {
-      const b = document.createElement('button');
-      b.className = 'mcq-option';
-      b.type = 'button';
-      b.textContent = opt;
-      b.addEventListener('click', () => {
-        if (locked) return;
-        locked = true;
-        if (i === cur.c) {
-          b.classList.add('correct');
-          score += 1;
-        } else {
-          b.classList.add('wrong');
-        }
-        scoreEl.textContent = `Score: ${score}/${questions.length}`;
+  if (classSelect && bankList) {
+    /* ── NEW STUDENT UI: class picker → bank picker → quiz ── */
+    nextBtn.style.display = 'none';
+    testArea && (testArea.style.display = 'none');
+
+    let activeQuestions = [];
+    let idx = 0, score = 0, locked = false;
+
+    const renderBankList = () => {
+      const cid = classSelect.value;
+      if (!cid) { bankList.innerHTML = '<p style="color:var(--muted);text-align:center">Select your class above ☝️</p>'; return; }
+      const banks = loadMcqBankIndex(cid);
+      if (!banks.length) {
+        bankList.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><h3>No Tests for Class ${cid}</h3><p>Your teacher hasn't published any tests yet.</p></div>`;
+        return;
+      }
+      bankList.innerHTML = banks.map(b => `
+        <div class="mcq-bank-card" data-id="${b.id}" style="background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;transition:all .2s;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-weight:800;font-size:.96rem;color:var(--ink);margin-bottom:3px">📝 ${b.title}</div>
+            <div style="font-size:.78rem;color:var(--muted)">${b.count} questions • ${new Date(b.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</div>
+          </div>
+          <button class="btn" style="flex-shrink:0;font-size:.82rem;padding:8px 18px" onclick="event.stopPropagation();startMcqBank('${b.id}')">Start Test ▶</button>
+        </div>
+      `).join('');
+    };
+    classSelect.addEventListener('change', renderBankList);
+    renderBankList();
+
+    window.startMcqBank = (bankId) => {
+      const bank = loadMcqBank(bankId);
+      if (!bank || !bank.questions.length) return;
+      activeQuestions = bank.questions;
+      idx = 0; score = 0; locked = false;
+      bankList.style.display = 'none';
+      classSelect.closest('.mcq-class-row') && (classSelect.closest('.mcq-class-row').style.display = 'none');
+      testArea && (testArea.style.display = '');
+      nextBtn.style.display = '';
+      nextBtn.disabled = false;
+      scoreEl.textContent = `Score: 0/${activeQuestions.length}`;
+      const bankTitle = document.getElementById('mcqBankTitle');
+      if (bankTitle) bankTitle.textContent = `📝 ${bank.title}`;
+      renderQ();
+    };
+
+    const renderQ = () => {
+      locked = false;
+      const cur = activeQuestions[idx];
+      box.innerHTML = `<h3 style="margin-bottom:14px">Q${idx + 1}. ${cur.q}</h3>`;
+      cur.a.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.className = 'mcq-option';
+        b.type = 'button';
+        b.textContent = `${'ABCD'[i]}) ${opt}`;
+        b.addEventListener('click', () => {
+          if (locked) return;
+          locked = true;
+          box.querySelectorAll('.mcq-option').forEach((btn, bi) => {
+            if (bi === cur.c) btn.classList.add('correct');
+            else if (bi === i && i !== cur.c) btn.classList.add('wrong');
+          });
+          if (i === cur.c) score++;
+          scoreEl.textContent = `Score: ${score}/${activeQuestions.length}`;
+        });
+        box.appendChild(b);
       });
-      box.appendChild(b);
+    };
+
+    nextBtn.addEventListener('click', () => {
+      idx++;
+      if (idx >= activeQuestions.length) {
+        const pct = Math.round((score / activeQuestions.length) * 100);
+        localStorage.setItem('latest-mcq-score', String(pct));
+        awardPoints(score * 5);
+        initStudentRewards && initStudentRewards();
+        box.innerHTML = `
+          <div style="text-align:center;padding:20px 0">
+            <div style="font-size:3rem;margin-bottom:12px">${pct >= 80 ? '🏆' : pct >= 50 ? '✅' : '📚'}</div>
+            <h2 style="margin-bottom:8px">Test Complete!</h2>
+            <div style="font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:6px">${pct}%</div>
+            <p style="color:var(--muted)">Score: ${score} / ${activeQuestions.length}</p>
+            <button class="btn" style="margin-top:16px" onclick="location.reload()">↩ Try Another Test</button>
+          </div>`;
+        nextBtn.style.display = 'none';
+        return;
+      }
+      renderQ();
     });
-  };
 
-  nextBtn.addEventListener('click', () => {
-    idx += 1;
-    if (idx >= questions.length) {
-      localStorage.setItem('latest-mcq-score', String(Math.round((score / questions.length) * 100)));
-      awardPoints(score * 5);
-      initStudentRewards();
-      box.innerHTML = `<h3>Test Complete</h3><p>Your score is ${score}/${questions.length}.</p>`;
-      nextBtn.disabled = true;
-      return;
-    }
+  } else {
+    /* ── LEGACY fallback: default questions only ── */
+    const defaultQuestions = [
+      { q: 'What is the SI unit of force?', a: ['Newton', 'Joule', 'Watt', 'Pascal'], c: 0 },
+      { q: 'DNA full form is?', a: ['Deoxyribo Nucleic Acid', 'Dynamic Nuclear Acid', 'Double Nitrogen Atom', 'None'], c: 0 },
+      { q: '2 + 3 x 4 = ?', a: ['20', '14', '24', '11'], c: 1 },
+      { q: 'Plant food preparation process?', a: ['Respiration', 'Photosynthesis', 'Transpiration', 'Digestion'], c: 1 }
+    ];
+    const custom = JSON.parse(localStorage.getItem('custom-mcqs-v1') || '[]');
+    const questions = [...defaultQuestions, ...custom];
+    let idx = 0, score = 0, locked = false;
+
+    const render = () => {
+      locked = false;
+      const cur = questions[idx];
+      box.innerHTML = `<h3>Q${idx + 1}. ${cur.q}</h3>`;
+      cur.a.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.className = 'mcq-option';
+        b.type = 'button';
+        b.textContent = opt;
+        b.addEventListener('click', () => {
+          if (locked) return;
+          locked = true;
+          if (i === cur.c) { b.classList.add('correct'); score++; }
+          else b.classList.add('wrong');
+          scoreEl.textContent = `Score: ${score}/${questions.length}`;
+        });
+        box.appendChild(b);
+      });
+    };
+
+    nextBtn.addEventListener('click', () => {
+      idx++;
+      if (idx >= questions.length) {
+        localStorage.setItem('latest-mcq-score', String(Math.round((score / questions.length) * 100)));
+        awardPoints(score * 5);
+        initStudentRewards && initStudentRewards();
+        box.innerHTML = `<h3>Test Complete</h3><p>Your score is ${score}/${questions.length}.</p>`;
+        nextBtn.disabled = true;
+        return;
+      }
+      render();
+    });
     render();
-  });
-
-  render();
+  }
 }
 
 function initTeacherMcq() {
+  // Legacy single-question creator — kept for backward compat
   const form = document.getElementById('mcqCreatorForm');
   const status = document.getElementById('mcqCreatorStatus');
   if (!form || !status) return;
-
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const q = document.getElementById('mcqQuestion').value.trim();
@@ -1170,13 +1600,10 @@ function initTeacherMcq() {
       document.getElementById('mcqOpt3').value.trim()
     ];
     const c = Number(document.getElementById('mcqCorrect').value);
-    
     if (!q || a.some(opt => !opt)) return;
-
     const existing = JSON.parse(localStorage.getItem('custom-mcqs-v1') || '[]');
     existing.push({ q, a, c });
     localStorage.setItem('custom-mcqs-v1', JSON.stringify(existing));
-    
     status.textContent = 'Question added successfully!';
     form.reset();
     setTimeout(() => { status.textContent = ''; }, 3000);
@@ -1284,6 +1711,7 @@ initMcqTest();
 initStudentRewards();
 initSidebarMobile();
 initTeacherVideo();
+initTeacherMcqManager();
 initMobileNav();
 
 /* ══ MOBILE NAV — injected dynamically on every page ══ */

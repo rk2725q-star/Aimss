@@ -122,6 +122,17 @@
     /* Password strength */
     .pwd-strength { margin-top:6px; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden; }
     .pwd-strength-bar { height:100%; width:0%; border-radius:2px; transition:width .3s,background .3s; }
+
+    /* Select dropdowns (board, class) */
+    .login-field option {
+      background: #0d0d18;
+      color: #fff;
+    }
+    select.login-field {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
   </style>
 </head>
 <body>
@@ -179,6 +190,43 @@
             <input id="signupEmail" class="login-field" type="email" placeholder="you@email.com" required />
           </div>
         </div>
+
+        <!-- Board selector -->
+        <div class="login-field-wrap">
+          <label for="signupBoard" class="login-field-label">Your Board</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <select id="signupBoard" class="login-field" required style="padding-left:44px;cursor:pointer;appearance:none;-webkit-appearance:none;">
+              <option value="">-- Select your board --</option>
+              <option value="stateboard">Stateboard (Tamil Nadu)</option>
+              <option value="cbse">CBSE</option>
+              <option value="icse">ICSE</option>
+              <option value="neet">NEET Preparation</option>
+              <option value="jee">JEE Preparation</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Class selector -->
+        <div class="login-field-wrap">
+          <label for="signupClass" class="login-field-label">Your Class</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <select id="signupClass" class="login-field" required style="padding-left:44px;cursor:pointer;appearance:none;-webkit-appearance:none;">
+              <option value="">-- Select your class --</option>
+              <option value="6">Class 6</option>
+              <option value="7">Class 7</option>
+              <option value="8">Class 8</option>
+              <option value="9">Class 9</option>
+              <option value="10">Class 10</option>
+              <option value="11">Class 11</option>
+              <option value="12">Class 12</option>
+              <option value="neet">NEET</option>
+              <option value="jee">JEE</option>
+            </select>
+          </div>
+        </div>
+
         <div class="login-field-wrap">
           <label for="signupPassword" class="login-field-label">Password</label>
           <div style="position:relative;">
@@ -273,8 +321,12 @@
       const email   = document.getElementById('signupEmail').value.trim();
       const pass    = document.getElementById('signupPassword').value;
       const confirm = document.getElementById('signupConfirm').value;
+      const board   = document.getElementById('signupBoard').value;
+      const cls     = document.getElementById('signupClass').value;
 
       if (!email || !pass) { setStatus('signupStatus', 'Please fill in all fields.', 'error'); return; }
+      if (!board) { setStatus('signupStatus', 'Please select your board (Stateboard / CBSE / etc.).', 'error'); return; }
+      if (!cls)   { setStatus('signupStatus', 'Please select your class.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
       if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
 
@@ -285,6 +337,9 @@
         else if (r.needsConfirmation) {
           setStatus('signupStatus', '📧 ' + r.message, 'info');
         } else {
+          // Save board and class selection for personalized experience
+          localStorage.setItem('student-board', board);
+          localStorage.setItem('student-class', cls);
           setStatus('signupStatus', '✓ Account created! Redirecting to dashboard...', 'success');
           setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 1000);
         }
@@ -293,9 +348,11 @@
     });
 
     // Clear status on typing
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm'].forEach(id => {
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','signupBoard','signupClass'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
+      document.getElementById(id)?.addEventListener('change', clearAll);
     });
+
   </script>
 </body>
 </html>

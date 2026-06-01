@@ -1576,7 +1576,11 @@ function renderMcqBankManager() {
     wrap.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><h3>No Tests Published Yet</h3><p>Generate or upload MCQs above to publish tests.</p></div>`;
     return;
   }
-  const classColors = { '6':'#06b6d4','7':'#8b5cf6','8':'#f59e0b','9':'#10b981','10':'#ef4444','11':'#00e5cc','12':'#ffd700','neet':'#f97316','jee':'#a78bfa' };
+  const classColors = {
+    '6': '#06b6d4', '7': '#8b5cf6', '8': '#f59e0b', '9': '#10b981', '10': '#ef4444',
+    '11': '#00e5cc', '12': '#ffd700', 'neet': '#f97316', 'jee': '#a78bfa',
+    'ncert': '#ec4899', 'nda': '#34d399', 'upsc': '#3b82f6', 'tnpsc': '#fb7185', 'tnspc': '#fb7185'
+  };
   wrap.innerHTML = `
     <table class="file-table" style="margin-top:4px">
       <thead><tr>
@@ -1586,7 +1590,7 @@ function renderMcqBankManager() {
         ${banks.map(b => `
           <tr>
             <td><div class="file-name-cell"><span style="font-size:1.1rem">📝</span><span class="file-name-text" title="${b.title}">${b.title}</span></div></td>
-            <td><span style="background:${classColors[b.classId]||'#00e5cc'}22;border:1px solid ${classColors[b.classId]||'#00e5cc'}44;color:${classColors[b.classId]||'#00e5cc'};padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:800">Class ${b.classId}</span></td>
+            <td><span style="background:${classColors[b.classId]||'#00e5cc'}22;border:1px solid ${classColors[b.classId]||'#00e5cc'}44;color:${classColors[b.classId]||'#00e5cc'};padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:800">${isNaN(b.classId) ? b.classId.toUpperCase() : 'Class ' + b.classId}</span></td>
             <td style="font-weight:700;color:var(--accent)">${b.count}</td>
             <td style="color:var(--muted);font-size:.8rem">${new Date(b.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
             <td>

@@ -667,18 +667,26 @@ Requirements:
           uploadRow.style.cssText = 'margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
           uploadRow.innerHTML = `
             <select id="mcqChatClassPicker" style="background:var(--surface-2);border:1px solid var(--line-hard);border-radius:8px;padding:6px 12px;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;outline:none;cursor:pointer;">
-              <option value="">Select class to publish…</option>
+              <option value="">Select class…</option>
               <option value="6">Class 6</option><option value="7">Class 7</option>
               <option value="8">Class 8</option><option value="9">Class 9</option>
               <option value="10">Class 10</option><option value="11">Class 11</option>
               <option value="12">Class 12</option>
               <option value="neet">NEET</option><option value="jee">JEE</option>
+              <option value="ncert">NCERT</option><option value="nda">NDA</option>
+              <option value="upsc">UPSC</option><option value="tnpsc">TNPSC</option>
+            </select>
+            <select id="mcqChatBoardPicker" style="background:var(--surface-2);border:1px solid var(--line-hard);border-radius:8px;padding:6px 12px;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;outline:none;cursor:pointer;">
+              <option value="">Select board (optional)…</option>
+              <option value="stateboard">Stateboard</option>
+              <option value="cbse">CBSE</option>
             </select>
             <button id="mcqChatUploadBtn" style="background:linear-gradient(135deg,#4ade80,#16a34a);border:none;border-radius:8px;padding:6px 14px;color:#000;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;">📤 Upload to Class</button>
             <span id="mcqChatUploadStatus" style="font-size:.78rem;color:var(--accent);"></span>
           `;
           uploadRow.querySelector('#mcqChatUploadBtn').addEventListener('click', () => {
             const classId = uploadRow.querySelector('#mcqChatClassPicker').value;
+            const board = uploadRow.querySelector('#mcqChatBoardPicker').value;
             const statusEl = uploadRow.querySelector('#mcqChatUploadStatus');
             if (!classId) { statusEl.textContent = '⚠️ Pick a class first'; return; }
             // ── Teacher-only gate ──
@@ -690,10 +698,11 @@ Requirements:
             const qs = parseMcqText(rawText);
             if (!qs.length) { statusEl.textContent = '❌ Could not parse questions'; return; }
             const topicGuess = msg.length < 80 ? msg : msg.slice(0, 60) + '…';
-            saveMcqBank(classId, `${topicGuess} — Class ${classId}`, qs);
+            const finalClassId = board ? `${classId}-${board}` : classId;
+            saveMcqBank(finalClassId, `${topicGuess} — ${finalClassId.toUpperCase().replace('-',' ')}`, qs);
             renderMcqBankManager && renderMcqBankManager();
-            statusEl.innerHTML = `<span style="color:#4ade80">✅ Published ${qs.length} Qs to Class ${classId}!</span>`;
-            showMcqToast && showMcqToast(`✅ ${qs.length} MCQs published to Class ${classId}`);
+            statusEl.innerHTML = `<span style="color:#4ade80">✅ Published ${qs.length} Qs!</span>`;
+            showMcqToast && showMcqToast(`✅ ${qs.length} MCQs published to ${finalClassId.toUpperCase().replace('-',' ')}`);
           });
           bubble.appendChild(uploadRow);
         }
@@ -1629,7 +1638,11 @@ function renderMcqBankManager() {
         ${banks.map(b => `
           <tr>
             <td><div class="file-name-cell"><span style="font-size:1.1rem">📝</span><span class="file-name-text" title="${b.title}">${b.title}</span></div></td>
-            <td><span style="background:${classColors[b.classId]||'#00e5cc'}22;border:1px solid ${classColors[b.classId]||'#00e5cc'}44;color:${classColors[b.classId]||'#00e5cc'};padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:800">${isNaN(b.classId) ? b.classId.toUpperCase() : 'Class ' + b.classId}</span></td>
+            <td>
+              <span style="background:${classColors[b.classId.split('-')[0]]||'#00e5cc'}22;border:1px solid ${classColors[b.classId.split('-')[0]]||'#00e5cc'}44;color:${classColors[b.classId.split('-')[0]]||'#00e5cc'};padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:800">
+                ${isNaN(b.classId.split('-')[0]) ? b.classId.toUpperCase() : 'Class ' + b.classId.toUpperCase().replace('-',' ')}
+              </span>
+            </td>
             <td style="font-weight:700;color:var(--accent)">${b.count}</td>
             <td style="color:var(--muted);font-size:.8rem">${new Date(b.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
             <td>

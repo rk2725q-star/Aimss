@@ -1,4 +1,4 @@
-function initReveal() {
+﻿function initReveal() {
   const items = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('show'); });
@@ -2330,201 +2330,6 @@ function initMobileNav() {
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">🏠 Home</a>
-      if (!name) return;
-      // sanitize name to avoid slash issues
-      name = name.replace(/\//g, '-');
-      
-      const folders = readFolders();
-      // Check duplicate
-      if (folders.some(f => f.parentPath === currentPath && f.name.toLowerCase() === name.toLowerCase())) {
-        alert('A folder with this name already exists here.');
-        return;
-      }
-      
-      folders.push({
-        id: 'fld_' + Date.now().toString(36),
-        name: name,
-        parentPath: currentPath,
-        addedAt: new Date().toISOString()
-      });
-      writeFolders(folders);
-      closeFolderModal();
-      renderDrive();
-    };
-  }
-
-  // Upload Video Submit
-  const uploadForm = document.getElementById('driveUploadForm');
-  if (uploadForm) {
-    uploadForm.onsubmit = (e) => {
-      e.preventDefault();
-      const title = document.getElementById('modalVideoTitleInput').value.trim();
-      const urlInput = document.getElementById('modalVideoUrlInput').value.trim();
-      const status = document.getElementById('modalUploadStatus');
-
-      if (!title || !urlInput) return;
-      const videoId = extractYoutubeId(urlInput);
-
-      if (!videoId) {
-        if(status) { status.textContent = "Invalid YouTube URL or iframe code."; status.style.color = '#f87171'; }
-        return;
-      }
-
-      // backward compatibility for classLevel and board
-      const segments = getPathSegments(currentPath);
-      const cls = segments[0] || 'Unknown';
-      const brd = segments[1] || 'Unknown';
-
-      const videos = readVideos();
-      videos.unshift({
-        id: 'vid_' + Date.now().toString(36),
-        title: title,
-        videoId: videoId,
-        parentPath: currentPath,
-        classLevel: cls,
-        board: brd,
-        addedAt: new Date().toISOString()
-      });
-      writeVideos(videos);
-
-      if(status) { status.textContent = "Video uploaded successfully!"; status.style.color = '#4ade80'; }
-      
-      const toast = document.getElementById('tpSuccessToast');
-      const toastMsg = document.getElementById('tpToastMsg');
-      if (toast && toastMsg) {
-        toastMsg.textContent = 'Video "' + title + '" uploaded!';
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-      }
-
-      setTimeout(() => {
-        closeUploadModal();
-        renderDrive();
-      }, 800);
-    };
-  }
-
-  /* ══ DELETE ACTIONS ══ */
-  window.deleteFolder = (id) => {
-    if (!confirm('Are you sure you want to delete this folder and ALL its contents?')) return;
-    const folders = readFolders();
-    const folderToDelete = folders.find(f => f.id === id);
-    if (!folderToDelete) return;
-
-    const pathToDelete = folderToDelete.parentPath + folderToDelete.name + '/';
-    
-    // Remove the folder itself
-    const updatedFolders = folders.filter(f => f.id !== id && !f.parentPath.startsWith(pathToDelete));
-    writeFolders(updatedFolders);
-
-    // Remove all videos inside this folder and its subfolders
-    const videos = readVideos();
-    const updatedVideos = videos.filter(v => !v.parentPath.startsWith(pathToDelete));
-    writeVideos(updatedVideos);
-
-    renderDrive();
-  };
-
-  window.deleteVideo = (id) => {
-    if (!confirm('Delete this video?')) return;
-    const videos = readVideos();
-    writeVideos(videos.filter(v => v.id !== id));
-    renderDrive();
-  };
-
-  /* ══ VIDEO PLAYER MODAL ══ */
-  const playerOverlay = document.getElementById('vidPlayerOverlay');
-  const playerFrame = document.getElementById('vidPlayerFrame');
-  const playerTitle = document.getElementById('vidPlayerTitle');
-  const playerMeta = document.getElementById('vidPlayerMeta');
-  const playerClose = document.getElementById('vidPlayerClose');
-  const playerYTBtn = document.getElementById('vidPlayerYTBtn');
-
-  window.openPlayer = (vid) => {
-    if (!playerOverlay || !playerFrame) return;
-    if (playerTitle) playerTitle.textContent = vid.title;
-    if (playerMeta) {
-      const segs = getPathSegments(vid.parentPath);
-      playerMeta.textContent = segs.join(' • ');
-    }
-    playerFrame.src = `https://www.youtube.com/embed/${vid.videoId}?autoplay=1&rel=0&modestbranding=1`;
-    if (playerYTBtn) playerYTBtn.onclick = () => window.open('https://www.youtube.com/watch?v=' + vid.videoId, '_blank');
-    playerOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closePlayer = () => {
-    if (!playerOverlay) return;
-    playerOverlay.classList.remove('open');
-    if (playerFrame) playerFrame.src = '';
-    document.body.style.overflow = '';
-  };
-
-  if (playerClose) playerClose.addEventListener('click', closePlayer);
-  if (playerOverlay) playerOverlay.addEventListener('click', (e) => { if (e.target === playerOverlay) closePlayer(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && playerOverlay && playerOverlay.classList.contains('open')) closePlayer(); });
-
-  // Initial Render
-  renderDrive();
-}
-
-initThemeToggle();
-initPortalGuard();
-initReveal();
-initCounters();
-initFloatingChat();
-initSidebarChat();
-initConversationalSearch();
-initVideoProgress();
-initCycleCounts();
-initLoginForm();
-initRoleLogin();
-initTeacherProgress();
-initTeacherMcq();
-initAiPdfGenerator();
-initMcqTest();
-initStudentRewards();
-initSidebarMobile();
-initTeacherVideo();
-initTeacherMcqManager();
-initMobileNav();
-
-/* ══ MOBILE NAV — injected dynamically on every page ══ */
-function initMobileNav() {
-  const nav = document.querySelector('.nav');
-  if (!nav) return;
-
-  // Avoid double-inject
-  if (nav.querySelector('.nav-hamburger')) return;
-
-  /* 1. Inject hamburger button into nav — insert BEFORE nav-tools so order is
-     [Brand]  [nav-links desktop]  [Apply btn]  [☰ Hamburger]
-     On mobile nav-links is hidden, Apply is hidden, hamburger stays right. */
-  const ham = document.createElement('button');
-  ham.className = 'nav-hamburger';
-  ham.setAttribute('aria-label', 'Open menu');
-  ham.setAttribute('aria-expanded', 'false');
-  ham.innerHTML = '<span></span><span></span><span></span>';
-  const navTools = nav.querySelector('.nav-tools');
-  if (navTools) {
-    nav.insertBefore(ham, navTools.nextSibling); // insert AFTER nav-tools
-  } else {
-    nav.appendChild(ham);
-  }
-
-  /* 2. Build mobile nav drawer */
-  const drawer = document.createElement('div');
-  drawer.className = 'mobile-nav-drawer';
-  drawer.id = 'mobileNavDrawer';
-  drawer.innerHTML = `
-    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
-    <div class="mobile-nav-panel">
-      <div class="mobile-nav-head">
-        <strong>📚 Dr.AIMSS</strong>
-        <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close menu">✕</button>
-      </div>
-      <nav class="mobile-nav-links">
-        <a href="index.html">🏠 Home</a>
         <a href="index.html#programs">📖 Programs</a>
         <a href="matric.html">📚 Stateboard</a>
         <a href="cbse.html">🎓 CBSE</a>
@@ -2598,7 +2403,7 @@ function initStudentVideo() {
   // Render Breadcrumbs
   const renderBreadcrumbs = () => {
     const segments = getPathSegments(currentPath);
-    let html = `<div class="breadcrumb-item" onclick="navigateStudentToPath('/')">🏠 Root</div>`;
+    let html = `<div class="breadcrumb-item" onclick="navigateStudentToPath('/')">ðŸ  Root</div>`;
     let buildPath = '';
     
     segments.forEach((seg, i) => {
@@ -2665,7 +2470,7 @@ function initStudentVideo() {
       const card = document.createElement('div');
       card.className = 'drive-card';
       card.innerHTML = `
-        <div class="drive-icon">📁</div>
+        <div class="drive-icon">ðŸ“</div>
         <div class="drive-name">${f.name}</div>
       `;
       card.onclick = () => navigateStudentToPath(currentPath + f.name + '/');
@@ -2692,7 +2497,7 @@ function initStudentVideo() {
     });
   };
 
-  /* ══ VIDEO PLAYER MODAL ══ */
+  /* â•â• VIDEO PLAYER MODAL â•â• */
   const playerOverlay = document.getElementById('vidPlayerOverlay');
   const playerFrame = document.getElementById('vidPlayerFrame');
   const playerTitle = document.getElementById('vidPlayerTitle');

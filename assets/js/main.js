@@ -1027,6 +1027,21 @@ function initStudentRewards() {
 }
 
 function initTeacherProgress() {
+  /* ══ TABS ══ */
+  const tabs = document.querySelectorAll('.tp-tab');
+  const panels = document.querySelectorAll('.tp-panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected','true');
+      const target = document.getElementById('panel' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1));
+      if (target) target.classList.add('active');
+    });
+  });
+
+  /* ══ PROGRESS RECORDS ══ */
   const form = document.getElementById('progressForm');
   const body = document.getElementById('progressBody');
   const exportBtn = document.getElementById('exportProgressBtn');
@@ -1043,6 +1058,21 @@ function initTeacherProgress() {
     rows.splice(index, 1);
     write(rows);
     render();
+    updateStats();
+  };
+
+  const updateStats = () => {
+    const rows = read();
+    const statsRow = document.getElementById('tpStatsRow');
+    if (!statsRow) return;
+    const total = rows.length;
+    const avg = total ? Math.round(rows.reduce((s,r) => s + Number(r.score||0), 0) / total) : 0;
+    const classes = new Set(rows.map(r => r.classId)).size;
+    statsRow.innerHTML = [
+      { val: total, lbl: 'Students' },
+      { val: avg + '%', lbl: 'Avg Score' },
+      { val: classes, lbl: 'Classes' }
+    ].map(s => `<div class="tp-stat-card"><div class="tp-stat-val">${s.val}</div><div class="tp-stat-lbl">${s.lbl}</div></div>`).join('');
   };
 
   const render = () => {
@@ -1052,15 +1082,11 @@ function initTeacherProgress() {
     const fBoard = filterBoard ? filterBoard.value : 'all';
 
     let filtered = rows;
-    if (fClass !== 'all') {
-      filtered = filtered.filter(r => r.classId === fClass);
-    }
-    if (fBoard !== 'all') {
-      filtered = filtered.filter(r => r.board === fBoard);
-    }
+    if (fClass !== 'all') filtered = filtered.filter(r => r.classId === fClass);
+    if (fBoard !== 'all') filtered = filtered.filter(r => r.board === fBoard);
 
     if (!filtered.length) {
-      body.innerHTML = '<tr><td colspan="7">No matching progress records found.</td></tr>';
+      body.innerHTML = `<tr><td colspan="7"><div class="tp-empty"><div class="tp-empty-icon">📋</div><p class="tp-empty-text">No records found</p><p class="tp-empty-sub">Add student records using the form above.</p></div></td></tr>`;
       return;
     }
 
@@ -1069,16 +1095,16 @@ function initTeacherProgress() {
       const tr = document.createElement('tr');
       const classLabel = isNaN(r.classId) ? String(r.classId || '').toUpperCase() : 'Class ' + r.classId;
       const boardLabel = r.board === 'none' ? 'General' : String(r.board || '').toUpperCase();
+      const sc = Number(r.score || 0);
+      const scoreCls = sc >= 75 ? '' : sc >= 50 ? 'mid' : 'low';
       tr.innerHTML = `
-        <td><strong>${r.name}</strong></td>
-        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${classLabel}</span></td>
-        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${boardLabel}</span></td>
-        <td>${r.subject}</td>
-        <td><span class="badge-score">${r.score}%</span></td>
-        <td><span style="color:var(--muted);font-size:.84rem;">${r.note || '-'}</span></td>
-        <td style="text-align:right;">
-          <button class="action-btn btn-del" onclick="deleteProgressRecord(${origIdx})" style="padding:3px 10px;font-size:.78rem;">🗑 Delete</button>
-        </td>
+        <td><strong style="color:#fff;">${r.name}</strong></td>
+        <td><span class="tp-badge tp-badge-class">${classLabel}</span></td>
+        <td><span class="tp-badge tp-badge-board">${boardLabel}</span></td>
+        <td style="color:var(--muted);">${r.subject}</td>
+        <td><span class="tp-badge tp-badge-score ${scoreCls}">${r.score}%</span></td>
+        <td style="color:var(--muted);font-size:.82rem;">${r.note || '—'}</td>
+        <td style="text-align:right;"><button class="tp-del-btn" onclick="deleteProgressRecord(${origIdx})">🗑 Delete</button></td>
       `;
       body.appendChild(tr);
     });
@@ -1101,6 +1127,8 @@ function initTeacherProgress() {
     write(rows);
     form.reset();
     render();
+    updateStats();
+    showToast('Student record added successfully!');
   });
 
   if (filterClass) filterClass.addEventListener('change', render);
@@ -1122,6 +1150,18 @@ function initTeacherProgress() {
   }
 
   render();
+  updateStats();
+}
+
+/* ══ TOAST HELPER ══ */
+function showToast(msg) {
+  const toast = document.getElementById('tpSuccessToast');
+  const msgEl = document.getElementById('tpToastMsg');
+  if (!toast) return;
+  if (msgEl) msgEl.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 function initAiPdfGenerator() {
@@ -1901,450 +1941,319 @@ function initSidebarMobile() {
 }
 
 function initTeacherVideo() {
-  const grid = document.getElementById('driveGrid');
-  const breadcrumbs = document.getElementById('driveBreadcrumbs');
-  const btnNewFolder = document.getElementById('btnNewFolder');
-  const btnUploadVideo = document.getElementById('btnUploadVideo');
-  
-  if (!grid || !breadcrumbs) return;
+  /* ══ VIDEO UPLOAD FORM ══ */
+  const vidForm = document.getElementById('lectureVideoForm');
+  const vidClass = document.getElementById('vidClass');
+  const vidBoard = document.getElementById('vidBoard');
+  const vidBoardWrap = document.getElementById('vidBoardWrap');
+  const vidSubject = document.getElementById('vidSubject');
+  const vidTopic = document.getElementById('vidTopic');
+  const vidTitle = document.getElementById('vidTitle');
+  const vidUrl = document.getElementById('vidUrl');
+  const vidStatus = document.getElementById('vidUploadStatus');
+  const vidLibrary = document.getElementById('vidLibrary');
+  const vidFilterClass = document.getElementById('vidFilterClass');
+  const vidFilterBoard = document.getElementById('vidFilterBoard');
+  const vidFormReset = document.getElementById('vidFormReset');
 
-  const key = 'lectureVideosList';
-  const readVideos = () => JSON.parse(localStorage.getItem(key) || '[]');
-  const writeVideos = (list) => localStorage.setItem(key, JSON.stringify(list));
+  if (!vidForm || !vidLibrary) return;
 
-  const fldrKey = 'lectureFoldersList';
-  const readFolders = () => JSON.parse(localStorage.getItem(fldrKey) || '[]');
-  const writeFolders = (list) => localStorage.setItem(fldrKey, JSON.stringify(list));
+  const PREP_CLASSES = ['neet','jee','ncert','nda','upsc','tnpsc'];
+  const VID_KEY = 'lectureVideosList';
+  const readVideos = () => JSON.parse(localStorage.getItem(VID_KEY) || '[]');
+  const writeVideos = (list) => localStorage.setItem(VID_KEY, JSON.stringify(list));
 
-  let currentPath = localStorage.getItem('aimss-drive-current-path') || '/';
+  /* Toggle board visibility for prep classes */
+  const toggleBoard = () => {
+    if (!vidClass || !vidBoardWrap) return;
+    const val = vidClass.value.toLowerCase();
+    const isPrep = PREP_CLASSES.includes(val);
+    vidBoardWrap.style.display = isPrep ? 'none' : '';
+    if (isPrep && vidBoard) vidBoard.value = 'none';
+  };
+  if (vidClass) { vidClass.addEventListener('change', toggleBoard); toggleBoard(); }
 
-  // Robust YouTube Video ID Extractor
+  /* YouTube ID extractor — supports full URLs, short URLs, embeds, iframes */
   const extractYoutubeId = (input) => {
     if (!input) return null;
     let str = input.trim();
+    // Extract src from iframe
     if (str.includes('<iframe')) {
       const match = str.match(/src=["']([^"']+)["']/i);
-      if (match && match[1]) {
-        str = match[1];
-      }
+      if (match && match[1]) str = match[1];
     }
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = str.match(regExp);
-    if (match && match[2] && match[2].length === 11) {
-      return match[2];
-    }
+    // Decode HTML entities
+    str = str.replace(/&amp;/g,'&').replace(/&#39;/g,"'");
+    // Standard regex
+    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\?v=|&v=)([^#&?]*).*/;
+    const m = str.match(regExp);
+    if (m && m[2] && m[2].length === 11) return m[2];
+    // Fallback: last path segment
     const cleaned = str.split('?')[0].split('/').pop();
-    if (cleaned.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleaned)) {
-      return cleaned;
-    }
-    if (str.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(str)) {
-      return str;
-    }
+    if (cleaned && cleaned.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleaned)) return cleaned;
+    // Fallback: raw ID
+    if (str.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
     return null;
   };
 
-  // Navigates to a specific sub-path
-  window.navigateToPath = (path) => {
-    currentPath = path;
-    localStorage.setItem('aimss-drive-current-path', currentPath);
-    renderDrive();
+  /* Class label helper */
+  const classLabel = (val) => {
+    if (!isNaN(val)) return 'Class ' + val;
+    return val.toUpperCase();
   };
 
-  // Modal Open/Close helpers
-  const modalFolder = document.getElementById('modalNewFolder');
-  const modalUpload = document.getElementById('modalUploadVideo');
-
-  window.openFolderModal = () => {
-    if (modalFolder) {
-      modalFolder.classList.add('open');
-      document.getElementById('modalFolderNameInput').focus();
-    }
-  };
-  window.closeFolderModal = () => {
-    if (modalFolder) {
-      modalFolder.classList.remove('open');
-      document.getElementById('driveFolderForm').reset();
-    }
+  /* Board label helper */
+  const boardLabel = (val) => {
+    if (!val || val === 'none') return 'General';
+    return val.charAt(0).toUpperCase() + val.slice(1);
   };
 
-  window.openUploadModal = () => {
-    if (modalUpload) {
-      modalUpload.classList.add('open');
-      document.getElementById('modalVideoTitleInput').focus();
-      document.getElementById('modalUploadStatus').textContent = '';
-    }
-  };
-  window.closeUploadModal = () => {
-    if (modalUpload) {
-      modalUpload.classList.remove('open');
-      document.getElementById('driveUploadForm').reset();
-    }
-  };
+  /* ══ VIDEO FORM SUBMIT ══ */
+  vidForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const clsVal = vidClass ? vidClass.value.trim() : '';
+    const boardVal = vidBoard ? vidBoard.value.trim() : 'none';
+    const subjectVal = vidSubject ? vidSubject.value.trim() : '';
+    const topicVal = vidTopic ? vidTopic.value.trim() : '';
+    const titleVal = vidTitle ? vidTitle.value.trim() : '';
+    const urlVal = vidUrl ? vidUrl.value.trim() : '';
 
-  // Deletion logic
+    if (!clsVal || !subjectVal || !titleVal || !urlVal) {
+      if (vidStatus) { vidStatus.textContent = 'Please fill all required fields.'; vidStatus.style.color = '#f87171'; }
+      return;
+    }
+
+    const videoId = extractYoutubeId(urlVal);
+    if (!videoId) {
+      if (vidStatus) { vidStatus.textContent = 'Could not extract a valid YouTube Video ID. Please check the URL or iframe code.'; vidStatus.style.color = '#f87171'; }
+      return;
+    }
+
+    const isPrep = PREP_CLASSES.includes(clsVal.toLowerCase());
+    const newVid = {
+      id: Date.now().toString() + Math.random().toString(36).slice(2,6),
+      classLevel: clsVal,
+      board: isPrep ? 'none' : boardVal,
+      subject: subjectVal,
+      topic: topicVal || subjectVal,
+      title: titleVal,
+      videoId: videoId,
+      addedAt: new Date().toISOString()
+    };
+
+    const vids = readVideos();
+    vids.unshift(newVid);
+    writeVideos(vids);
+
+    if (vidStatus) { vidStatus.textContent = ''; }
+    vidForm.reset();
+    toggleBoard();
+    renderLibrary();
+    showToast('Video "' + titleVal + '" uploaded successfully!');
+  });
+
+  if (vidFormReset) vidFormReset.addEventListener('click', () => { vidForm.reset(); if(vidStatus) vidStatus.textContent=''; toggleBoard(); });
+  if (vidFilterClass) vidFilterClass.addEventListener('change', renderLibrary);
+  if (vidFilterBoard) vidFilterBoard.addEventListener('change', renderLibrary);
+
+  /* ══ DELETE VIDEO ══ */
   window.deleteVideoRecord = (id) => {
-    let list = readVideos();
-    const video = list.find(v => v.id === String(id));
-    if (!video) return;
-    if (confirm(`Are you sure you want to delete the video "${video.title}"?`)) {
-      list = list.filter(v => v.id !== String(id));
-      writeVideos(list);
-      renderDrive();
-    }
+    const vids = readVideos();
+    const vid = vids.find(v => v.id === String(id));
+    if (!vid) return;
+    if (!confirm(`Delete video "${vid.title}"?`)) return;
+    writeVideos(vids.filter(v => v.id !== String(id)));
+    renderLibrary();
   };
 
-  window.deleteCustomFolder = (id, name) => {
-    const folders = readFolders();
-    const folder = folders.find(f => f.id === String(id));
-    if (!folder) return;
-    
-    const folderPath = folder.path + (folder.path === "/" ? "" : "/") + folder.name;
-    
-    // Check for nested subfolders or files
-    const allFolders = readFolders();
-    const hasSubfolders = allFolders.some(f => f.path === folderPath || f.path.startsWith(folderPath + "/"));
-    
-    const allVideos = readVideos();
-    const hasVideos = allVideos.some(v => v.path === folderPath || v.path.startsWith(folderPath + "/"));
-    
-    if (hasSubfolders || hasVideos) {
-      alert(`Cannot delete folder "${name}" because it contains files or subfolders. Please delete its contents first.`);
-      return;
-    }
-    
-    if (confirm(`Are you sure you want to delete the empty folder "${name}"?`)) {
-      const updated = allFolders.filter(f => f.id !== String(id));
-      writeFolders(updated);
-      renderDrive();
-    }
+  /* ══ VIDEO PLAYER MODAL ══ */
+  const playerOverlay = document.getElementById('vidPlayerOverlay');
+  const playerFrame = document.getElementById('vidPlayerFrame');
+  const playerTitle = document.getElementById('vidPlayerTitle');
+  const playerMeta = document.getElementById('vidPlayerMeta');
+  const playerClose = document.getElementById('vidPlayerClose');
+  const playerYTBtn = document.getElementById('vidPlayerYTBtn');
+  let currentVideoId = null;
+
+  const openPlayer = (vid) => {
+    if (!playerOverlay || !playerFrame) return;
+    currentVideoId = vid.videoId;
+    if (playerTitle) playerTitle.textContent = vid.title;
+    if (playerMeta) playerMeta.textContent = `${classLabel(vid.classLevel)} • ${boardLabel(vid.board)} • ${vid.subject}${vid.topic && vid.topic !== vid.subject ? ' • ' + vid.topic : ''}`;
+    playerFrame.src = `https://www.youtube.com/embed/${vid.videoId}?autoplay=1&rel=0&modestbranding=1`;
+    if (playerYTBtn) playerYTBtn.onclick = () => window.open('https://www.youtube.com/watch?v=' + vid.videoId, '_blank');
+    playerOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
   };
 
-  // Helper to parse path segments and map back to Class, Board, Subject, Topic
-  const parsePathFields = (path) => {
-    const segments = path.split('/').filter(Boolean);
-    let classLevel = "General";
-    let board = "general";
-    let subject = "General";
-    let topic = "";
-    
-    if (segments[0]) {
-      const cls = segments[0].toLowerCase();
-      if (cls.startsWith("class ")) {
-        classLevel = cls.replace("class ", "").trim();
-      } else if (cls.includes("neet")) {
-        classLevel = "neet";
-      } else if (cls.includes("jee")) {
-        classLevel = "jee";
-      } else {
-        classLevel = cls.trim();
-      }
-    }
-    
-    const isSchool = segments[0] && segments[0].toLowerCase().startsWith("class ");
-    
-    if (isSchool) {
-      if (segments[1]) {
-        board = segments[1].toLowerCase().trim();
-      }
-      if (segments[2]) {
-        let sub = segments[2];
-        if (sub.toLowerCase() === "mathematics") sub = "Maths";
-        subject = sub;
-      }
-      if (segments.length > 3) {
-        topic = segments.slice(3).join(" - ");
-      } else {
-        topic = subject || "";
-      }
-    } else {
-      if (segments[1]) {
-        let sub = segments[1];
-        if (sub.toLowerCase() === "mathematics") sub = "Maths";
-        subject = sub;
-      }
-      if (segments.length > 2) {
-        topic = segments.slice(2).join(" - ");
-      } else {
-        topic = subject || "";
-      }
-      board = "none";
-    }
-
-    return { classLevel, board, subject, topic };
+  const closePlayer = () => {
+    if (!playerOverlay) return;
+    playerOverlay.classList.remove('open');
+    if (playerFrame) { playerFrame.src = ''; }
+    document.body.style.overflow = '';
+    currentVideoId = null;
   };
 
-  // Render visual drive
-  const renderDrive = () => {
-    const segments = currentPath.split('/').filter(Boolean);
-    const depth = segments.length;
+  if (playerClose) playerClose.addEventListener('click', closePlayer);
+  if (playerOverlay) playerOverlay.addEventListener('click', (e) => { if (e.target === playerOverlay) closePlayer(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && playerOverlay && playerOverlay.classList.contains('open')) closePlayer(); });
 
-    // Render breadcrumbs
-    breadcrumbs.innerHTML = '';
-    
-    // Home Breadcrumb
-    const homeItem = document.createElement('span');
-    homeItem.className = `breadcrumb-item ${depth === 0 ? 'active' : ''}`;
-    homeItem.innerHTML = '🏠 Home';
-    if (depth > 0) {
-      homeItem.onclick = () => navigateToPath('/');
-    }
-    breadcrumbs.appendChild(homeItem);
+  /* ══ RENDER LIBRARY ══ */
+  const renderLibrary = () => {
+    if (!vidLibrary) return;
+    let vids = readVideos();
 
-    // Dynamic segments
-    let pathAcc = '';
-    segments.forEach((seg, idx) => {
-      // Separator
-      const sep = document.createElement('span');
-      sep.className = 'breadcrumb-separator';
-      sep.textContent = ' / ';
-      breadcrumbs.appendChild(sep);
+    // Apply filters
+    const fClass = vidFilterClass ? vidFilterClass.value : 'all';
+    const fBoard = vidFilterBoard ? vidFilterBoard.value : 'all';
+    if (fClass !== 'all') vids = vids.filter(v => v.classLevel === fClass);
+    if (fBoard !== 'all') vids = vids.filter(v => (v.board || 'none') === fBoard);
 
-      pathAcc += '/' + seg;
-      const item = document.createElement('span');
-      item.className = `breadcrumb-item ${idx === depth - 1 ? 'active' : ''}`;
-      item.textContent = seg;
-      if (idx < depth - 1) {
-        const targetPath = pathAcc;
-        item.onclick = () => navigateToPath(targetPath);
-      }
-      breadcrumbs.appendChild(item);
-    });
-
-    // Control button visibilities
-    // Can create custom folders if inside CBSE/Stateboard or inside NEET/JEE subject folders
-    const isAcademic = segments[0] && segments[0].toLowerCase().startsWith("class ");
-    const canCreateFolder = isAcademic ? depth >= 2 : depth >= 1;
-    const canUpload = isAcademic ? depth >= 3 : depth >= 2;
-
-    if (btnNewFolder) {
-      btnNewFolder.style.display = canCreateFolder ? 'inline-flex' : 'none';
-      btnNewFolder.onclick = openFolderModal;
-    }
-    if (btnUploadVideo) {
-      btnUploadVideo.style.display = canUpload ? 'inline-flex' : 'none';
-      btnUploadVideo.onclick = openUploadModal;
-    }
-
-    // Get folders & files
-    const subfolders = [];
-    const videos = [];
-
-    if (depth === 0) {
-      const classes = [
-        "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12",
-        "NEET Prep", "JEE Prep", "NCERT", "NDA", "UPSC", "TNPSC"
-      ];
-      classes.forEach(cls => {
-        subfolders.push({ isStatic: true, name: cls });
-      });
-    } else if (depth === 1) {
-      const cls = segments[0];
-      const isAcademicClass = cls.toLowerCase().startsWith("class ");
-      if (isAcademicClass) {
-        subfolders.push({ isStatic: true, name: "Stateboard" });
-        subfolders.push({ isStatic: true, name: "CBSE" });
-      } else {
-        const subjects = ["Physics", "Chemistry", "Biology", "Mathematics", "General"];
-        subjects.forEach(sub => {
-          subfolders.push({ isStatic: true, name: sub });
-        });
-      }
-    } else if (depth === 2) {
-      const cls = segments[0];
-      const isAcademicClass = cls.toLowerCase().startsWith("class ");
-      if (isAcademicClass) {
-        const subjects = ["Physics", "Chemistry", "Biology", "Mathematics", "Science", "Social Science"];
-        subjects.forEach(sub => {
-          subfolders.push({ isStatic: true, name: sub });
-        });
-      } else {
-        const customFolders = readFolders();
-        customFolders.forEach(f => {
-          if (f.path === currentPath) {
-            subfolders.push({ isStatic: false, id: f.id, name: f.name });
-          }
-        });
-        const allVideos = readVideos();
-        allVideos.forEach(v => {
-          if (v.path === currentPath) {
-            videos.push(v);
-          }
-        });
-      }
-    } else {
-      const customFolders = readFolders();
-      customFolders.forEach(f => {
-        if (f.path === currentPath) {
-          subfolders.push({ isStatic: false, id: f.id, name: f.name });
-        }
-      });
-      const allVideos = readVideos();
-      allVideos.forEach(v => {
-        if (v.path === currentPath) {
-          videos.push(v);
-        }
-      });
-    }
-
-    // Render Drive Grid contents
-    grid.innerHTML = '';
-
-    if (subfolders.length === 0 && videos.length === 0) {
-      grid.style.display = 'block';
-      grid.innerHTML = `
-        <div style="color:var(--muted);text-align:center;padding:48px 24px;font-family:'Manrope',sans-serif;">
-          <div style="font-size:2.8rem;margin-bottom:12px;opacity:0.6;">📁</div>
-          <div style="font-weight:600;font-size:0.95rem;margin-bottom:4px;">This folder is empty</div>
-          <div style="font-size:0.8rem;opacity:0.8;">Click "+ New Subfolder" or "+ Upload Video" at the top to add content here.</div>
-        </div>
-      `;
+    if (!vids.length) {
+      vidLibrary.innerHTML = `
+        <div style="text-align:center;padding:48px 24px;color:var(--muted);">
+          <div style="font-size:2.8rem;margin-bottom:12px;opacity:0.45;">🎬</div>
+          <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">No videos yet</div>
+          <div style="font-size:0.82rem;opacity:0.7;">Upload your first lecture video using the form above.</div>
+        </div>`;
       return;
     }
 
-    grid.style.display = 'grid';
-
-    // Render subfolders
-    subfolders.forEach(fldr => {
-      const card = document.createElement('div');
-      card.className = 'drive-card';
-      card.innerHTML = `
-        <div class="drive-icon">📁</div>
-        <div class="drive-name">${fldr.name}</div>
-      `;
-      card.onclick = () => {
-        const next = currentPath + (currentPath === '/' ? '' : '/') + fldr.name;
-        navigateToPath(next);
-      };
-
-      if (!fldr.isStatic) {
-        const delBtn = document.createElement('div');
-        delBtn.className = 'drive-card-delete';
-        delBtn.innerHTML = '🗑';
-        delBtn.title = 'Delete empty subfolder';
-        delBtn.onclick = (e) => {
-          e.stopPropagation();
-          deleteCustomFolder(fldr.id, fldr.name);
-        };
-        card.appendChild(delBtn);
-      }
-      grid.appendChild(card);
+    // Group: classLevel → board → subject → topic → videos[]
+    const groups = {};
+    vids.forEach(v => {
+      const cls = v.classLevel || 'other';
+      const brd = v.board || 'none';
+      const sub = v.subject || 'General';
+      const top = v.topic || sub;
+      if (!groups[cls]) groups[cls] = {};
+      if (!groups[cls][brd]) groups[cls][brd] = {};
+      if (!groups[cls][brd][sub]) groups[cls][brd][sub] = {};
+      if (!groups[cls][brd][sub][top]) groups[cls][brd][sub][top] = [];
+      groups[cls][brd][sub][top].push(v);
     });
 
-    // Render videos
-    videos.forEach(video => {
-      const card = document.createElement('div');
-      card.className = 'drive-card video-card';
-      card.innerHTML = `
-        <div class="drive-thumb">
-          <img src="https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg" alt="${video.title}" loading="lazy"/>
-          <div class="drive-play"><svg width="14" height="14" viewBox="0 0 52 52" fill="none"><polygon points="18,12 38,26 18,40" fill="#064e3b"/></svg></div>
+    vidLibrary.innerHTML = '';
+
+    Object.keys(groups).sort().forEach(cls => {
+      const brdGroups = groups[cls];
+      const totalVids = Object.values(brdGroups).reduce((a,b) => a + Object.values(b).reduce((c,d) => c + Object.values(d).reduce((e,f) => e + f.length, 0), 0), 0);
+
+      const classGroup = document.createElement('div');
+      classGroup.className = 'vid-class-group';
+
+      const icon = isNaN(cls) ? '🎯' : '📚';
+      const header = document.createElement('div');
+      header.className = 'vid-class-header';
+      header.innerHTML = `
+        <div class="vid-class-header-left">
+          <div class="vid-class-icon">${icon}</div>
+          <div>
+            <p class="vid-class-title">${classLabel(cls)}</p>
+            <p class="vid-class-count">${totalVids} video${totalVids !== 1 ? 's' : ''}</p>
+          </div>
         </div>
-        <div class="drive-video-info">
-          <div class="drive-video-title">${video.title}</div>
-          <div class="drive-video-meta">ID: ${video.videoId}</div>
-        </div>
+        <svg class="vid-class-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       `;
 
-      const delBtn = document.createElement('div');
-      delBtn.className = 'drive-card-delete';
-      delBtn.innerHTML = '🗑';
-      delBtn.title = 'Delete video';
-      delBtn.onclick = (e) => {
-        e.stopPropagation();
-        deleteVideoRecord(video.id);
-      };
-      card.appendChild(delBtn);
+      const body = document.createElement('div');
+      body.className = 'vid-class-body';
 
-      card.onclick = () => {
-        window.open('https://www.youtube.com/watch?v=' + video.videoId, '_blank');
-      };
-      grid.appendChild(card);
+      // Auto-open first group
+      const isFirst = vidLibrary.children.length === 0;
+      if (isFirst) { header.classList.add('open'); body.classList.add('open'); }
+
+      header.addEventListener('click', () => {
+        const isOpen = header.classList.contains('open');
+        if (isOpen) { header.classList.remove('open'); body.classList.remove('open'); }
+        else { header.classList.add('open'); body.classList.add('open'); }
+      });
+
+      // Render boards → subjects → topics → video cards
+      Object.keys(brdGroups).sort().forEach(brd => {
+        const subGroups = brdGroups[brd];
+
+        const brdDiv = document.createElement('div');
+        brdDiv.className = 'vid-subject-group';
+
+        // Board label (only show if not 'none' or multiple boards)
+        const hasManyBoards = Object.keys(brdGroups).length > 1;
+        if (hasManyBoards || brd !== 'none') {
+          const bl = document.createElement('div');
+          bl.className = 'vid-subject-divider';
+          bl.textContent = boardLabel(brd);
+          brdDiv.appendChild(bl);
+        }
+
+        Object.keys(subGroups).sort().forEach(sub => {
+          const topGroups = subGroups[sub];
+
+          const subDiv = document.createElement('div');
+          subDiv.className = 'vid-subject-group';
+          const sl = document.createElement('div');
+          sl.className = 'vid-subject-label';
+          sl.textContent = sub;
+          subDiv.appendChild(sl);
+
+          Object.keys(topGroups).sort().forEach(top => {
+            const topVids = topGroups[top];
+            const topDiv = document.createElement('div');
+            topDiv.className = 'vid-topic-group';
+
+            // Show topic label only if different from subject
+            if (top !== sub) {
+              const tl = document.createElement('div');
+              tl.className = 'vid-topic-label';
+              tl.textContent = top;
+              topDiv.appendChild(tl);
+            }
+
+            const row = document.createElement('div');
+            row.className = 'vid-cards-row';
+
+            topVids.forEach(vid => {
+              const card = document.createElement('div');
+              card.className = 'vid-card';
+              card.innerHTML = `
+                <div class="vid-thumb">
+                  <img src="https://img.youtube.com/vi/${vid.videoId}/mqdefault.jpg" alt="${vid.title}" loading="lazy" />
+                  <div class="vid-play-overlay">
+                    <div class="vid-play-btn">
+                      <svg viewBox="0 0 52 52"><polygon points="18,12 40,26 18,40" /></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="vid-info">
+                  <div class="vid-title">${vid.title}</div>
+                  <div class="vid-meta">
+                    <span class="vid-meta-chip">${classLabel(vid.classLevel)}</span>
+                    <span class="vid-meta-chip">${vid.subject}</span>
+                  </div>
+                </div>
+                <button class="vid-del-btn" onclick="event.stopPropagation();deleteVideoRecord('${vid.id}')" title="Delete">🗑</button>
+              `;
+              card.addEventListener('click', () => openPlayer(vid));
+              row.appendChild(card);
+            });
+
+            topDiv.appendChild(row);
+            subDiv.appendChild(topDiv);
+          });
+
+          brdDiv.appendChild(subDiv);
+        });
+
+        body.appendChild(brdDiv);
+      });
+
+      classGroup.appendChild(header);
+      classGroup.appendChild(body);
+      vidLibrary.appendChild(classGroup);
     });
   };
 
-  // Wire Modal forms
-  const folderForm = document.getElementById('driveFolderForm');
-  if (folderForm) {
-    folderForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const inputVal = document.getElementById('modalFolderNameInput').value.trim();
-      if (!inputVal) return;
+  renderLibrary();
 
-      const folders = readFolders();
-      const exists = folders.some(f => 
-        f.path === currentPath && f.name.toLowerCase() === inputVal.toLowerCase()
-      );
-
-      if (exists) {
-        alert("A subfolder with that name already exists in the current directory.");
-        return;
-      }
-
-      folders.push({
-        id: Date.now().toString() + Math.random().toString().slice(2, 6),
-        path: currentPath,
-        name: inputVal
-      });
-
-      writeFolders(folders);
-      closeFolderModal();
-      renderDrive();
-    });
-  }
-
-  const uploadForm = document.getElementById('driveUploadForm');
-  const uploadStatus = document.getElementById('modalUploadStatus');
-  if (uploadForm) {
-    uploadForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const title = document.getElementById('modalVideoTitleInput').value.trim();
-      const urlInput = document.getElementById('modalVideoUrlInput').value.trim();
-
-      if (!title || !urlInput) return;
-
-      const videoId = extractYoutubeId(urlInput);
-
-      if (!videoId) {
-        if (uploadStatus) {
-          uploadStatus.textContent = "Could not extract a valid YouTube Video ID from input. Please check the URL or iframe embed code.";
-          uploadStatus.style.color = '#f87171';
-        }
-        return;
-      }
-
-      // Parse current path to set backward compatibility fields
-      const { classLevel, board, subject, topic } = parsePathFields(currentPath);
-
-      const newLecture = {
-        id: Date.now().toString(),
-        path: currentPath,
-        classLevel: classLevel,
-        board: board,
-        subject: subject,
-        topic: topic,
-        title: title,
-        videoId: videoId,
-        addedAt: new Date().toISOString()
-      };
-
-      const videos = readVideos();
-      videos.push(newLecture);
-      writeVideos(videos);
-
-      if (uploadStatus) {
-        uploadStatus.textContent = "Video uploaded and organized successfully!";
-        uploadStatus.style.color = '#4ade80';
-      }
-
-      setTimeout(() => {
-        closeUploadModal();
-        renderDrive();
-      }, 1000);
-    });
-  }
-
-  // Initial Drive Render
-  renderDrive();
 }
 
 initThemeToggle();

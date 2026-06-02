@@ -256,8 +256,8 @@
         if (!isNaN(clsNum)) {
           CBSE_COURSES.push({
             cls: clsNum,
-            subject: 'Science',
-            title: v.topic,
+            subject: v.subject || 'Science',
+            title: (v.topic ? v.topic + ' – ' : '') + (v.title || 'Lecture Video'),
             videoId: v.videoId,
             rating: 4.8,
             learners: '1.2k',

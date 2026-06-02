@@ -8,6 +8,142 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* Sleek Collapsible Folder Tree Explorer */
+    .video-tree {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 14px;
+      font-family: 'Manrope', sans-serif;
+    }
+    .tree-folder {
+      margin-left: 14px;
+      border-left: 1.5px dashed rgba(255,255,255,0.08);
+      padding-left: 10px;
+      margin-top: 6px;
+    }
+    .tree-folder-title {
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+      margin-bottom: 2px;
+    }
+    .tree-folder-title:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+    }
+    .tree-folder-title::before {
+      content: '📁';
+      font-size: 0.95rem;
+    }
+    .tree-folder-title.open::before {
+      content: '📂';
+    }
+    .tree-folder.collapsed > .tree-content {
+      display: none;
+    }
+    .tree-item {
+      margin-left: 18px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.86rem;
+      transition: background 0.2s;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+    .tree-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .tree-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tree-item-title {
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .tree-item-vid {
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: rgba(0,0,0,0.2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .tree-item-delete {
+      background: rgba(248, 113, 113, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      padding: 2px 8px;
+      font-size: 0.78rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .tree-item-delete:hover {
+      background: #f87171;
+      color: #000;
+    }
+    .tree-folder-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tree-action-btn {
+      background: rgba(0, 229, 204, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 204, 0.15);
+      padding: 2px 6px;
+      font-size: 0.74rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-left: 4px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      line-height: 1;
+    }
+    .tree-action-btn:hover {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+    .tree-action-btn.btn-danger {
+      background: rgba(248, 113, 113, 0.08);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.15);
+    }
+    .tree-action-btn.btn-danger:hover {
+      background: #f87171;
+      color: #000;
+      border-color: #f87171;
+    }
+    .empty-folder-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-left: 18px;
+      padding: 4px 10px;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Main Page</a><a href="#" data-logout>Logout</a></nav></div></header>
@@ -128,7 +264,7 @@
       <!-- ══════════════ ADD LECTURE VIDEO ══════════════ -->
       <div class="glass card" style="margin-top: 24px;">
         <h2>Add Lecture Video</h2>
-        <p style="color:var(--muted);margin-bottom:18px;">Add a YouTube lecture to the Video Library for Class-wise students.</p>
+        <p style="color:var(--muted);margin-bottom:18px;">Add a YouTube lecture to the Video Library under Class, Subject and Topic folders.</p>
         <form id="lectureVideoForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px;">
           <select class="field" id="vidClass" required style="margin:0;">
             <option value="">Select Class Level</option>
@@ -141,34 +277,70 @@
             <option value="12">Class 12</option>
             <option value="neet">NEET Prep</option>
             <option value="jee">JEE Prep</option>
+            <option value="ncert">NCERT</option>
+            <option value="nda">NDA</option>
+            <option value="upsc">UPSC</option>
+            <option value="tnpsc">TNPSC</option>
           </select>
           <select class="field" id="vidBoard" style="margin:0;">
             <option value="">Select Board (if applicable)</option>
             <option value="stateboard">Stateboard</option>
             <option value="cbse">CBSE</option>
           </select>
-          <input class="field" id="vidTopic" placeholder="Topic Name (e.g. Biology: Human Eye)" required style="margin:0;" />
+          
+          <!-- Subject Input with Datalist -->
+          <input class="field" id="vidSubject" list="subjectOptions" placeholder="Enter Subject (e.g. Physics, Biology...)" required style="margin:0;" />
+          <datalist id="subjectOptions">
+            <option value="Physics">
+            <option value="Chemistry">
+            <option value="Biology">
+            <option value="Mathematics">
+            <option value="Science">
+            <option value="Social Science">
+          </datalist>
+
+          <input class="field" id="vidTopic" placeholder="Topic Folder (e.g. Light, Genetics)" required style="margin:0;" />
+          <input class="field" id="vidTitle" placeholder="Video Title (e.g. Refraction of Light)" required style="margin:0;" />
           <input class="field" id="ytVideoInput" placeholder="YouTube Video ID or URL" required style="margin:0;" />
           <button class="btn" type="submit" style="grid-column:1/-1;">Add Video</button>
           <p id="lectureVideoStatus" class="status" style="grid-column:1/-1;margin:0;"></p>
         </form>
 
-        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">🎬 Managed Lecture Videos</h3>
-        <div style="overflow:auto;">
-          <table class="tracker-table">
-            <thead>
-              <tr>
-                <th>Class</th>
-                <th>Board</th>
-                <th>Topic Name</th>
-                <th>Video ID</th>
-                <th style="text-align:right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="addedVideosBody">
-              <tr><td colspan="5">No custom lecture videos added yet.</td></tr>
-            </tbody>
-          </table>
+        <!-- Quick Folder Creation Form -->
+        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">📁 Quick Create Subject/Topic Folders</h3>
+        <p style="color:var(--muted);font-size:.84rem;margin:0 0 12px;">Create empty subject folders and topic subfolders for any class level without adding a video first.</p>
+        <form id="createFolderForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;">
+          <select class="field" id="fldrClass" required style="margin:0;">
+            <option value="">Select Class Level</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="neet">NEET Prep</option>
+            <option value="jee">JEE Prep</option>
+            <option value="ncert">NCERT</option>
+            <option value="nda">NDA</option>
+            <option value="upsc">UPSC</option>
+            <option value="tnpsc">TNPSC</option>
+          </select>
+          <select class="field" id="fldrBoard" style="margin:0;">
+            <option value="">Select Board (if applicable)</option>
+            <option value="stateboard">Stateboard</option>
+            <option value="cbse">CBSE</option>
+          </select>
+          <input class="field" id="fldrSubject" list="subjectOptions" placeholder="Subject Name (e.g. Physics)" required style="margin:0;" />
+          <input class="field" id="fldrTopic" placeholder="Topic Subfolder (optional)" style="margin:0;" />
+          <button class="btn btn-soft" type="submit" style="margin:0;">Create Folder</button>
+        </form>
+        <p id="folderCreateStatus" class="status" style="margin:0;"></p>
+
+        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">🎬 Managed Lecture Videos Explorer</h3>
+        <p style="color:var(--muted);font-size:.84rem;margin:0 0 12px;">Collapsible folder tree structure organized by Class ➔ Board ➔ Subject ➔ Topic folders.</p>
+        <div id="addedVideosTree" class="video-tree">
+          <div style="color:var(--muted);text-align:center;padding:24px;">No custom lecture videos added yet.</div>
         </div>
       </div>
     </section>

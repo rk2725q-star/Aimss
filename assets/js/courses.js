@@ -105,8 +105,8 @@
       COURSES.push({
         id: 'custom-' + v.id,
         videoId: v.videoId,
-        title: v.topic,
-        subject: 'biology', // Default subject
+        title: (v.topic ? v.topic + ' – ' : '') + (v.title || 'Lecture Video'),
+        subject: String(v.subject || 'biology').toLowerCase(),
         classLevel: v.classLevel === 'neet' || v.classLevel === 'jee' ? v.classLevel : 'class-' + v.classLevel,
         badge: 'Teacher Upload',
         rating: 4.8,

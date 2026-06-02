@@ -1903,12 +1903,16 @@ function initSidebarMobile() {
 function initTeacherVideo() {
   const form = document.getElementById('lectureVideoForm');
   const status = document.getElementById('lectureVideoStatus');
-  const videoTableBody = document.getElementById('addedVideosBody');
+  const treeContainer = document.getElementById('addedVideosTree');
   if (!form || !status) return;
 
   const key = 'lectureVideosList';
   const read = () => JSON.parse(localStorage.getItem(key) || '[]');
   const write = (list) => localStorage.setItem(key, JSON.stringify(list));
+
+  const fldrKey = 'lectureFoldersList';
+  const readFolders = () => JSON.parse(localStorage.getItem(fldrKey) || '[]');
+  const writeFolders = (list) => localStorage.setItem(fldrKey, JSON.stringify(list));
 
   window.deleteVideoRecord = (id) => {
     let list = read();
@@ -1917,40 +1921,359 @@ function initTeacherVideo() {
     renderVideos();
   };
 
-  const renderVideos = () => {
-    if (!videoTableBody) return;
+  const addExplicitFolder = (cls, board, sub, topic) => {
+    const folders = readFolders();
+    const exists = folders.some(f => 
+      (f.classLevel || 'General') === cls &&
+      (f.board || 'general') === board &&
+      (f.subject || 'General Subject') === sub &&
+      (f.topic || '') === topic
+    );
+
+    if (!exists) {
+      folders.push({
+        id: Date.now().toString() + Math.random().toString().slice(2, 6),
+        classLevel: cls,
+        board: board,
+        subject: sub,
+        topic: topic
+      });
+      writeFolders(folders);
+      renderVideos();
+    }
+  };
+
+  window.promptAddSubject = (cls, board) => {
+    const subject = prompt(`Create Subject Folder under ${cls.toUpperCase()} (${board.toUpperCase()}):\nEnter Subject Name (e.g. Physics, Chemistry, Biology):`);
+    if (!subject) return;
+    const trimmed = subject.trim();
+    if (trimmed) {
+      addExplicitFolder(cls, board, trimmed, '');
+    }
+  };
+
+  window.promptAddTopic = (cls, board, sub) => {
+    const topic = prompt(`Create Topic Folder under ${cls.toUpperCase()} > ${sub}:\nEnter Topic Name (e.g. Thermodynamics, Light):`);
+    if (!topic) return;
+    const trimmed = topic.trim();
+    if (trimmed) {
+      addExplicitFolder(cls, board, sub, trimmed);
+    }
+  };
+
+  window.promptAddVideo = (cls, board, sub, topic) => {
+    const fClass = document.getElementById('vidClass');
+    const fBoard = document.getElementById('vidBoard');
+    const fSubject = document.getElementById('vidSubject');
+    const fTopic = document.getElementById('vidTopic');
+    const fTitle = document.getElementById('vidTitle');
+    const fUrl = document.getElementById('ytVideoInput');
+
+    if (fClass) fClass.value = cls;
+    if (fBoard) fBoard.value = (board === 'general' ? '' : board);
+    if (fSubject) fSubject.value = sub;
+    if (fTopic) fTopic.value = topic;
+    if (fTitle) { fTitle.value = ''; fTitle.focus(); }
+    if (fUrl) fUrl.value = '';
+
+    const formEl = document.getElementById('lectureVideoForm');
+    if (formEl) {
+      formEl.scrollIntoView({ behavior: 'smooth' });
+      formEl.style.outline = '2px dashed var(--accent)';
+      setTimeout(() => {
+        formEl.style.outline = 'none';
+      }, 1500);
+    }
+  };
+
+  window.confirmDeleteFolder = (cls, board, sub, topic) => {
     const list = read();
-    videoTableBody.innerHTML = '';
+    const isTopic = topic !== '';
+    const label = isTopic ? `Topic "${topic}"` : `Subject "${sub}"`;
     
-    if (!list.length) {
-      videoTableBody.innerHTML = '<tr><td colspan="5">No custom lecture videos added yet.</td></tr>';
+    const hasVideos = list.some(v => {
+      const matchCls = (v.classLevel || 'General') === cls;
+      const matchBoard = (v.board || 'general') === board;
+      const matchSub = (v.subject || 'General Subject') === sub;
+      const matchTopic = isTopic ? ((v.topic || 'General Topic') === topic) : true;
+      return matchCls && matchBoard && matchSub && matchTopic;
+    });
+
+    if (hasVideos) {
+      alert(`Cannot delete this ${isTopic ? 'topic' : 'subject'} folder because it contains lecture videos. Please delete the videos first.`);
       return;
     }
 
-    list.forEach(v => {
-      const tr = document.createElement('tr');
-      const classLabel = isNaN(v.classLevel) ? String(v.classLevel || '').toUpperCase() : 'Class ' + v.classLevel;
-      const boardLabel = v.board ? String(v.board).toUpperCase() : 'General';
-      tr.innerHTML = `
-        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${classLabel}</span></td>
-        <td><span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700;">${boardLabel}</span></td>
-        <td><strong>${v.topic}</strong></td>
-        <td><code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-size:.8rem;color:var(--accent);">${v.videoId}</code></td>
-        <td style="text-align:right;">
-          <button class="action-btn btn-del" onclick="deleteVideoRecord('${v.id}')" style="padding:3px 10px;font-size:.78rem;">🗑 Delete</button>
-        </td>
-      `;
-      videoTableBody.appendChild(tr);
-    });
+    if (confirm(`Are you sure you want to delete the empty ${label} folder?`)) {
+      let folders = readFolders();
+      folders = folders.filter(f => {
+        const matchCls = (f.classLevel || 'General') === cls;
+        const matchBoard = (f.board || 'general') === board;
+        const matchSub = (f.subject || 'General Subject') === sub;
+        const matchTopic = isTopic ? ((f.topic || '') === topic) : true;
+        return !(matchCls && matchBoard && matchSub && matchTopic);
+      });
+      writeFolders(folders);
+      renderVideos();
+    }
   };
+
+  const renderVideos = () => {
+    if (!treeContainer) return;
+    const list = read();
+    const folders = readFolders();
+    treeContainer.innerHTML = '';
+    
+    if (!list.length && !folders.length) {
+      treeContainer.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">No custom lecture videos or empty folders created yet.</div>';
+      return;
+    }
+
+    const tree = {};
+
+    // First populate explicit folders
+    folders.forEach(f => {
+      const cls = f.classLevel || 'General';
+      const board = f.board || 'general';
+      const sub = f.subject || 'General Subject';
+      const topic = f.topic || '';
+
+      if (!tree[cls]) tree[cls] = {};
+      if (!tree[cls][board]) tree[cls][board] = {};
+      if (!tree[cls][board][sub]) tree[cls][board][sub] = {};
+      if (topic) {
+        if (!tree[cls][board][sub][topic]) tree[cls][board][sub][topic] = [];
+      }
+    });
+
+    // Merge video folders
+    list.forEach(v => {
+      const cls = v.classLevel || 'General';
+      const board = v.board || 'general';
+      const sub = v.subject || 'General Subject';
+      const topic = v.topic || 'General Topic';
+
+      if (!tree[cls]) tree[cls] = {};
+      if (!tree[cls][board]) tree[cls][board] = {};
+      if (!tree[cls][board][sub]) tree[cls][board][sub] = {};
+      if (!tree[cls][board][sub][topic]) tree[cls][board][sub][topic] = [];
+
+      tree[cls][board][sub][topic].push(v);
+    });
+
+    const rootDiv = document.createElement('div');
+    
+    Object.keys(tree).sort().forEach(cls => {
+      const clsFolder = document.createElement('div');
+      clsFolder.className = 'tree-folder';
+      const clsTitle = document.createElement('span');
+      clsTitle.className = 'tree-folder-title';
+      clsTitle.textContent = isNaN(cls) ? cls.toUpperCase() : 'Class ' + cls;
+      clsFolder.appendChild(clsTitle);
+
+      const clsContent = document.createElement('div');
+      clsContent.className = 'tree-content';
+      clsFolder.appendChild(clsContent);
+
+      Object.keys(tree[cls]).sort().forEach(board => {
+        const boardFolder = document.createElement('div');
+        boardFolder.className = 'tree-folder';
+        
+        const boardHeader = document.createElement('div');
+        boardHeader.className = 'tree-folder-header';
+
+        const boardTitle = document.createElement('span');
+        boardTitle.className = 'tree-folder-title';
+        boardTitle.textContent = board.toUpperCase();
+        boardHeader.appendChild(boardTitle);
+
+        const addSubBtn = document.createElement('button');
+        addSubBtn.className = 'tree-action-btn';
+        addSubBtn.innerHTML = '➕ Subject';
+        addSubBtn.onclick = (e) => {
+          e.stopPropagation();
+          promptAddSubject(cls, board);
+        };
+        boardHeader.appendChild(addSubBtn);
+
+        boardFolder.appendChild(boardHeader);
+
+        const boardContent = document.createElement('div');
+        boardContent.className = 'tree-content';
+        boardFolder.appendChild(boardContent);
+
+        Object.keys(tree[cls][board]).sort().forEach(sub => {
+          const subFolder = document.createElement('div');
+          subFolder.className = 'tree-folder';
+          
+          const subHeader = document.createElement('div');
+          subHeader.className = 'tree-folder-header';
+
+          const subTitle = document.createElement('span');
+          subTitle.className = 'tree-folder-title';
+          subTitle.textContent = sub;
+          subHeader.appendChild(subTitle);
+
+          const addTopicBtn = document.createElement('button');
+          addTopicBtn.className = 'tree-action-btn';
+          addTopicBtn.innerHTML = '➕ Topic';
+          addTopicBtn.onclick = (e) => {
+            e.stopPropagation();
+            promptAddTopic(cls, board, sub);
+          };
+          subHeader.appendChild(addTopicBtn);
+
+          const delSubBtn = document.createElement('button');
+          delSubBtn.className = 'tree-action-btn btn-danger';
+          delSubBtn.innerHTML = '🗑 Delete';
+          delSubBtn.onclick = (e) => {
+            e.stopPropagation();
+            confirmDeleteFolder(cls, board, sub, '');
+          };
+          subHeader.appendChild(delSubBtn);
+
+          subFolder.appendChild(subHeader);
+
+          const subContent = document.createElement('div');
+          subContent.className = 'tree-content';
+          subFolder.appendChild(subContent);
+
+          const topics = Object.keys(tree[cls][board][sub]);
+          if (topics.length === 0) {
+            const emptyNote = document.createElement('div');
+            emptyNote.className = 'empty-folder-note';
+            emptyNote.innerHTML = '<span>(Empty Subject folder)</span>';
+            subContent.appendChild(emptyNote);
+          } else {
+            topics.sort().forEach(topic => {
+              const topicFolder = document.createElement('div');
+              topicFolder.className = 'tree-folder';
+              
+              const topicHeader = document.createElement('div');
+              topicHeader.className = 'tree-folder-header';
+
+              const topicTitle = document.createElement('span');
+              topicTitle.className = 'tree-folder-title';
+              topicTitle.textContent = topic;
+              topicHeader.appendChild(topicTitle);
+
+              const addVidBtn = document.createElement('button');
+              addVidBtn.className = 'tree-action-btn';
+              addVidBtn.innerHTML = '➕ Add Video';
+              addVidBtn.onclick = (e) => {
+                e.stopPropagation();
+                promptAddVideo(cls, board, sub, topic);
+              };
+              topicHeader.appendChild(addVidBtn);
+
+              const delTopicBtn = document.createElement('button');
+              delTopicBtn.className = 'tree-action-btn btn-danger';
+              delTopicBtn.innerHTML = '🗑 Delete';
+              delTopicBtn.onclick = (e) => {
+                e.stopPropagation();
+                confirmDeleteFolder(cls, board, sub, topic);
+              };
+              topicHeader.appendChild(delTopicBtn);
+
+              topicFolder.appendChild(topicHeader);
+
+              const topicContent = document.createElement('div');
+              topicContent.className = 'tree-content';
+              topicFolder.appendChild(topicContent);
+
+              const videos = tree[cls][board][sub][topic];
+              if (videos.length === 0) {
+                const emptyNote = document.createElement('div');
+                emptyNote.className = 'empty-folder-note';
+                emptyNote.innerHTML = '<span>(Empty Topic subfolder)</span>';
+                topicContent.appendChild(emptyNote);
+              } else {
+                videos.forEach(video => {
+                  const item = document.createElement('div');
+                  item.className = 'tree-item';
+                  item.innerHTML = `
+                    <div class="tree-item-meta">
+                      <span style="font-size:1rem;">🎥</span>
+                      <span class="tree-item-title">${video.title || 'Untitled Video'}</span>
+                      <span class="tree-item-vid">${video.videoId}</span>
+                    </div>
+                    <button class="tree-item-delete" onclick="deleteVideoRecord('${video.id}')">🗑 Delete</button>
+                  `;
+                  topicContent.appendChild(item);
+                });
+              }
+
+              topicTitle.onclick = (e) => {
+                e.stopPropagation();
+                topicFolder.classList.toggle('collapsed');
+                topicTitle.classList.toggle('open');
+              };
+              subContent.appendChild(topicFolder);
+            });
+          }
+
+          subTitle.onclick = (e) => {
+            e.stopPropagation();
+            subFolder.classList.toggle('collapsed');
+            subTitle.classList.toggle('open');
+          };
+          boardContent.appendChild(subFolder);
+        });
+
+        boardTitle.onclick = (e) => {
+          e.stopPropagation();
+          boardFolder.classList.toggle('collapsed');
+          boardTitle.classList.toggle('open');
+        };
+        clsContent.appendChild(boardFolder);
+      });
+
+      clsTitle.onclick = (e) => {
+        e.stopPropagation();
+        clsFolder.classList.toggle('collapsed');
+        clsTitle.classList.toggle('open');
+      };
+      rootDiv.appendChild(clsFolder);
+    });
+
+    treeContainer.appendChild(rootDiv);
+  };
+
+  // Wire quick create folder form
+  const createFolderForm = document.getElementById('createFolderForm');
+  const folderStatus = document.getElementById('folderCreateStatus');
+  if (createFolderForm) {
+    createFolderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const cls = document.getElementById('fldrClass').value;
+      const board = document.getElementById('fldrBoard').value || 'general';
+      const sub = document.getElementById('fldrSubject').value.trim();
+      const topic = document.getElementById('fldrTopic').value.trim();
+
+      if (!cls || !sub) return;
+
+      addExplicitFolder(cls, board, sub, topic);
+      
+      if (folderStatus) {
+        folderStatus.textContent = `Folder structure created successfully!`;
+        folderStatus.style.color = '#38a169';
+        setTimeout(() => folderStatus.textContent = '', 3000);
+      }
+      createFolderForm.reset();
+      renderVideos();
+    });
+  }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('ytVideoInput').value.trim();
     const vidClass = document.getElementById('vidClass').value;
     const vidBoard = document.getElementById('vidBoard') ? document.getElementById('vidBoard').value : '';
+    const vidSubject = document.getElementById('vidSubject').value.trim();
     const vidTopic = document.getElementById('vidTopic').value.trim();
-    if (!input || !vidClass || !vidTopic) return;
+    const vidTitle = document.getElementById('vidTitle').value.trim();
+
+    if (!input || !vidClass || !vidSubject || !vidTopic || !vidTitle) return;
 
     let videoId = input;
     if (input.includes('youtube.com') || input.includes('youtu.be')) {
@@ -1973,7 +2296,9 @@ function initTeacherVideo() {
         id: Date.now().toString(),
         classLevel: vidClass,
         board: vidBoard,
+        subject: vidSubject,
         topic: vidTopic,
+        title: vidTitle,
         videoId: videoId,
         addedAt: new Date().toISOString()
       };
@@ -1981,7 +2306,7 @@ function initTeacherVideo() {
       list.push(newLecture);
       write(list);
       
-      status.textContent = 'Lecture added to library successfully!';
+      status.textContent = 'Lecture added and organized successfully!';
       status.style.color = '#38a169';
       setTimeout(() => status.textContent = '', 3000);
       form.reset();

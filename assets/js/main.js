@@ -2051,7 +2051,11 @@ function initTeacherVideo() {
 
     // Depth >= 2: We are inside a Class/Board. Render Subfolders and Videos for current path
     const folders = readFolders().filter(f => f.parentPath === currentPath);
-    const videos = readVideos().filter(v => v.parentPath === currentPath);
+    const videos = readVideos().filter(v => {
+      if (v.parentPath === currentPath) return true;
+      if (!v.parentPath && segments.length === 2 && v.classLevel === segments[0] && v.board === segments[1]) return true;
+      return false;
+    });
 
     if (folders.length === 0 && videos.length === 0) {
       grid.innerHTML = `
@@ -2641,7 +2645,11 @@ function initStudentVideo() {
     }
 
     const folders = readFolders().filter(f => f.parentPath === currentPath);
-    const videos = readVideos().filter(v => v.parentPath === currentPath);
+    const videos = readVideos().filter(v => {
+      if (v.parentPath === currentPath) return true;
+      if (!v.parentPath && segments.length === 2 && v.classLevel === segments[0] && v.board === segments[1]) return true;
+      return false;
+    });
 
     if (folders.length === 0 && videos.length === 0) {
       grid.innerHTML = `

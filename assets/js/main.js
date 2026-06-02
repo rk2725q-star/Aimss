@@ -1,4 +1,4 @@
-function initReveal() {
+﻿function initReveal() {
   const items = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('show'); });
@@ -1941,129 +1941,296 @@ function initSidebarMobile() {
 }
 
 function initTeacherVideo() {
-  /* ══ VIDEO UPLOAD FORM ══ */
-  const vidForm = document.getElementById('lectureVideoForm');
-  const vidClass = document.getElementById('vidClass');
-  const vidBoard = document.getElementById('vidBoard');
-  const vidBoardWrap = document.getElementById('vidBoardWrap');
-  const vidSubject = document.getElementById('vidSubject');
-  const vidTopic = document.getElementById('vidTopic');
-  const vidTitle = document.getElementById('vidTitle');
-  const vidUrl = document.getElementById('vidUrl');
-  const vidStatus = document.getElementById('vidUploadStatus');
-  const vidLibrary = document.getElementById('vidLibrary');
-  const vidFilterClass = document.getElementById('vidFilterClass');
-  const vidFilterBoard = document.getElementById('vidFilterBoard');
-  const vidFormReset = document.getElementById('vidFormReset');
+  const grid = document.getElementById('driveGrid');
+  const breadcrumbs = document.getElementById('driveBreadcrumbs');
+  const btnNewFolder = document.getElementById('btnNewFolder');
+  const btnUploadVideo = document.getElementById('btnUploadVideo');
+  
+  if (!grid || !breadcrumbs) return;
 
-  if (!vidForm || !vidLibrary) return;
-
-  const PREP_CLASSES = ['neet','jee','ncert','nda','upsc','tnpsc'];
   const VID_KEY = 'lectureVideosList';
+  const FLD_KEY = 'lectureFoldersList';
+  
   const readVideos = () => JSON.parse(localStorage.getItem(VID_KEY) || '[]');
   const writeVideos = (list) => localStorage.setItem(VID_KEY, JSON.stringify(list));
+  const readFolders = () => JSON.parse(localStorage.getItem(FLD_KEY) || '[]');
+  const writeFolders = (list) => localStorage.setItem(FLD_KEY, JSON.stringify(list));
 
-  /* Toggle board visibility for prep classes */
-  const toggleBoard = () => {
-    if (!vidClass || !vidBoardWrap) return;
-    const val = vidClass.value.toLowerCase();
-    const isPrep = PREP_CLASSES.includes(val);
-    vidBoardWrap.style.display = isPrep ? 'none' : '';
-    if (isPrep && vidBoard) vidBoard.value = 'none';
-  };
-  if (vidClass) { vidClass.addEventListener('change', toggleBoard); toggleBoard(); }
+  let currentPath = localStorage.getItem('aimss-drive-path') || '/';
 
-  /* YouTube ID extractor — supports full URLs, short URLs, embeds, iframes */
+  // Classes & Boards for root levels
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC'];
+  const BOARDS = ['Stateboard', 'CBSE', 'General'];
+
+  // Robust YouTube Extractor
   const extractYoutubeId = (input) => {
     if (!input) return null;
     let str = input.trim();
-    // Extract src from iframe
     if (str.includes('<iframe')) {
       const match = str.match(/src=["']([^"']+)["']/i);
       if (match && match[1]) str = match[1];
     }
-    // Decode HTML entities
     str = str.replace(/&amp;/g,'&').replace(/&#39;/g,"'");
-    // Standard regex
     const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\?v=|&v=)([^#&?]*).*/;
     const m = str.match(regExp);
     if (m && m[2] && m[2].length === 11) return m[2];
-    // Fallback: last path segment
     const cleaned = str.split('?')[0].split('/').pop();
     if (cleaned && cleaned.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleaned)) return cleaned;
-    // Fallback: raw ID
     if (str.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
     return null;
   };
 
-  /* Class label helper */
-  const classLabel = (val) => {
-    if (!isNaN(val)) return 'Class ' + val;
-    return val.toUpperCase();
+  const getPathSegments = (path) => path.split('/').filter(Boolean);
+
+  window.navigateToPath = (path) => {
+    currentPath = path;
+    localStorage.setItem('aimss-drive-path', currentPath);
+    renderDrive();
   };
 
-  /* Board label helper */
-  const boardLabel = (val) => {
-    if (!val || val === 'none') return 'General';
-    return val.charAt(0).toUpperCase() + val.slice(1);
+  // Render Breadcrumbs
+  const renderBreadcrumbs = () => {
+    const segments = getPathSegments(currentPath);
+    let html = `<div class="breadcrumb-item" onclick="navigateToPath('/')">🏠 Root</div>`;
+    let buildPath = '';
+    
+    segments.forEach((seg, i) => {
+      buildPath += '/' + seg;
+      html += `<span class="breadcrumb-separator">/</span>`;
+      if (i === segments.length - 1) {
+        html += `<div class="breadcrumb-item active">${seg}</div>`;
+      } else {
+        html += `<div class="breadcrumb-item" onclick="navigateToPath('${buildPath}/')">${seg}</div>`;
+      }
+    });
+    breadcrumbs.innerHTML = html;
   };
 
-  /* ══ VIDEO FORM SUBMIT ══ */
-  vidForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const clsVal = vidClass ? vidClass.value.trim() : '';
-    const boardVal = vidBoard ? vidBoard.value.trim() : 'none';
-    const subjectVal = vidSubject ? vidSubject.value.trim() : '';
-    const topicVal = vidTopic ? vidTopic.value.trim() : '';
-    const titleVal = vidTitle ? vidTitle.value.trim() : '';
-    const urlVal = vidUrl ? vidUrl.value.trim() : '';
+  // Render Grid
+  const renderDrive = () => {
+    renderBreadcrumbs();
+    grid.innerHTML = '';
+    const segments = getPathSegments(currentPath);
+    const depth = segments.length;
 
-    if (!clsVal || !subjectVal || !titleVal || !urlVal) {
-      if (vidStatus) { vidStatus.textContent = 'Please fill all required fields.'; vidStatus.style.color = '#f87171'; }
+    // Show/hide action buttons
+    if (depth >= 2) {
+      // Inside a specific Class and Board
+      if(btnNewFolder) btnNewFolder.style.display = 'inline-flex';
+      if(btnUploadVideo) btnUploadVideo.style.display = 'inline-flex';
+    } else {
+      if(btnNewFolder) btnNewFolder.style.display = 'none';
+      if(btnUploadVideo) btnUploadVideo.style.display = 'none';
+    }
+
+    if (depth === 0) {
+      // Render Root Classes
+      CLASSES.forEach(cls => {
+        const card = document.createElement('div');
+        card.className = 'drive-card';
+        card.innerHTML = `<div class="drive-icon">📚</div><div class="drive-name">${cls}</div>`;
+        card.onclick = () => navigateToPath('/' + cls + '/');
+        grid.appendChild(card);
+      });
       return;
     }
 
-    const videoId = extractYoutubeId(urlVal);
-    if (!videoId) {
-      if (vidStatus) { vidStatus.textContent = 'Could not extract a valid YouTube Video ID. Please check the URL or iframe code.'; vidStatus.style.color = '#f87171'; }
+    if (depth === 1) {
+      // Render Boards for the selected Class
+      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC'].includes(segments[0]);
+      const boardsToShow = isPrep ? ['General'] : BOARDS;
+      boardsToShow.forEach(brd => {
+        const card = document.createElement('div');
+        card.className = 'drive-card';
+        card.innerHTML = `<div class="drive-icon">🎯</div><div class="drive-name">${brd}</div>`;
+        card.onclick = () => navigateToPath('/' + segments[0] + '/' + brd + '/');
+        grid.appendChild(card);
+      });
       return;
     }
 
-    const isPrep = PREP_CLASSES.includes(clsVal.toLowerCase());
-    const newVid = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2,6),
-      classLevel: clsVal,
-      board: isPrep ? 'none' : boardVal,
-      subject: subjectVal,
-      topic: topicVal || subjectVal,
-      title: titleVal,
-      videoId: videoId,
-      addedAt: new Date().toISOString()
+    // Depth >= 2: We are inside a Class/Board. Render Subfolders and Videos for current path
+    const folders = readFolders().filter(f => f.parentPath === currentPath);
+    const videos = readVideos().filter(v => v.parentPath === currentPath);
+
+    if (folders.length === 0 && videos.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+          <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px;">📂</div>
+          <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">This folder is empty</div>
+          <div style="font-size: 0.9rem; margin-top: 5px;">Create a subfolder or upload a video here.</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Render Folders
+    folders.forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'drive-card';
+      card.innerHTML = `
+        <div class="drive-icon">📁</div>
+        <div class="drive-name">${f.name}</div>
+        <div class="drive-card-delete" onclick="event.stopPropagation(); deleteFolder('${f.id}')" title="Delete Folder">🗑</div>
+      `;
+      card.onclick = () => navigateToPath(currentPath + f.name + '/');
+      grid.appendChild(card);
+    });
+
+    // Render Videos
+    videos.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'drive-card video-card';
+      card.innerHTML = `
+        <div class="drive-thumb">
+          <img src="https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg" alt="${v.title}" loading="lazy" />
+          <div class="drive-play">
+            <svg viewBox="0 0 52 52"><polygon points="18,12 40,26 18,40" /></svg>
+          </div>
+        </div>
+        <div class="drive-video-info">
+          <div class="drive-video-title">${v.title}</div>
+          <div class="drive-video-meta">${new Date(v.addedAt || Date.now()).toLocaleDateString()}</div>
+        </div>
+        <div class="drive-card-delete" onclick="event.stopPropagation(); deleteVideo('${v.id}')" title="Delete Video">🗑</div>
+      `;
+      card.onclick = () => openPlayer(v);
+      grid.appendChild(card);
+    });
+  };
+
+  /* ══ MODALS & ACTIONS ══ */
+  const modalFolder = document.getElementById('modalNewFolder');
+  const modalUpload = document.getElementById('modalUploadVideo');
+
+  window.closeFolderModal = () => { if(modalFolder) modalFolder.classList.remove('open'); };
+  window.closeUploadModal = () => { if(modalUpload) modalUpload.classList.remove('open'); };
+
+  if(btnNewFolder) btnNewFolder.onclick = () => {
+    document.getElementById('driveFolderForm').reset();
+    modalFolder.classList.add('open');
+    setTimeout(() => document.getElementById('modalFolderNameInput').focus(), 100);
+  };
+  
+  if(btnUploadVideo) btnUploadVideo.onclick = () => {
+    document.getElementById('driveUploadForm').reset();
+    const status = document.getElementById('modalUploadStatus');
+    if(status) status.textContent = '';
+    modalUpload.classList.add('open');
+    setTimeout(() => document.getElementById('modalVideoTitleInput').focus(), 100);
+  };
+
+  document.getElementById('btnCloseFolderModal')?.addEventListener('click', closeFolderModal);
+  document.getElementById('btnCancelFolderModal')?.addEventListener('click', closeFolderModal);
+  document.getElementById('btnCloseUploadModal')?.addEventListener('click', closeUploadModal);
+  document.getElementById('btnCancelUploadModal')?.addEventListener('click', closeUploadModal);
+
+  // Create Folder Submit
+  const folderForm = document.getElementById('driveFolderForm');
+  if (folderForm) {
+    folderForm.onsubmit = (e) => {
+      e.preventDefault();
+      let name = document.getElementById('modalFolderNameInput').value.trim();
+      if (!name) return;
+      // sanitize name to avoid slash issues
+      name = name.replace(/\//g, '-');
+      
+      const folders = readFolders();
+      // Check duplicate
+      if (folders.some(f => f.parentPath === currentPath && f.name.toLowerCase() === name.toLowerCase())) {
+        alert('A folder with this name already exists here.');
+        return;
+      }
+      
+      folders.push({
+        id: 'fld_' + Date.now().toString(36),
+        name: name,
+        parentPath: currentPath,
+        addedAt: new Date().toISOString()
+      });
+      writeFolders(folders);
+      closeFolderModal();
+      renderDrive();
     };
+  }
 
-    const vids = readVideos();
-    vids.unshift(newVid);
-    writeVideos(vids);
+  // Upload Video Submit
+  const uploadForm = document.getElementById('driveUploadForm');
+  if (uploadForm) {
+    uploadForm.onsubmit = (e) => {
+      e.preventDefault();
+      const title = document.getElementById('modalVideoTitleInput').value.trim();
+      const urlInput = document.getElementById('modalVideoUrlInput').value.trim();
+      const status = document.getElementById('modalUploadStatus');
 
-    if (vidStatus) { vidStatus.textContent = ''; }
-    vidForm.reset();
-    toggleBoard();
-    renderLibrary();
-    showToast('Video "' + titleVal + '" uploaded successfully!');
-  });
+      if (!title || !urlInput) return;
+      const videoId = extractYoutubeId(urlInput);
 
-  if (vidFormReset) vidFormReset.addEventListener('click', () => { vidForm.reset(); if(vidStatus) vidStatus.textContent=''; toggleBoard(); });
-  if (vidFilterClass) vidFilterClass.addEventListener('change', renderLibrary);
-  if (vidFilterBoard) vidFilterBoard.addEventListener('change', renderLibrary);
+      if (!videoId) {
+        if(status) { status.textContent = "Invalid YouTube URL or iframe code."; status.style.color = '#f87171'; }
+        return;
+      }
 
-  /* ══ DELETE VIDEO ══ */
-  window.deleteVideoRecord = (id) => {
-    const vids = readVideos();
-    const vid = vids.find(v => v.id === String(id));
-    if (!vid) return;
-    if (!confirm(`Delete video "${vid.title}"?`)) return;
-    writeVideos(vids.filter(v => v.id !== String(id)));
-    renderLibrary();
+      // backward compatibility for classLevel and board
+      const segments = getPathSegments(currentPath);
+      const cls = segments[0] || 'Unknown';
+      const brd = segments[1] || 'Unknown';
+
+      const videos = readVideos();
+      videos.unshift({
+        id: 'vid_' + Date.now().toString(36),
+        title: title,
+        videoId: videoId,
+        parentPath: currentPath,
+        classLevel: cls,
+        board: brd,
+        addedAt: new Date().toISOString()
+      });
+      writeVideos(videos);
+
+      if(status) { status.textContent = "Video uploaded successfully!"; status.style.color = '#4ade80'; }
+      
+      const toast = document.getElementById('tpSuccessToast');
+      const toastMsg = document.getElementById('tpToastMsg');
+      if (toast && toastMsg) {
+        toastMsg.textContent = 'Video "' + title + '" uploaded!';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      setTimeout(() => {
+        closeUploadModal();
+        renderDrive();
+      }, 800);
+    };
+  }
+
+  /* ══ DELETE ACTIONS ══ */
+  window.deleteFolder = (id) => {
+    if (!confirm('Are you sure you want to delete this folder and ALL its contents?')) return;
+    const folders = readFolders();
+    const folderToDelete = folders.find(f => f.id === id);
+    if (!folderToDelete) return;
+
+    const pathToDelete = folderToDelete.parentPath + folderToDelete.name + '/';
+    
+    // Remove the folder itself
+    const updatedFolders = folders.filter(f => f.id !== id && !f.parentPath.startsWith(pathToDelete));
+    writeFolders(updatedFolders);
+
+    // Remove all videos inside this folder and its subfolders
+    const videos = readVideos();
+    const updatedVideos = videos.filter(v => !v.parentPath.startsWith(pathToDelete));
+    writeVideos(updatedVideos);
+
+    renderDrive();
+  };
+
+  window.deleteVideo = (id) => {
+    if (!confirm('Delete this video?')) return;
+    const videos = readVideos();
+    writeVideos(videos.filter(v => v.id !== id));
+    renderDrive();
   };
 
   /* ══ VIDEO PLAYER MODAL ══ */
@@ -2073,13 +2240,14 @@ function initTeacherVideo() {
   const playerMeta = document.getElementById('vidPlayerMeta');
   const playerClose = document.getElementById('vidPlayerClose');
   const playerYTBtn = document.getElementById('vidPlayerYTBtn');
-  let currentVideoId = null;
 
-  const openPlayer = (vid) => {
+  window.openPlayer = (vid) => {
     if (!playerOverlay || !playerFrame) return;
-    currentVideoId = vid.videoId;
     if (playerTitle) playerTitle.textContent = vid.title;
-    if (playerMeta) playerMeta.textContent = `${classLabel(vid.classLevel)} • ${boardLabel(vid.board)} • ${vid.subject}${vid.topic && vid.topic !== vid.subject ? ' • ' + vid.topic : ''}`;
+    if (playerMeta) {
+      const segs = getPathSegments(vid.parentPath);
+      playerMeta.textContent = segs.join(' • ');
+    }
     playerFrame.src = `https://www.youtube.com/embed/${vid.videoId}?autoplay=1&rel=0&modestbranding=1`;
     if (playerYTBtn) playerYTBtn.onclick = () => window.open('https://www.youtube.com/watch?v=' + vid.videoId, '_blank');
     playerOverlay.classList.add('open');
@@ -2089,171 +2257,16 @@ function initTeacherVideo() {
   const closePlayer = () => {
     if (!playerOverlay) return;
     playerOverlay.classList.remove('open');
-    if (playerFrame) { playerFrame.src = ''; }
+    if (playerFrame) playerFrame.src = '';
     document.body.style.overflow = '';
-    currentVideoId = null;
   };
 
   if (playerClose) playerClose.addEventListener('click', closePlayer);
   if (playerOverlay) playerOverlay.addEventListener('click', (e) => { if (e.target === playerOverlay) closePlayer(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && playerOverlay && playerOverlay.classList.contains('open')) closePlayer(); });
 
-  /* ══ RENDER LIBRARY ══ */
-  const renderLibrary = () => {
-    if (!vidLibrary) return;
-    let vids = readVideos();
-
-    // Apply filters
-    const fClass = vidFilterClass ? vidFilterClass.value : 'all';
-    const fBoard = vidFilterBoard ? vidFilterBoard.value : 'all';
-    if (fClass !== 'all') vids = vids.filter(v => v.classLevel === fClass);
-    if (fBoard !== 'all') vids = vids.filter(v => (v.board || 'none') === fBoard);
-
-    if (!vids.length) {
-      vidLibrary.innerHTML = `
-        <div style="text-align:center;padding:48px 24px;color:var(--muted);">
-          <div style="font-size:2.8rem;margin-bottom:12px;opacity:0.45;">🎬</div>
-          <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">No videos yet</div>
-          <div style="font-size:0.82rem;opacity:0.7;">Upload your first lecture video using the form above.</div>
-        </div>`;
-      return;
-    }
-
-    // Group: classLevel → board → subject → topic → videos[]
-    const groups = {};
-    vids.forEach(v => {
-      const cls = v.classLevel || 'other';
-      const brd = v.board || 'none';
-      const sub = v.subject || 'General';
-      const top = v.topic || sub;
-      if (!groups[cls]) groups[cls] = {};
-      if (!groups[cls][brd]) groups[cls][brd] = {};
-      if (!groups[cls][brd][sub]) groups[cls][brd][sub] = {};
-      if (!groups[cls][brd][sub][top]) groups[cls][brd][sub][top] = [];
-      groups[cls][brd][sub][top].push(v);
-    });
-
-    vidLibrary.innerHTML = '';
-
-    Object.keys(groups).sort().forEach(cls => {
-      const brdGroups = groups[cls];
-      const totalVids = Object.values(brdGroups).reduce((a,b) => a + Object.values(b).reduce((c,d) => c + Object.values(d).reduce((e,f) => e + f.length, 0), 0), 0);
-
-      const classGroup = document.createElement('div');
-      classGroup.className = 'vid-class-group';
-
-      const icon = isNaN(cls) ? '🎯' : '📚';
-      const header = document.createElement('div');
-      header.className = 'vid-class-header';
-      header.innerHTML = `
-        <div class="vid-class-header-left">
-          <div class="vid-class-icon">${icon}</div>
-          <div>
-            <p class="vid-class-title">${classLabel(cls)}</p>
-            <p class="vid-class-count">${totalVids} video${totalVids !== 1 ? 's' : ''}</p>
-          </div>
-        </div>
-        <svg class="vid-class-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      `;
-
-      const body = document.createElement('div');
-      body.className = 'vid-class-body';
-
-      // Auto-open first group
-      const isFirst = vidLibrary.children.length === 0;
-      if (isFirst) { header.classList.add('open'); body.classList.add('open'); }
-
-      header.addEventListener('click', () => {
-        const isOpen = header.classList.contains('open');
-        if (isOpen) { header.classList.remove('open'); body.classList.remove('open'); }
-        else { header.classList.add('open'); body.classList.add('open'); }
-      });
-
-      // Render boards → subjects → topics → video cards
-      Object.keys(brdGroups).sort().forEach(brd => {
-        const subGroups = brdGroups[brd];
-
-        const brdDiv = document.createElement('div');
-        brdDiv.className = 'vid-subject-group';
-
-        // Board label (only show if not 'none' or multiple boards)
-        const hasManyBoards = Object.keys(brdGroups).length > 1;
-        if (hasManyBoards || brd !== 'none') {
-          const bl = document.createElement('div');
-          bl.className = 'vid-subject-divider';
-          bl.textContent = boardLabel(brd);
-          brdDiv.appendChild(bl);
-        }
-
-        Object.keys(subGroups).sort().forEach(sub => {
-          const topGroups = subGroups[sub];
-
-          const subDiv = document.createElement('div');
-          subDiv.className = 'vid-subject-group';
-          const sl = document.createElement('div');
-          sl.className = 'vid-subject-label';
-          sl.textContent = sub;
-          subDiv.appendChild(sl);
-
-          Object.keys(topGroups).sort().forEach(top => {
-            const topVids = topGroups[top];
-            const topDiv = document.createElement('div');
-            topDiv.className = 'vid-topic-group';
-
-            // Show topic label only if different from subject
-            if (top !== sub) {
-              const tl = document.createElement('div');
-              tl.className = 'vid-topic-label';
-              tl.textContent = top;
-              topDiv.appendChild(tl);
-            }
-
-            const row = document.createElement('div');
-            row.className = 'vid-cards-row';
-
-            topVids.forEach(vid => {
-              const card = document.createElement('div');
-              card.className = 'vid-card';
-              card.innerHTML = `
-                <div class="vid-thumb">
-                  <img src="https://img.youtube.com/vi/${vid.videoId}/mqdefault.jpg" alt="${vid.title}" loading="lazy" />
-                  <div class="vid-play-overlay">
-                    <div class="vid-play-btn">
-                      <svg viewBox="0 0 52 52"><polygon points="18,12 40,26 18,40" /></svg>
-                    </div>
-                  </div>
-                </div>
-                <div class="vid-info">
-                  <div class="vid-title">${vid.title}</div>
-                  <div class="vid-meta">
-                    <span class="vid-meta-chip">${classLabel(vid.classLevel)}</span>
-                    <span class="vid-meta-chip">${vid.subject}</span>
-                  </div>
-                </div>
-                <button class="vid-del-btn" onclick="event.stopPropagation();deleteVideoRecord('${vid.id}')" title="Delete">🗑</button>
-              `;
-              card.addEventListener('click', () => openPlayer(vid));
-              row.appendChild(card);
-            });
-
-            topDiv.appendChild(row);
-            subDiv.appendChild(topDiv);
-          });
-
-          brdDiv.appendChild(subDiv);
-        });
-
-        body.appendChild(brdDiv);
-      });
-
-      classGroup.appendChild(header);
-      classGroup.appendChild(body);
-      vidLibrary.appendChild(classGroup);
-    });
-  };
-
-  renderLibrary();
-
+  // Initial Render
+  renderDrive();
 }
 
 initThemeToggle();

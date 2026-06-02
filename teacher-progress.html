@@ -194,370 +194,171 @@
       margin-right: 4px;
     }
 
-    /* ══ VIDEO LECTURES SECTION ══ */
-    .vid-upload-card {
+    /* ══ VIDEO LECTURES SECTION (DRIVE EXPLORER) ══ */
+    .drive-container {
       background: var(--tp-card-bg);
       border: 1px solid var(--tp-card-border);
       border-radius: var(--tp-radius);
-      padding: 22px;
+      padding: 20px;
       margin-bottom: 24px;
+      font-family: 'Outfit', sans-serif;
     }
-    
-    .vid-tree {
+    .drive-toolbar {
       display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* Class Group */
-    .vid-class-group {
-      border: 1px solid var(--tp-card-border);
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--tp-card-bg);
-      transition: box-shadow 0.2s;
-    }
-    .vid-class-header {
-      display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding: 14px 18px;
-      cursor: pointer;
-      user-select: none;
-      background: rgba(255,255,255,0.02);
-      border-bottom: 1px solid transparent;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .vid-class-header:hover { background: rgba(255,255,255,0.04); }
-    .vid-class-header.open { border-bottom-color: var(--tp-card-border); }
-    .vid-class-header-left {
-      display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--tp-card-border);
+      flex-wrap: wrap;
     }
-    .vid-class-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, rgba(0,229,204,0.15), rgba(124,58,237,0.15));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      border: 1px solid rgba(0,229,204,0.15);
-      flex-shrink: 0;
-    }
-    .vid-class-title { font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; }
-    .vid-class-count { font-size: 0.76rem; color: var(--muted); margin: 0; margin-top: 1px; }
-    .vid-class-chevron {
-      width: 20px;
-      height: 20px;
-      color: var(--muted);
-      transition: transform 0.25s;
-      flex-shrink: 0;
-    }
-    .vid-class-header.open .vid-class-chevron { transform: rotate(180deg); }
-
-    .vid-class-body { display: none; padding: 12px 12px 8px; }
-    .vid-class-body.open { display: block; }
-
-    /* Subject Groups inside class */
-    .vid-subject-group { margin-bottom: 10px; }
-    .vid-subject-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--muted);
-      padding: 4px 8px;
-      margin-bottom: 8px;
+    .drive-breadcrumbs {
       display: flex;
       align-items: center;
       gap: 6px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      flex-wrap: wrap;
     }
-    .vid-subject-label::before {
-      content: '';
-      display: inline-block;
-      width: 3px;
-      height: 14px;
-      background: var(--tp-accent);
-      border-radius: 2px;
-    }
-    
-    .vid-subject-divider {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: rgba(255,255,255,0.25);
-      padding: 2px 8px 6px;
-    }
-    
-    /* Topic group inside subject */
-    .vid-topic-group { margin-bottom: 8px; }
-    .vid-topic-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: rgba(255,255,255,0.35);
-      padding: 2px 10px 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .vid-topic-label::before {
-      content: '';
-      display: inline-block;
-      width: 12px;
-      height: 1px;
-      background: rgba(255,255,255,0.15);
-    }
-
-    /* Video Card */
-    .vid-cards-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-      padding: 0 6px 4px;
-    }
-    .vid-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      overflow: hidden;
+    .breadcrumb-item {
       cursor: pointer;
-      transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted);
+      transition: color 0.2s;
+      font-weight: 600;
     }
-    .vid-card:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(0,229,204,0.2);
+    .breadcrumb-item:hover { color: var(--tp-accent); }
+    .breadcrumb-item.active { color: #fff; font-weight: 800; cursor: default; }
+    .breadcrumb-separator { color: rgba(255, 255, 255, 0.15); user-select: none; }
+    
+    .drive-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .drive-btn {
+      background: rgba(0, 229, 204, 0.08);
+      color: var(--tp-accent);
+      border: 1px solid rgba(0, 229, 204, 0.2);
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drive-btn:hover { background: var(--tp-accent); color: #000; border-color: var(--tp-accent); transform: translateY(-1px); }
+    .drive-btn:disabled { opacity: 0.5; pointer-events: none; }
+    
+    .drive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    .drive-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      user-select: none;
+      min-height: 130px;
+    }
+    .drive-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 229, 204, 0.2);
       transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
-    .vid-thumb {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #060c1a;
+    .drive-icon { font-size: 2.5rem; margin-bottom: 8px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    .drive-name {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #fff;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .vid-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.85;
-      transition: opacity 0.2s, transform 0.3s;
-    }
-    .vid-card:hover .vid-thumb img { opacity: 1; transform: scale(1.03); }
-    .vid-play-overlay {
+    .drive-card-delete {
       position: absolute;
-      inset: 0;
+      top: 8px;
+      right: 8px;
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.15);
-      transition: background 0.2s;
+      font-size: 0.72rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s;
+      z-index: 10;
     }
-    .vid-card:hover .vid-play-overlay { background: rgba(0,0,0,0.3); }
-    .vid-play-btn {
-      width: 44px;
-      height: 44px;
-      background: rgba(255,255,255,0.9);
+    .drive-card:hover .drive-card-delete { opacity: 1; }
+    .drive-card-delete:hover { background: #f87171; color: #000; border-color: #f87171; }
+    
+    /* Video Thumbnail Card specific */
+    .drive-card.video-card {
+      padding: 0;
+      overflow: hidden;
+      align-items: stretch;
+      justify-content: flex-start;
+      min-height: auto;
+    }
+    .drive-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .drive-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.2s, transform 0.3s; }
+    .drive-card.video-card:hover .drive-thumb img { opacity: 1; transform: scale(1.03); }
+    .drive-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.9);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      transition: transform 0.2s, background 0.2s;
+      pointer-events: none;
+      transition: transform 0.2s;
     }
-    .vid-card:hover .vid-play-btn {
-      transform: scale(1.12);
-      background: var(--tp-accent);
-    }
-    .vid-play-btn svg { width: 16px; height: 16px; fill: #064e3b; margin-left: 2px; }
-    .vid-card:hover .vid-play-btn svg { fill: #000; }
-    
-    .vid-info {
-      padding: 10px 12px 12px;
-    }
-    .vid-title {
+    .drive-card.video-card:hover .drive-play { transform: translate(-50%, -50%) scale(1.1); background: var(--tp-accent); }
+    .drive-play svg { width: 14px; height: 14px; fill: #064e3b; margin-left: 2px; }
+    .drive-video-info { padding: 12px; text-align: left; }
+    .drive-video-title {
       font-size: 0.85rem;
       font-weight: 700;
       color: #fff;
-      line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      line-height: 1.3;
       margin-bottom: 6px;
     }
-    .vid-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .vid-meta-chip {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      color: var(--tp-accent);
-      background: rgba(0,229,204,0.08);
-      border: 1px solid rgba(0,229,204,0.15);
-    }
-    .vid-del-btn {
-      position: absolute;
-      top: 7px;
-      right: 7px;
-      background: rgba(0,0,0,0.6);
-      color: #f87171;
-      border: 1px solid rgba(248,113,113,0.25);
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.2s, background 0.2s;
-      z-index: 5;
-    }
-    .vid-card:hover .vid-del-btn { opacity: 1; }
-    .vid-del-btn:hover { background: #f87171; color: #000; border-color: #f87171; }
-
-    /* ══ VIDEO PLAYER MODAL ══ */
-    .vid-player-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.88);
-      backdrop-filter: blur(6px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      padding: 16px;
-    }
-    .vid-player-overlay.open {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .vid-player-modal {
-      background: #0a1120;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 860px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.7);
-      transform: scale(0.94) translateY(16px);
-      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-      overflow: hidden;
-    }
-    .vid-player-overlay.open .vid-player-modal {
-      transform: scale(1) translateY(0);
-    }
-    .vid-player-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .vid-player-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      margin: 0;
-      flex: 1;
-      margin-right: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .vid-player-close {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    .vid-player-close:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
-    .vid-iframe-wrap {
-      position: relative;
-      width: 100%;
-      padding-bottom: 56.25%;
-      background: #000;
-    }
-    .vid-iframe-wrap iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .vid-player-footer {
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-    .vid-player-meta {
-      font-size: 0.8rem;
-      color: var(--muted);
-      flex: 1;
-    }
-
-    /* Steps UI for Upload Form */
-    .tp-step-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 24px;
-      counter-reset: step;
-    }
-    .tp-step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--muted);
-      flex: 1;
-    }
-    .tp-step-num {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 800;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .tp-step-line {
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.07);
-    }
+    .drive-video-meta { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
 
     /* Info Banner */
     .tp-info-banner {
@@ -628,25 +429,54 @@
     }
     .tp-success-toast.show { transform: translateY(0); opacity: 1; }
 
-    /* Video filter bar */
-    .vid-filter-bar {
+    /* Drive Modals */
+    .drive-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid var(--tp-card-border);
-      border-radius: 10px;
-      margin-bottom: 16px;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-out;
     }
-    .vid-filter-label {
-      font-size: 0.72rem;
-      font-weight: 700;
+    .drive-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .drive-modal {
+      background: #0a1120;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 480px;
+      padding: 24px;
+      transform: scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .drive-modal-overlay.open .drive-modal { transform: scale(1); }
+    .drive-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .drive-modal-header h3 { font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .drive-modal-close {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .05em;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
     }
+    .drive-modal-close:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .drive-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 
     @media (max-width: 600px) {
       .tp-tabs { gap: 4px; }
@@ -833,114 +663,34 @@
 
         <!-- ══ PANEL: Lecture Videos ══ -->
         <div class="tp-panel" id="panelLectures">
-          <!-- Upload Form -->
-          <div class="vid-upload-card">
-            <div class="tp-section-header">
-              <div class="tp-section-icon">🎥</div>
-              <div>
-                <p class="tp-section-title">Upload Lecture Video</p>
-                <p class="tp-section-sub">Add YouTube videos organised by class, board, subject and topic</p>
-              </div>
-            </div>
-
-            <div class="tp-info-banner">
-              <span class="tp-info-banner-icon">💡</span>
-              <span>Paste any YouTube URL or embed iframe code. The video will automatically be sorted into the correct class &amp; subject folder below.</span>
-            </div>
-
-            <form id="lectureVideoForm">
-              <div class="tp-form-grid">
-                <div class="tp-field-wrap">
-                  <label class="tp-label" for="vidClass">Class</label>
-                  <select class="field" id="vidClass" required style="margin:0;">
-                    <option value="">Select Class</option>
-                    <option value="6">Class 6</option>
-                    <option value="7">Class 7</option>
-                    <option value="8">Class 8</option>
-                    <option value="9">Class 9</option>
-                    <option value="10">Class 10</option>
-                    <option value="11">Class 11</option>
-                    <option value="12">Class 12</option>
-                    <option value="neet">NEET Prep</option>
-                    <option value="jee">JEE Prep</option>
-                    <option value="ncert">NCERT</option>
-                    <option value="nda">NDA</option>
-                    <option value="upsc">UPSC</option>
-                    <option value="tnpsc">TNPSC</option>
-                  </select>
-                </div>
-                <div class="tp-field-wrap" id="vidBoardWrap">
-                  <label class="tp-label" for="vidBoard">Board</label>
-                  <select class="field" id="vidBoard" style="margin:0;">
-                    <option value="stateboard">Stateboard</option>
-                    <option value="cbse">CBSE</option>
-                    <option value="none">General</option>
-                  </select>
-                </div>
-                <div class="tp-field-wrap">
-                  <label class="tp-label" for="vidSubject">Subject</label>
-                  <input class="field" id="vidSubject" placeholder="e.g. Mathematics" required style="margin:0;" />
-                </div>
-                <div class="tp-field-wrap">
-                  <label class="tp-label" for="vidTopic">Topic / Unit</label>
-                  <input class="field" id="vidTopic" placeholder="e.g. Algebra – Unit 1" style="margin:0;" />
-                </div>
-                <div class="tp-field-wrap" style="grid-column: 1 / -1;">
-                  <label class="tp-label" for="vidTitle">Video Title</label>
-                  <input class="field" id="vidTitle" placeholder="e.g. Introduction to Polynomials" required style="margin:0;" />
-                </div>
-                <div class="tp-field-wrap" style="grid-column: 1 / -1;">
-                  <label class="tp-label" for="vidUrl">YouTube URL or Embed Iframe</label>
-                  <textarea class="field" id="vidUrl" placeholder="Paste YouTube link (https://youtu.be/... or https://www.youtube.com/watch?v=...) or &lt;iframe&gt; embed code" required style="margin:0;height:80px;resize:vertical;font-family:monospace;font-size:0.82rem;"></textarea>
-                </div>
-              </div>
-              <div id="vidUploadStatus" style="font-size:0.83rem;margin:0 0 10px;min-height:20px;"></div>
-              <div class="tp-form-actions">
-                <button class="btn" type="submit" style="margin:0;">🎬 Upload Video</button>
-                <button class="btn btn-soft" type="button" id="vidFormReset" style="margin:0;">↺ Clear</button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Video Library -->
-          <div class="tp-section-header" style="margin-bottom:12px;">
+          <div class="tp-section-header" style="margin-bottom: 24px;">
             <div class="tp-section-icon">📂</div>
             <div>
-              <p class="tp-section-title">Video Library</p>
-              <p class="tp-section-sub">Click any video card to play inline. Organised by class → board → subject → topic.</p>
+              <p class="tp-section-title">Video Lectures Drive</p>
+              <p class="tp-section-sub">Navigate, create subfolders, and upload lecture videos directly into the selected folders.</p>
             </div>
           </div>
-
-          <!-- Video Filter -->
-          <div class="vid-filter-bar">
-            <span class="vid-filter-label">Filter:</span>
-            <select class="field" id="vidFilterClass" style="width:auto;min-width:140px;margin:0;">
-              <option value="all">All Classes</option>
-              <option value="6">Class 6</option>
-              <option value="7">Class 7</option>
-              <option value="8">Class 8</option>
-              <option value="9">Class 9</option>
-              <option value="10">Class 10</option>
-              <option value="11">Class 11</option>
-              <option value="12">Class 12</option>
-              <option value="neet">NEET</option>
-              <option value="jee">JEE</option>
-              <option value="ncert">NCERT</option>
-              <option value="nda">NDA</option>
-              <option value="upsc">UPSC</option>
-              <option value="tnpsc">TNPSC</option>
-            </select>
-            <select class="field" id="vidFilterBoard" style="width:auto;min-width:140px;margin:0;">
-              <option value="all">All Boards</option>
-              <option value="stateboard">Stateboard</option>
-              <option value="cbse">CBSE</option>
-              <option value="none">General</option>
-            </select>
-          </div>
-
-          <!-- Video Tree / Library -->
-          <div id="vidLibrary" class="vid-tree">
-            <!-- injected by JS -->
+          
+          <div class="drive-container">
+            <!-- Drive Toolbar: Breadcrumbs & Actions -->
+            <div class="drive-toolbar">
+              <div id="driveBreadcrumbs" class="drive-breadcrumbs">
+                <!-- breadcrumbs injected by JS -->
+              </div>
+              <div class="drive-actions">
+                <button id="btnNewFolder" class="drive-btn" style="display: none;">
+                  <span>📁</span> New Subfolder
+                </button>
+                <button id="btnUploadVideo" class="drive-btn" style="display: none;">
+                  <span>🎬</span> Upload Video
+                </button>
+              </div>
+            </div>
+            
+            <!-- Drive Files Grid -->
+            <div id="driveGrid" class="drive-grid">
+              <!-- folders and videos injected by JS -->
+            </div>
           </div>
         </div>
 
@@ -968,6 +718,48 @@
   <!-- ══ SUCCESS TOAST ══ -->
   <div id="tpSuccessToast" class="tp-success-toast">
     <span>✅</span><span id="tpToastMsg">Video uploaded successfully!</span>
+  </div>
+
+  <!-- Modal: Create Folder -->
+  <div id="modalNewFolder" class="drive-modal-overlay">
+    <div class="drive-modal">
+      <div class="drive-modal-header">
+        <h3><span>📁</span> Create New Subfolder</h3>
+        <button class="drive-modal-close" id="btnCloseFolderModal">✕</button>
+      </div>
+      <form id="driveFolderForm">
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);font-weight:700;">Subfolder Name</label>
+        <input class="field" id="modalFolderNameInput" placeholder="e.g. Unit 1 - Number System" required style="width:100%;margin-bottom:14px;" />
+        <div class="drive-modal-footer">
+          <button class="btn btn-soft" type="button" id="btnCancelFolderModal" style="margin:0;">Cancel</button>
+          <button class="btn" type="submit" style="margin:0;">Create Folder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Upload Video -->
+  <div id="modalUploadVideo" class="drive-modal-overlay">
+    <div class="drive-modal">
+      <div class="drive-modal-header">
+        <h3><span>🎬</span> Upload Video</h3>
+        <button class="drive-modal-close" id="btnCloseUploadModal">✕</button>
+      </div>
+      <form id="driveUploadForm">
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);font-weight:700;">Video Title</label>
+        <input class="field" id="modalVideoTitleInput" placeholder="e.g. Introduction to Rational Numbers" required style="width:100%;margin-bottom:14px;" />
+        
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);font-weight:700;">YouTube URL or Embed Iframe</label>
+        <textarea class="field" id="modalVideoUrlInput" placeholder="Paste YouTube link (https://...) or Iframe embed code (<iframe>...</iframe>)" required style="width:100%;height:100px;margin-bottom:14px;resize:vertical;font-family:monospace;font-size:0.84rem;"></textarea>
+        
+        <div id="modalUploadStatus" style="font-size:0.84rem;margin:10px 0;text-align:center;font-weight:700;min-height:20px;"></div>
+        
+        <div class="drive-modal-footer">
+          <button class="btn btn-soft" type="button" id="btnCancelUploadModal" style="margin:0;">Cancel</button>
+          <button class="btn" type="submit" style="margin:0;">Upload Video</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

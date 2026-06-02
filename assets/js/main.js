@@ -2403,7 +2403,7 @@ function initStudentVideo() {
   // Render Breadcrumbs
   const renderBreadcrumbs = () => {
     const segments = getPathSegments(currentPath);
-    let html = `<div class="breadcrumb-item" onclick="navigateStudentToPath('/')">ðŸ  Root</div>`;
+    let html = `<div class="breadcrumb-item" onclick="navigateStudentToPath('/')">🏠 Root</div>`;
     let buildPath = '';
     
     segments.forEach((seg, i) => {
@@ -2470,7 +2470,7 @@ function initStudentVideo() {
       const card = document.createElement('div');
       card.className = 'drive-card';
       card.innerHTML = `
-        <div class="drive-icon">ðŸ“</div>
+        <div class="drive-icon">📁</div>
         <div class="drive-name">${f.name}</div>
       `;
       card.onclick = () => navigateStudentToPath(currentPath + f.name + '/');

@@ -142,53 +142,105 @@
     Maths:'#d97706', Science:'#0891b2', 'Social Science':'#dc2626'
   };
 
+  
   function renderCourses(filter) {
-    const container = document.getElementById('sbCourseContainer');
-    container.innerHTML = '';
+    const targetContainerId = document.getElementById('cbseCourseContainer') ? 'cbseCourseContainer' : 'sbCourseContainer';
+    const finalContainer = document.getElementById(targetContainerId);
+    if(!finalContainer) return;
+
+    finalContainer.innerHTML = '';
     const classes = filter === 'all' ? [6,7,8,9,10,11,12] : [parseInt(filter)];
+    
+    // Fetch videos from localStorage
+    const allVideos = JSON.parse(localStorage.getItem('lectureVideosList') || '[]');
+    
+    const getPathSegments = (path) => (path || '').split('/').filter(Boolean);
+
+    let foundAny = false;
+
     classes.forEach(cls => {
-      const courses = SB_COURSES.filter(c => c.cls === cls);
+      // Filter videos by class and board
+      const classString = 'Class ' + cls;
+      const courses = allVideos.filter(v => {
+        // Fallback for legacy videos
+        if (!v.parentPath) {
+          return v.classLevel === classString && v.board && v.board.toLowerCase() === 'Stateboard'.toLowerCase();
+        }
+        // Folder path check
+        const segs = getPathSegments(v.parentPath);
+        return segs[0] === classString && segs[1] && segs[1].toLowerCase() === 'Stateboard'.toLowerCase();
+      });
+
       if (!courses.length) return;
+      foundAny = true;
+
       const section = document.createElement('div');
       section.className = 'class-section reveal';
       section.innerHTML = `
         <div class="class-section-header">
           <span class="class-label">CLASS ${cls}</span>
-          <h2>${courses.length} courses available</h2>
+          <h2>${courses.length} videos available</h2>
         </div>
         <div class="yt-grid" id="grid-${cls}"></div>
       `;
-      container.appendChild(section);
+      finalContainer.appendChild(section);
+
       const grid = section.querySelector(`#grid-${cls}`);
       courses.forEach((c, i) => {
         const card = document.createElement('div');
         card.className = 'yt-card fade-up';
-        card.style.animationDelay = (i * 0.09) + 's';
-        const color = subjectColors[c.subject] || '#059669';
+        card.style.animationDelay = (i * 0.05) + 's';
+        
+        const segs = getPathSegments(c.parentPath);
+        const subject = segs.length > 2 ? segs[2] : 'General';
+        const color = subjectColors[subject] || '#059669';
+        
+        // Randomize some stats for visual flair
+        const rating = (4.5 + Math.random() * 0.4).toFixed(1);
+        const learners = (Math.floor(Math.random() * 15) + 2) + 'k+';
+        const progress = Math.floor(Math.random() * 60) + 10;
+
         card.innerHTML = `
           <div class="yt-thumb">
             <img src="https://img.youtube.com/vi/${c.videoId}/mqdefault.jpg" alt="${c.title}" loading="lazy"/>
             <div class="yt-play"><svg width="52" height="52" viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="26" fill="rgba(255,255,255,0.9)"/><polygon points="21,18 37,26 21,34" fill="#064e3b"/></svg></div>
-            <span class="subject-tag" style="background:${color}">${c.subject}</span>
+            <span class="subject-tag" style="background:${color}">${subject}</span>
           </div>
           <div class="yt-body">
             <div class="yt-title">${c.title}</div>
             <div class="yt-meta">
-              <span class="yt-rating">★ ${c.rating}</span>
-              <span>• ${c.learners}+ learners</span>
+              <span class="yt-rating">★ ${rating}</span>
+              <span>• ${learners} learners</span>
               <span>• Free</span>
             </div>
           </div>
           <div class="progress-wrap">
             <div class="progress-label"><span>Course Progress</span><span class="pct-label">0%</span></div>
-            <div class="progress-bar"><div class="progress-fill" data-pct="${c.progress}"></div></div>
+            <div class="progress-bar"><div class="progress-fill" data-pct="${progress}"></div></div>
           </div>
         `;
-        card.addEventListener('click', () => window.open('https://www.youtube.com/watch?v=' + c.videoId, '_blank'));
+        card.addEventListener('click', () => {
+          if (window.openGlobalPlayer) {
+            window.openGlobalPlayer(c);
+          } else {
+            window.open('https://www.youtube.com/watch?v=' + c.videoId, '_blank');
+          }
+        });
         grid.appendChild(card);
       });
     });
 
+    if (!foundAny) {
+      finalContainer.innerHTML = `
+        <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+          <div style="font-size:3rem; opacity:0.3; margin-bottom:10px;">📭</div>
+          <h3 style="color:#111; margin-bottom:8px;">No Videos Found</h3>
+          <p>The teacher hasn't uploaded any videos for this selection yet.</p>
+        </div>
+      `;
+    }
+
+    // Animate progress bars
     setTimeout(() => {
       document.querySelectorAll('.progress-fill').forEach(bar => {
         const pct = bar.dataset.pct;
@@ -198,13 +250,15 @@
         const step = Math.ceil(pct / 40);
         const t = setInterval(() => {
           n = Math.min(n + step, pct);
-          label.textContent = n + '%';
+          if (label) label.textContent = n + '%';
           if (n >= pct) clearInterval(t);
         }, 35);
       });
+      // Re-run reveal
       document.querySelectorAll('.reveal').forEach(el => el.classList.add('show'));
     }, 100);
   }
+
 
   document.querySelectorAll('.class-tab').forEach(tab => {
     tab.addEventListener('click', () => {

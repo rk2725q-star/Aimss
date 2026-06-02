@@ -3,11 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Student Dashboard | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <title>Video Lectures | Dr.AIMSS EDUCATIONAL ACADEMY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ══ VIDEO PLAYER MODAL ══ */
+    .vid-player-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 16px; }
+    .vid-player-overlay.open { opacity: 1; pointer-events: all; }
+    .vid-player-modal { background: #0a1120; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; width: 100%; max-width: 860px; box-shadow: 0 30px 80px rgba(0,0,0,0.7); transform: scale(0.94) translateY(16px); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
+    .vid-player-overlay.open .vid-player-modal { transform: scale(1) translateY(0); }
+    .vid-player-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .vid-player-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; flex: 1; margin-right: 12px; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .vid-player-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; flex-shrink: 0; }
+    .vid-player-close:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .vid-iframe-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+    .vid-iframe-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .vid-player-footer { padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .vid-player-meta { font-size: 0.8rem; color: var(--muted); flex: 1; }
+
+    /* Drive explorer specific */
+    .drive-breadcrumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface-2); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); margin-bottom: 24px; font-size: 0.9rem; }
+    .breadcrumb-item { font-weight: 700; color: var(--muted); cursor: pointer; transition: color 0.2s; }
+    .breadcrumb-item:hover { color: var(--accent); }
+    .breadcrumb-item.active { color: #fff; cursor: default; }
+    .breadcrumb-separator { color: var(--muted-2); font-size: 0.8rem; }
+    .drive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    .drive-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; min-height: 120px; }
+    .drive-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+    .drive-icon { font-size: 2.5rem; margin-bottom: 8px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    .drive-name { font-size: 0.86rem; font-weight: 700; color: #fff; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .drive-card.video-card { padding: 0; overflow: hidden; align-items: stretch; justify-content: flex-start; min-height: auto; }
+    .drive-thumb { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; }
+    .drive-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.2s, transform 0.3s; }
+    .drive-card.video-card:hover .drive-thumb img { opacity: 1; transform: scale(1.03); }
+    .drive-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.5); pointer-events: none; transition: transform 0.2s; }
+    .drive-card.video-card:hover .drive-play { transform: translate(-50%, -50%) scale(1.1); background: var(--accent); }
+    .drive-play svg { width: 14px; height: 14px; fill: #064e3b; margin-left: 2px; }
+    .drive-video-info { padding: 12px; text-align: left; }
+    .drive-video-title { font-size: 0.85rem; font-weight: 700; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; margin-bottom: 6px; }
+    .drive-video-meta { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+  </style>
 </head>
 <body>
   <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="index.html">Home</a><a href="#" data-logout id="navLogout">Logout</a></nav></div></header>
@@ -46,10 +83,6 @@
         ePDF Generator
       </a>
 
-      <a class="portal-link" href="student-videos.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
-        Video Lectures
-      </a>
       <div class="portal-title">ASSESSMENT</div>
       <a class="portal-link" href="mcq-test.html">
         <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
@@ -74,46 +107,38 @@
         <div style="font-size:0.8rem; color:var(--muted); margin-top:6px;">Free Plan</div>
       </div>
     </aside>
-    <section class="portal-main">
-      <div class="gamification-badges" style="margin-bottom: 24px; padding: 20px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);">
-        <div>
-          <h2 style="font-size: 1.6rem; margin: 0;">Welcome back! <span id="studentEmailBadge" data-auth-email style="font-size: 1.1rem; color: var(--muted); font-weight: 500;"></span></h2>
-          <p style="color: var(--muted); margin: 4px 0 0; font-size: 1rem;">Continue your learning journey today.</p>
-        </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <div class="badge-streak">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><path d="M12,2C12,2 10,7 6,10C2,13 2,18 5,21C8,24 16,24 19,21C22,18 22,13 18,10C14,7 12,2 12,2ZM12,6C12,6 13,9 15,11C17,13 17,16 15,18C13,20 11,20 9,18C7,16 7,13 9,11C11,9 12,6 12,6Z"/></svg>
-            <span id="streakCount">3 Day Streak</span>
-          </div>
-          <div class="badge-xp">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z"/></svg>
-            <span id="xpBadge">0 XP</span>
-          </div>
-          <div style="font-weight: 800; color: var(--ink); background: var(--surface-2); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);">
-            <span id="studentLevel">Level 1</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Conversational Search Trigger -->
-      <div id="triggerSearchModal" style="margin-bottom: 24px; padding: 18px 24px; background: var(--surface); border-radius: 999px; border: 1px solid var(--accent); display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 229, 204, 0.12); transition: transform 0.2s ease;">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--accent)" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <span style="color: var(--ink); font-size: 1.15rem; font-weight: 600;">Ask AI anything about your courses, topics, or formulas...</span>
-        <div style="margin-left: auto; padding: 4px 10px; background: var(--bg-2); border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line);">CTRL + K</div>
-      </div>
-
+        <section class="portal-main">
       <div class="glass card">
-        <h3 style="margin-bottom: 16px;">Quick Access</h3>
-        <div class="split-2">
-          <a class="card" href="study-materials.html"><h3>Study Materials</h3><p>Access notes, guides, and resources for Class 6th to 12th.</p></a>
-          <a class="card" href="mcq-test.html"><h3>Answer MCQ</h3><p>Earn +5 pts per correct MCQ answer.</p></a>
-          <a class="card" href="ai-pdf-generator.html"><h3>Generate ePDF</h3><p>Earn +20 XP per generation.</p></a>
-          <a class="card" href="mcq-store.html"><h3>🏪 Store</h3><p>View your points, badges &amp; achievements.</p></a>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h1 style="font-size:1.5rem;font-weight:800;margin:0 0 4px;color:#fff;">🎬 Video Lectures</h1>
+            <p style="color:var(--muted);margin:0;font-size:0.88rem;">Watch high-quality lecture videos uploaded by your teachers.</p>
+          </div>
         </div>
+
+        <div id="studentDriveBreadcrumbs" class="drive-breadcrumbs"></div>
+        <div id="studentDriveGrid" class="drive-grid"></div>
+
       </div>
     </section>
   </main>
 
+    <!-- ══ VIDEO PLAYER MODAL ══ -->
+  <div id="vidPlayerOverlay" class="vid-player-overlay" role="dialog" aria-modal="true" aria-label="Video Player">
+    <div class="vid-player-modal">
+      <div class="vid-player-header">
+        <h2 class="vid-player-title" id="vidPlayerTitle">Video</h2>
+        <button class="vid-player-close" id="vidPlayerClose" aria-label="Close player">✕</button>
+      </div>
+      <div class="vid-iframe-wrap">
+        <iframe id="vidPlayerFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" loading="lazy"></iframe>
+      </div>
+      <div class="vid-player-footer">
+        <div class="vid-player-meta" id="vidPlayerMeta"></div>
+        <button class="btn btn-soft" style="margin:0;font-size:0.8rem;" id="vidPlayerYTBtn">Open on YouTube ↗</button>
+      </div>
+    </div>
+  </div>
   <!-- AI Search Modal -->
   <div id="aiSearchModal" class="ai-search-modal">
     <div class="ai-search-box">
@@ -145,3 +170,4 @@
   </script>
 </body>
 </html>
+

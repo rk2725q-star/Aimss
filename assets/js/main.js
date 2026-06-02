@@ -2369,3 +2369,160 @@ function initMobileNav() {
   // Close on Escape key
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 }
+
+function initStudentVideo() {
+  const grid = document.getElementById('studentDriveGrid');
+  const breadcrumbs = document.getElementById('studentDriveBreadcrumbs');
+  
+  if (!grid || !breadcrumbs) return;
+
+  const VID_KEY = 'lectureVideosList';
+  const FLD_KEY = 'lectureFoldersList';
+  
+  const readVideos = () => JSON.parse(localStorage.getItem(VID_KEY) || '[]');
+  const readFolders = () => JSON.parse(localStorage.getItem(FLD_KEY) || '[]');
+
+  let currentPath = localStorage.getItem('aimss-student-drive-path') || '/';
+
+  // Classes & Boards for root levels
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC'];
+  const BOARDS = ['Stateboard', 'CBSE', 'General'];
+
+  const getPathSegments = (path) => path.split('/').filter(Boolean);
+
+  window.navigateStudentToPath = (path) => {
+    currentPath = path;
+    localStorage.setItem('aimss-student-drive-path', currentPath);
+    renderStudentDrive();
+  };
+
+  // Render Breadcrumbs
+  const renderBreadcrumbs = () => {
+    const segments = getPathSegments(currentPath);
+    let html = `<div class="breadcrumb-item" onclick="navigateStudentToPath('/')">ðŸ  Root</div>`;
+    let buildPath = '';
+    
+    segments.forEach((seg, i) => {
+      buildPath += '/' + seg;
+      html += `<span class="breadcrumb-separator">/</span>`;
+      if (i === segments.length - 1) {
+        html += `<div class="breadcrumb-item active">${seg}</div>`;
+      } else {
+        html += `<div class="breadcrumb-item" onclick="navigateStudentToPath('${buildPath}/')">${seg}</div>`;
+      }
+    });
+    breadcrumbs.innerHTML = html;
+  };
+
+  // Render Grid
+  const renderStudentDrive = () => {
+    renderBreadcrumbs();
+    grid.innerHTML = '';
+    const segments = getPathSegments(currentPath);
+    const depth = segments.length;
+
+    if (depth === 0) {
+      CLASSES.forEach(cls => {
+        const card = document.createElement('div');
+        card.className = 'drive-card';
+        card.innerHTML = `<div class="drive-icon">ðŸ“š</div><div class="drive-name">${cls}</div>`;
+        card.onclick = () => navigateStudentToPath('/' + cls + '/');
+        grid.appendChild(card);
+      });
+      return;
+    }
+
+    if (depth === 1) {
+      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC'].includes(segments[0]);
+      const boardsToShow = isPrep ? ['General'] : BOARDS;
+      boardsToShow.forEach(brd => {
+        const card = document.createElement('div');
+        card.className = 'drive-card';
+        card.innerHTML = `<div class="drive-icon">ðŸŽ¯</div><div class="drive-name">${brd}</div>`;
+        card.onclick = () => navigateStudentToPath('/' + segments[0] + '/' + brd + '/');
+        grid.appendChild(card);
+      });
+      return;
+    }
+
+    const folders = readFolders().filter(f => f.parentPath === currentPath);
+    const videos = readVideos().filter(v => v.parentPath === currentPath);
+
+    if (folders.length === 0 && videos.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+          <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px;">ðŸ“‚</div>
+          <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">This folder is empty</div>
+        </div>
+      `;
+      return;
+    }
+
+    folders.forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'drive-card';
+      card.innerHTML = `
+        <div class="drive-icon">ðŸ“</div>
+        <div class="drive-name">${f.name}</div>
+      `;
+      card.onclick = () => navigateStudentToPath(currentPath + f.name + '/');
+      grid.appendChild(card);
+    });
+
+    videos.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'drive-card video-card';
+      card.innerHTML = `
+        <div class="drive-thumb">
+          <img src="https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg" alt="${v.title}" loading="lazy" />
+          <div class="drive-play">
+            <svg viewBox="0 0 52 52"><polygon points="18,12 40,26 18,40" /></svg>
+          </div>
+        </div>
+        <div class="drive-video-info">
+          <div class="drive-video-title">${v.title}</div>
+          <div class="drive-video-meta">${new Date(v.addedAt || Date.now()).toLocaleDateString()}</div>
+        </div>
+      `;
+      card.onclick = () => openStudentPlayer(v);
+      grid.appendChild(card);
+    });
+  };
+
+  /* â•â• VIDEO PLAYER MODAL â•â• */
+  const playerOverlay = document.getElementById('vidPlayerOverlay');
+  const playerFrame = document.getElementById('vidPlayerFrame');
+  const playerTitle = document.getElementById('vidPlayerTitle');
+  const playerMeta = document.getElementById('vidPlayerMeta');
+  const playerClose = document.getElementById('vidPlayerClose');
+  const playerYTBtn = document.getElementById('vidPlayerYTBtn');
+
+  window.openStudentPlayer = (vid) => {
+    if (!playerOverlay || !playerFrame) return;
+    if (playerTitle) playerTitle.textContent = vid.title;
+    if (playerMeta) {
+      const segs = getPathSegments(vid.parentPath);
+      playerMeta.textContent = segs.join(' â€¢ ');
+    }
+    playerFrame.src = `https://www.youtube.com/embed/${vid.videoId}?autoplay=1&rel=0&modestbranding=1`;
+    if (playerYTBtn) playerYTBtn.onclick = () => window.open('https://www.youtube.com/watch?v=' + vid.videoId, '_blank');
+    playerOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closePlayer = () => {
+    if (!playerOverlay) return;
+    playerOverlay.classList.remove('open');
+    if (playerFrame) playerFrame.src = '';
+    document.body.style.overflow = '';
+  };
+
+  if (playerClose) playerClose.addEventListener('click', closePlayer);
+  if (playerOverlay) playerOverlay.addEventListener('click', (e) => { if (e.target === playerOverlay) closePlayer(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && playerOverlay && playerOverlay.classList.contains('open')) closePlayer(); });
+
+  // Initial Render
+  renderStudentDrive();
+}
+initStudentVideo();
+

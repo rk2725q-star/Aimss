@@ -8,142 +8,289 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
-  <style>
-    /* Sleek Collapsible Folder Tree Explorer */
-    .video-tree {
+    /* Dr.AIMSS Drive Visual Explorer Styles */
+    .drive-container {
       background: rgba(255, 255, 255, 0.01);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 16px;
-      margin-top: 14px;
+      padding: 20px;
+      margin-top: 18px;
       font-family: 'Manrope', sans-serif;
     }
-    .tree-folder {
-      margin-left: 14px;
-      border-left: 1.5px dashed rgba(255,255,255,0.08);
-      padding-left: 10px;
-      margin-top: 6px;
-    }
-    .tree-folder-title {
-      font-weight: 700;
-      color: var(--accent);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: background 0.2s, color 0.2s;
-      user-select: none;
-      margin-bottom: 2px;
-    }
-    .tree-folder-title:hover {
-      background: rgba(255, 255, 255, 0.04);
-      color: #fff;
-    }
-    .tree-folder-title::before {
-      content: '📁';
-      font-size: 0.95rem;
-    }
-    .tree-folder-title.open::before {
-      content: '📂';
-    }
-    .tree-folder.collapsed > .tree-content {
-      display: none;
-    }
-    .tree-item {
-      margin-left: 18px;
-      padding: 6px 10px;
-      border-radius: 6px;
+    .drive-toolbar {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      font-size: 0.86rem;
-      transition: background 0.2s;
-      border-bottom: 1px solid rgba(255,255,255,0.02);
-    }
-    .tree-item:hover {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .tree-item-meta {
-      display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .tree-item-title {
-      font-weight: 600;
-      color: var(--ink);
-    }
-    .tree-item-vid {
-      font-size: 0.78rem;
-      color: var(--muted);
-      background: rgba(0,0,0,0.2);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-    }
-    .tree-item-delete {
-      background: rgba(248, 113, 113, 0.1);
-      color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.2);
-      padding: 2px 8px;
-      font-size: 0.78rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: all 0.2s;
-    }
-    .tree-item-delete:hover {
-      background: #f87171;
-      color: #000;
-    }
-    .tree-folder-header {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
       flex-wrap: wrap;
     }
-    .tree-action-btn {
+    .drive-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .breadcrumb-item {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted);
+      transition: color 0.2s;
+      font-weight: 500;
+    }
+    .breadcrumb-item:hover {
+      color: var(--accent);
+    }
+    .breadcrumb-item.active {
+      color: #fff;
+      font-weight: 700;
+      cursor: default;
+    }
+    .breadcrumb-separator {
+      color: rgba(255, 255, 255, 0.15);
+      user-select: none;
+    }
+    .drive-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .drive-btn {
       background: rgba(0, 229, 204, 0.08);
       color: var(--accent);
-      border: 1px solid rgba(0, 229, 204, 0.15);
-      padding: 2px 6px;
-      font-size: 0.74rem;
-      border-radius: 4px;
+      border: 1px solid rgba(0, 229, 204, 0.2);
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: 700;
-      margin-left: 4px;
       transition: all 0.2s;
       display: inline-flex;
       align-items: center;
-      gap: 2px;
-      line-height: 1;
+      gap: 6px;
     }
-    .tree-action-btn:hover {
+    .drive-btn:hover {
       background: var(--accent);
       color: #000;
       border-color: var(--accent);
+      transform: translateY(-1px);
     }
-    .tree-action-btn.btn-danger {
-      background: rgba(248, 113, 113, 0.08);
+    .drive-btn:active {
+      transform: translateY(0);
+    }
+    .drive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .drive-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      user-select: none;
+      min-height: 120px;
+    }
+    .drive-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 229, 204, 0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .drive-card:active {
+      transform: translateY(-1px);
+    }
+    .drive-icon {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+    .drive-name {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--ink);
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .drive-card-delete {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(248, 113, 113, 0.1);
       color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.15);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s, color 0.2s;
+      z-index: 10;
     }
-    .tree-action-btn.btn-danger:hover {
+    .drive-card:hover .drive-card-delete {
+      opacity: 1;
+    }
+    .drive-card-delete:hover {
       background: #f87171;
       color: #000;
       border-color: #f87171;
     }
-    .empty-folder-note {
-      font-size: 0.78rem;
-      color: var(--muted);
-      font-style: italic;
-      margin-left: 18px;
-      padding: 4px 10px;
+    
+    /* Video Thumbnail Card specific */
+    .drive-card.video-card {
+      padding: 0;
+      overflow: hidden;
+      align-items: stretch;
+      justify-content: flex-start;
+      min-height: auto;
     }
-  </style>
+    .drive-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .drive-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    .drive-card.video-card:hover .drive-thumb img {
+      opacity: 1;
+    }
+    .drive-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+    .drive-play svg {
+      width: 14px;
+      height: 14px;
+      fill: #064e3b;
+      margin-left: 2px;
+    }
+    .drive-video-info {
+      padding: 10px;
+      text-align: left;
+    }
+    .drive-video-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .drive-video-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Drive Modals */
+    .drive-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-out;
+    }
+    .drive-modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .drive-modal {
+      background: #0d1527;
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 460px;
+      padding: 24px;
+      transform: scale(0.95);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .drive-modal-overlay.open .drive-modal {
+      transform: scale(1);
+    }
+    .drive-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .drive-modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drive-modal-close {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .drive-modal-close:hover {
+      color: #fff;
+    }
+    .drive-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
 </head>
 <body>
   <header class="topbar"><div class="container nav"><a class="brand" href="index.html"><img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" /><span>Dr.AIMSS EDUCATIONAL ACADEMY</span></a><nav class="nav-links"><a href="command-center.html">Main Page</a><a href="#" data-logout>Logout</a></nav></div></header>
@@ -261,88 +408,77 @@
         </div>
       </div>
 
-      <!-- ══════════════ ADD LECTURE VIDEO ══════════════ -->
+      <!-- ══════════════ Dr.AIMSS DRIVE FILE EXPLORER ══════════════ -->
       <div class="glass card" style="margin-top: 24px;">
-        <h2>Add Lecture Video</h2>
-        <p style="color:var(--muted);margin-bottom:18px;">Add a YouTube lecture to the Video Library under Class, Subject and Topic folders.</p>
-        <form id="lectureVideoForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px;">
-          <select class="field" id="vidClass" required style="margin:0;">
-            <option value="">Select Class Level</option>
-            <option value="6">Class 6</option>
-            <option value="7">Class 7</option>
-            <option value="8">Class 8</option>
-            <option value="9">Class 9</option>
-            <option value="10">Class 10</option>
-            <option value="11">Class 11</option>
-            <option value="12">Class 12</option>
-            <option value="neet">NEET Prep</option>
-            <option value="jee">JEE Prep</option>
-            <option value="ncert">NCERT</option>
-            <option value="nda">NDA</option>
-            <option value="upsc">UPSC</option>
-            <option value="tnpsc">TNPSC</option>
-          </select>
-          <select class="field" id="vidBoard" style="margin:0;">
-            <option value="">Select Board (if applicable)</option>
-            <option value="stateboard">Stateboard</option>
-            <option value="cbse">CBSE</option>
-          </select>
+        <h2>🎬 Dr.AIMSS Video Lectures Drive</h2>
+        <p style="color:var(--muted);margin-bottom:18px;">Google-Drive style visual file explorer. Navigate, create subfolders, and upload lecture videos directly into the selected folders.</p>
+        
+        <div class="drive-container">
+          <!-- Drive Toolbar: Breadcrumbs & Actions -->
+          <div class="drive-toolbar">
+            <div id="driveBreadcrumbs" class="drive-breadcrumbs">
+              <!-- breadcrumbs injected by JS -->
+            </div>
+            <div class="drive-actions">
+              <button id="btnNewFolder" class="drive-btn" style="display: none;">
+                <span>📁</span> New Subfolder
+              </button>
+              <button id="btnUploadVideo" class="drive-btn" style="display: none;">
+                <span>🎥</span> Upload Video
+              </button>
+            </div>
+          </div>
           
-          <!-- Subject Input with Datalist -->
-          <input class="field" id="vidSubject" list="subjectOptions" placeholder="Enter Subject (e.g. Physics, Biology...)" required style="margin:0;" />
-          <datalist id="subjectOptions">
-            <option value="Physics">
-            <option value="Chemistry">
-            <option value="Biology">
-            <option value="Mathematics">
-            <option value="Science">
-            <option value="Social Science">
-          </datalist>
-
-          <input class="field" id="vidTopic" placeholder="Topic Folder (e.g. Light, Genetics)" required style="margin:0;" />
-          <input class="field" id="vidTitle" placeholder="Video Title (e.g. Refraction of Light)" required style="margin:0;" />
-          <input class="field" id="ytVideoInput" placeholder="YouTube Video ID or URL" required style="margin:0;" />
-          <button class="btn" type="submit" style="grid-column:1/-1;">Add Video</button>
-          <p id="lectureVideoStatus" class="status" style="grid-column:1/-1;margin:0;"></p>
-        </form>
-
-        <!-- Quick Folder Creation Form -->
-        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">📁 Quick Create Subject/Topic Folders</h3>
-        <p style="color:var(--muted);font-size:.84rem;margin:0 0 12px;">Create empty subject folders and topic subfolders for any class level without adding a video first.</p>
-        <form id="createFolderForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;">
-          <select class="field" id="fldrClass" required style="margin:0;">
-            <option value="">Select Class Level</option>
-            <option value="6">Class 6</option>
-            <option value="7">Class 7</option>
-            <option value="8">Class 8</option>
-            <option value="9">Class 9</option>
-            <option value="10">Class 10</option>
-            <option value="11">Class 11</option>
-            <option value="12">Class 12</option>
-            <option value="neet">NEET Prep</option>
-            <option value="jee">JEE Prep</option>
-            <option value="ncert">NCERT</option>
-            <option value="nda">NDA</option>
-            <option value="upsc">UPSC</option>
-            <option value="tnpsc">TNPSC</option>
-          </select>
-          <select class="field" id="fldrBoard" style="margin:0;">
-            <option value="">Select Board (if applicable)</option>
-            <option value="stateboard">Stateboard</option>
-            <option value="cbse">CBSE</option>
-          </select>
-          <input class="field" id="fldrSubject" list="subjectOptions" placeholder="Subject Name (e.g. Physics)" required style="margin:0;" />
-          <input class="field" id="fldrTopic" placeholder="Topic Subfolder (optional)" style="margin:0;" />
-          <button class="btn btn-soft" type="submit" style="margin:0;">Create Folder</button>
-        </form>
-        <p id="folderCreateStatus" class="status" style="margin:0;"></p>
-
-        <h3 style="margin:24px 0 12px;border-top:1px solid var(--line);padding-top:18px;">🎬 Managed Lecture Videos Explorer</h3>
-        <p style="color:var(--muted);font-size:.84rem;margin:0 0 12px;">Collapsible folder tree structure organized by Class ➔ Board ➔ Subject ➔ Topic folders.</p>
-        <div id="addedVideosTree" class="video-tree">
-          <div style="color:var(--muted);text-align:center;padding:24px;">No custom lecture videos added yet.</div>
+          <!-- Drive Files Grid -->
+          <div id="driveGrid" class="drive-grid">
+            <!-- folders and videos injected by JS -->
+          </div>
         </div>
       </div>
+    </section>
+  </main>
+
+  <!-- Modal: Create Folder -->
+  <div id="modalNewFolder" class="drive-modal-overlay">
+    <div class="drive-modal">
+      <div class="drive-modal-header">
+        <h3><span>📁</span> Create New Subfolder</h3>
+        <button class="drive-modal-close" onclick="closeFolderModal()">✕</button>
+      </div>
+      <form id="driveFolderForm">
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);">Subfolder Name</label>
+        <input class="field" id="modalFolderNameInput" placeholder="e.g. Unit 1 - Number System" required style="width:100%;margin-bottom:14px;" />
+        <div class="drive-modal-footer">
+          <button class="btn btn-soft" type="button" onclick="closeFolderModal()" style="margin:0;">Cancel</button>
+          <button class="btn" type="submit" style="margin:0;">Create Folder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Upload Video -->
+  <div id="modalUploadVideo" class="drive-modal-overlay">
+    <div class="drive-modal">
+      <div class="drive-modal-header">
+        <h3><span>🎥</span> Upload Video</h3>
+        <button class="drive-modal-close" onclick="closeUploadModal()">✕</button>
+      </div>
+      <form id="driveUploadForm">
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);">Video Title</label>
+        <input class="field" id="modalVideoTitleInput" placeholder="e.g. Introduction to Rational Numbers" required style="width:100%;margin-bottom:14px;" />
+        
+        <label style="display:block;margin-bottom:8px;font-size:0.86rem;color:var(--muted);">YouTube URL or Embed Iframe</label>
+        <textarea class="field" id="modalVideoUrlInput" placeholder="Paste YouTube link (https://...) or Iframe embed code (<iframe>...</iframe>)" required style="width:100%;height:100px;margin-bottom:14px;resize:vertical;font-family:monospace;font-size:0.84rem;"></textarea>
+        
+        <div id="modalUploadStatus" style="font-size:0.84rem;margin:10px 0;text-align:center;"></div>
+        
+        <div class="drive-modal-footer">
+          <button class="btn btn-soft" type="button" onclick="closeUploadModal()" style="margin:0;">Cancel</button>
+          <button class="btn" type="submit" style="margin:0;">Upload Video</button>
+        </div>
+      </form>
+    </div>
+  </div>
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

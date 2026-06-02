@@ -1901,423 +1901,450 @@ function initSidebarMobile() {
 }
 
 function initTeacherVideo() {
-  const form = document.getElementById('lectureVideoForm');
-  const status = document.getElementById('lectureVideoStatus');
-  const treeContainer = document.getElementById('addedVideosTree');
-  if (!form || !status) return;
+  const grid = document.getElementById('driveGrid');
+  const breadcrumbs = document.getElementById('driveBreadcrumbs');
+  const btnNewFolder = document.getElementById('btnNewFolder');
+  const btnUploadVideo = document.getElementById('btnUploadVideo');
+  
+  if (!grid || !breadcrumbs) return;
 
   const key = 'lectureVideosList';
-  const read = () => JSON.parse(localStorage.getItem(key) || '[]');
-  const write = (list) => localStorage.setItem(key, JSON.stringify(list));
+  const readVideos = () => JSON.parse(localStorage.getItem(key) || '[]');
+  const writeVideos = (list) => localStorage.setItem(key, JSON.stringify(list));
 
   const fldrKey = 'lectureFoldersList';
   const readFolders = () => JSON.parse(localStorage.getItem(fldrKey) || '[]');
   const writeFolders = (list) => localStorage.setItem(fldrKey, JSON.stringify(list));
 
-  window.deleteVideoRecord = (id) => {
-    let list = read();
-    list = list.filter(v => v.id !== String(id));
-    write(list);
-    renderVideos();
+  let currentPath = localStorage.getItem('aimss-drive-current-path') || '/';
+
+  // Robust YouTube Video ID Extractor
+  const extractYoutubeId = (input) => {
+    if (!input) return null;
+    let str = input.trim();
+    if (str.includes('<iframe')) {
+      const match = str.match(/src=["']([^"']+)["']/i);
+      if (match && match[1]) {
+        str = match[1];
+      }
+    }
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = str.match(regExp);
+    if (match && match[2] && match[2].length === 11) {
+      return match[2];
+    }
+    const cleaned = str.split('?')[0].split('/').pop();
+    if (cleaned.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleaned)) {
+      return cleaned;
+    }
+    if (str.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(str)) {
+      return str;
+    }
+    return null;
   };
 
-  const addExplicitFolder = (cls, board, sub, topic) => {
-    const folders = readFolders();
-    const exists = folders.some(f => 
-      (f.classLevel || 'General') === cls &&
-      (f.board || 'general') === board &&
-      (f.subject || 'General Subject') === sub &&
-      (f.topic || '') === topic
-    );
+  // Navigates to a specific sub-path
+  window.navigateToPath = (path) => {
+    currentPath = path;
+    localStorage.setItem('aimss-drive-current-path', currentPath);
+    renderDrive();
+  };
 
-    if (!exists) {
+  // Modal Open/Close helpers
+  const modalFolder = document.getElementById('modalNewFolder');
+  const modalUpload = document.getElementById('modalUploadVideo');
+
+  window.openFolderModal = () => {
+    if (modalFolder) {
+      modalFolder.classList.add('open');
+      document.getElementById('modalFolderNameInput').focus();
+    }
+  };
+  window.closeFolderModal = () => {
+    if (modalFolder) {
+      modalFolder.classList.remove('open');
+      document.getElementById('driveFolderForm').reset();
+    }
+  };
+
+  window.openUploadModal = () => {
+    if (modalUpload) {
+      modalUpload.classList.add('open');
+      document.getElementById('modalVideoTitleInput').focus();
+      document.getElementById('modalUploadStatus').textContent = '';
+    }
+  };
+  window.closeUploadModal = () => {
+    if (modalUpload) {
+      modalUpload.classList.remove('open');
+      document.getElementById('driveUploadForm').reset();
+    }
+  };
+
+  // Deletion logic
+  window.deleteVideoRecord = (id) => {
+    let list = readVideos();
+    const video = list.find(v => v.id === String(id));
+    if (!video) return;
+    if (confirm(`Are you sure you want to delete the video "${video.title}"?`)) {
+      list = list.filter(v => v.id !== String(id));
+      writeVideos(list);
+      renderDrive();
+    }
+  };
+
+  window.deleteCustomFolder = (id, name) => {
+    const folders = readFolders();
+    const folder = folders.find(f => f.id === String(id));
+    if (!folder) return;
+    
+    const folderPath = folder.path + (folder.path === "/" ? "" : "/") + folder.name;
+    
+    // Check for nested subfolders or files
+    const allFolders = readFolders();
+    const hasSubfolders = allFolders.some(f => f.path === folderPath || f.path.startsWith(folderPath + "/"));
+    
+    const allVideos = readVideos();
+    const hasVideos = allVideos.some(v => v.path === folderPath || v.path.startsWith(folderPath + "/"));
+    
+    if (hasSubfolders || hasVideos) {
+      alert(`Cannot delete folder "${name}" because it contains files or subfolders. Please delete its contents first.`);
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete the empty folder "${name}"?`)) {
+      const updated = allFolders.filter(f => f.id !== String(id));
+      writeFolders(updated);
+      renderDrive();
+    }
+  };
+
+  // Helper to parse path segments and map back to Class, Board, Subject, Topic
+  const parsePathFields = (path) => {
+    const segments = path.split('/').filter(Boolean);
+    let classLevel = "General";
+    let board = "general";
+    let subject = "General";
+    let topic = "";
+    
+    if (segments[0]) {
+      const cls = segments[0].toLowerCase();
+      if (cls.startsWith("class ")) {
+        classLevel = cls.replace("class ", "").trim();
+      } else if (cls.includes("neet")) {
+        classLevel = "neet";
+      } else if (cls.includes("jee")) {
+        classLevel = "jee";
+      } else {
+        classLevel = cls.trim();
+      }
+    }
+    
+    const isSchool = segments[0] && segments[0].toLowerCase().startsWith("class ");
+    
+    if (isSchool) {
+      if (segments[1]) {
+        board = segments[1].toLowerCase().trim();
+      }
+      if (segments[2]) {
+        let sub = segments[2];
+        if (sub.toLowerCase() === "mathematics") sub = "Maths";
+        subject = sub;
+      }
+      if (segments.length > 3) {
+        topic = segments.slice(3).join(" - ");
+      } else {
+        topic = subject || "";
+      }
+    } else {
+      if (segments[1]) {
+        let sub = segments[1];
+        if (sub.toLowerCase() === "mathematics") sub = "Maths";
+        subject = sub;
+      }
+      if (segments.length > 2) {
+        topic = segments.slice(2).join(" - ");
+      } else {
+        topic = subject || "";
+      }
+      board = "none";
+    }
+
+    return { classLevel, board, subject, topic };
+  };
+
+  // Render visual drive
+  const renderDrive = () => {
+    const segments = currentPath.split('/').filter(Boolean);
+    const depth = segments.length;
+
+    // Render breadcrumbs
+    breadcrumbs.innerHTML = '';
+    
+    // Home Breadcrumb
+    const homeItem = document.createElement('span');
+    homeItem.className = `breadcrumb-item ${depth === 0 ? 'active' : ''}`;
+    homeItem.innerHTML = '🏠 Home';
+    if (depth > 0) {
+      homeItem.onclick = () => navigateToPath('/');
+    }
+    breadcrumbs.appendChild(homeItem);
+
+    // Dynamic segments
+    let pathAcc = '';
+    segments.forEach((seg, idx) => {
+      // Separator
+      const sep = document.createElement('span');
+      sep.className = 'breadcrumb-separator';
+      sep.textContent = ' / ';
+      breadcrumbs.appendChild(sep);
+
+      pathAcc += '/' + seg;
+      const item = document.createElement('span');
+      item.className = `breadcrumb-item ${idx === depth - 1 ? 'active' : ''}`;
+      item.textContent = seg;
+      if (idx < depth - 1) {
+        const targetPath = pathAcc;
+        item.onclick = () => navigateToPath(targetPath);
+      }
+      breadcrumbs.appendChild(item);
+    });
+
+    // Control button visibilities
+    // Can create custom folders if inside CBSE/Stateboard or inside NEET/JEE subject folders
+    const isAcademic = segments[0] && segments[0].toLowerCase().startsWith("class ");
+    const canCreateFolder = isAcademic ? depth >= 2 : depth >= 1;
+    const canUpload = isAcademic ? depth >= 3 : depth >= 2;
+
+    if (btnNewFolder) {
+      btnNewFolder.style.display = canCreateFolder ? 'inline-flex' : 'none';
+      btnNewFolder.onclick = openFolderModal;
+    }
+    if (btnUploadVideo) {
+      btnUploadVideo.style.display = canUpload ? 'inline-flex' : 'none';
+      btnUploadVideo.onclick = openUploadModal;
+    }
+
+    // Get folders & files
+    const subfolders = [];
+    const videos = [];
+
+    if (depth === 0) {
+      const classes = [
+        "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12",
+        "NEET Prep", "JEE Prep", "NCERT", "NDA", "UPSC", "TNPSC"
+      ];
+      classes.forEach(cls => {
+        subfolders.push({ isStatic: true, name: cls });
+      });
+    } else if (depth === 1) {
+      const cls = segments[0];
+      const isAcademicClass = cls.toLowerCase().startsWith("class ");
+      if (isAcademicClass) {
+        subfolders.push({ isStatic: true, name: "Stateboard" });
+        subfolders.push({ isStatic: true, name: "CBSE" });
+      } else {
+        const subjects = ["Physics", "Chemistry", "Biology", "Mathematics", "General"];
+        subjects.forEach(sub => {
+          subfolders.push({ isStatic: true, name: sub });
+        });
+      }
+    } else if (depth === 2) {
+      const cls = segments[0];
+      const isAcademicClass = cls.toLowerCase().startsWith("class ");
+      if (isAcademicClass) {
+        const subjects = ["Physics", "Chemistry", "Biology", "Mathematics", "Science", "Social Science"];
+        subjects.forEach(sub => {
+          subfolders.push({ isStatic: true, name: sub });
+        });
+      } else {
+        const customFolders = readFolders();
+        customFolders.forEach(f => {
+          if (f.path === currentPath) {
+            subfolders.push({ isStatic: false, id: f.id, name: f.name });
+          }
+        });
+        const allVideos = readVideos();
+        allVideos.forEach(v => {
+          if (v.path === currentPath) {
+            videos.push(v);
+          }
+        });
+      }
+    } else {
+      const customFolders = readFolders();
+      customFolders.forEach(f => {
+        if (f.path === currentPath) {
+          subfolders.push({ isStatic: false, id: f.id, name: f.name });
+        }
+      });
+      const allVideos = readVideos();
+      allVideos.forEach(v => {
+        if (v.path === currentPath) {
+          videos.push(v);
+        }
+      });
+    }
+
+    // Render Drive Grid contents
+    grid.innerHTML = '';
+
+    if (subfolders.length === 0 && videos.length === 0) {
+      grid.style.display = 'block';
+      grid.innerHTML = `
+        <div style="color:var(--muted);text-align:center;padding:48px 24px;font-family:'Manrope',sans-serif;">
+          <div style="font-size:2.8rem;margin-bottom:12px;opacity:0.6;">📁</div>
+          <div style="font-weight:600;font-size:0.95rem;margin-bottom:4px;">This folder is empty</div>
+          <div style="font-size:0.8rem;opacity:0.8;">Click "+ New Subfolder" or "+ Upload Video" at the top to add content here.</div>
+        </div>
+      `;
+      return;
+    }
+
+    grid.style.display = 'grid';
+
+    // Render subfolders
+    subfolders.forEach(fldr => {
+      const card = document.createElement('div');
+      card.className = 'drive-card';
+      card.innerHTML = `
+        <div class="drive-icon">📁</div>
+        <div class="drive-name">${fldr.name}</div>
+      `;
+      card.onclick = () => {
+        const next = currentPath + (currentPath === '/' ? '' : '/') + fldr.name;
+        navigateToPath(next);
+      };
+
+      if (!fldr.isStatic) {
+        const delBtn = document.createElement('div');
+        delBtn.className = 'drive-card-delete';
+        delBtn.innerHTML = '🗑';
+        delBtn.title = 'Delete empty subfolder';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteCustomFolder(fldr.id, fldr.name);
+        };
+        card.appendChild(delBtn);
+      }
+      grid.appendChild(card);
+    });
+
+    // Render videos
+    videos.forEach(video => {
+      const card = document.createElement('div');
+      card.className = 'drive-card video-card';
+      card.innerHTML = `
+        <div class="drive-thumb">
+          <img src="https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg" alt="${video.title}" loading="lazy"/>
+          <div class="drive-play"><svg width="14" height="14" viewBox="0 0 52 52" fill="none"><polygon points="18,12 38,26 18,40" fill="#064e3b"/></svg></div>
+        </div>
+        <div class="drive-video-info">
+          <div class="drive-video-title">${video.title}</div>
+          <div class="drive-video-meta">ID: ${video.videoId}</div>
+        </div>
+      `;
+
+      const delBtn = document.createElement('div');
+      delBtn.className = 'drive-card-delete';
+      delBtn.innerHTML = '🗑';
+      delBtn.title = 'Delete video';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteVideoRecord(video.id);
+      };
+      card.appendChild(delBtn);
+
+      card.onclick = () => {
+        window.open('https://www.youtube.com/watch?v=' + video.videoId, '_blank');
+      };
+      grid.appendChild(card);
+    });
+  };
+
+  // Wire Modal forms
+  const folderForm = document.getElementById('driveFolderForm');
+  if (folderForm) {
+    folderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputVal = document.getElementById('modalFolderNameInput').value.trim();
+      if (!inputVal) return;
+
+      const folders = readFolders();
+      const exists = folders.some(f => 
+        f.path === currentPath && f.name.toLowerCase() === inputVal.toLowerCase()
+      );
+
+      if (exists) {
+        alert("A subfolder with that name already exists in the current directory.");
+        return;
+      }
+
       folders.push({
         id: Date.now().toString() + Math.random().toString().slice(2, 6),
-        classLevel: cls,
-        board: board,
-        subject: sub,
-        topic: topic
+        path: currentPath,
+        name: inputVal
       });
+
       writeFolders(folders);
-      renderVideos();
-    }
-  };
-
-  window.promptAddSubject = (cls, board) => {
-    const subject = prompt(`Create Subject Folder under ${cls.toUpperCase()} (${board.toUpperCase()}):\nEnter Subject Name (e.g. Physics, Chemistry, Biology):`);
-    if (!subject) return;
-    const trimmed = subject.trim();
-    if (trimmed) {
-      addExplicitFolder(cls, board, trimmed, '');
-    }
-  };
-
-  window.promptAddTopic = (cls, board, sub) => {
-    const topic = prompt(`Create Topic Folder under ${cls.toUpperCase()} > ${sub}:\nEnter Topic Name (e.g. Thermodynamics, Light):`);
-    if (!topic) return;
-    const trimmed = topic.trim();
-    if (trimmed) {
-      addExplicitFolder(cls, board, sub, trimmed);
-    }
-  };
-
-  window.promptAddVideo = (cls, board, sub, topic) => {
-    const fClass = document.getElementById('vidClass');
-    const fBoard = document.getElementById('vidBoard');
-    const fSubject = document.getElementById('vidSubject');
-    const fTopic = document.getElementById('vidTopic');
-    const fTitle = document.getElementById('vidTitle');
-    const fUrl = document.getElementById('ytVideoInput');
-
-    if (fClass) fClass.value = cls;
-    if (fBoard) fBoard.value = (board === 'general' ? '' : board);
-    if (fSubject) fSubject.value = sub;
-    if (fTopic) fTopic.value = topic;
-    if (fTitle) { fTitle.value = ''; fTitle.focus(); }
-    if (fUrl) fUrl.value = '';
-
-    const formEl = document.getElementById('lectureVideoForm');
-    if (formEl) {
-      formEl.scrollIntoView({ behavior: 'smooth' });
-      formEl.style.outline = '2px dashed var(--accent)';
-      setTimeout(() => {
-        formEl.style.outline = 'none';
-      }, 1500);
-    }
-  };
-
-  window.confirmDeleteFolder = (cls, board, sub, topic) => {
-    const list = read();
-    const isTopic = topic !== '';
-    const label = isTopic ? `Topic "${topic}"` : `Subject "${sub}"`;
-    
-    const hasVideos = list.some(v => {
-      const matchCls = (v.classLevel || 'General') === cls;
-      const matchBoard = (v.board || 'general') === board;
-      const matchSub = (v.subject || 'General Subject') === sub;
-      const matchTopic = isTopic ? ((v.topic || 'General Topic') === topic) : true;
-      return matchCls && matchBoard && matchSub && matchTopic;
-    });
-
-    if (hasVideos) {
-      alert(`Cannot delete this ${isTopic ? 'topic' : 'subject'} folder because it contains lecture videos. Please delete the videos first.`);
-      return;
-    }
-
-    if (confirm(`Are you sure you want to delete the empty ${label} folder?`)) {
-      let folders = readFolders();
-      folders = folders.filter(f => {
-        const matchCls = (f.classLevel || 'General') === cls;
-        const matchBoard = (f.board || 'general') === board;
-        const matchSub = (f.subject || 'General Subject') === sub;
-        const matchTopic = isTopic ? ((f.topic || '') === topic) : true;
-        return !(matchCls && matchBoard && matchSub && matchTopic);
-      });
-      writeFolders(folders);
-      renderVideos();
-    }
-  };
-
-  const renderVideos = () => {
-    if (!treeContainer) return;
-    const list = read();
-    const folders = readFolders();
-    treeContainer.innerHTML = '';
-    
-    if (!list.length && !folders.length) {
-      treeContainer.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">No custom lecture videos or empty folders created yet.</div>';
-      return;
-    }
-
-    const tree = {};
-
-    // First populate explicit folders
-    folders.forEach(f => {
-      const cls = f.classLevel || 'General';
-      const board = f.board || 'general';
-      const sub = f.subject || 'General Subject';
-      const topic = f.topic || '';
-
-      if (!tree[cls]) tree[cls] = {};
-      if (!tree[cls][board]) tree[cls][board] = {};
-      if (!tree[cls][board][sub]) tree[cls][board][sub] = {};
-      if (topic) {
-        if (!tree[cls][board][sub][topic]) tree[cls][board][sub][topic] = [];
-      }
-    });
-
-    // Merge video folders
-    list.forEach(v => {
-      const cls = v.classLevel || 'General';
-      const board = v.board || 'general';
-      const sub = v.subject || 'General Subject';
-      const topic = v.topic || 'General Topic';
-
-      if (!tree[cls]) tree[cls] = {};
-      if (!tree[cls][board]) tree[cls][board] = {};
-      if (!tree[cls][board][sub]) tree[cls][board][sub] = {};
-      if (!tree[cls][board][sub][topic]) tree[cls][board][sub][topic] = [];
-
-      tree[cls][board][sub][topic].push(v);
-    });
-
-    const rootDiv = document.createElement('div');
-    
-    Object.keys(tree).sort().forEach(cls => {
-      const clsFolder = document.createElement('div');
-      clsFolder.className = 'tree-folder';
-      const clsTitle = document.createElement('span');
-      clsTitle.className = 'tree-folder-title';
-      clsTitle.textContent = isNaN(cls) ? cls.toUpperCase() : 'Class ' + cls;
-      clsFolder.appendChild(clsTitle);
-
-      const clsContent = document.createElement('div');
-      clsContent.className = 'tree-content';
-      clsFolder.appendChild(clsContent);
-
-      Object.keys(tree[cls]).sort().forEach(board => {
-        const boardFolder = document.createElement('div');
-        boardFolder.className = 'tree-folder';
-        
-        const boardHeader = document.createElement('div');
-        boardHeader.className = 'tree-folder-header';
-
-        const boardTitle = document.createElement('span');
-        boardTitle.className = 'tree-folder-title';
-        boardTitle.textContent = board.toUpperCase();
-        boardHeader.appendChild(boardTitle);
-
-        const addSubBtn = document.createElement('button');
-        addSubBtn.className = 'tree-action-btn';
-        addSubBtn.innerHTML = '➕ Subject';
-        addSubBtn.onclick = (e) => {
-          e.stopPropagation();
-          promptAddSubject(cls, board);
-        };
-        boardHeader.appendChild(addSubBtn);
-
-        boardFolder.appendChild(boardHeader);
-
-        const boardContent = document.createElement('div');
-        boardContent.className = 'tree-content';
-        boardFolder.appendChild(boardContent);
-
-        Object.keys(tree[cls][board]).sort().forEach(sub => {
-          const subFolder = document.createElement('div');
-          subFolder.className = 'tree-folder';
-          
-          const subHeader = document.createElement('div');
-          subHeader.className = 'tree-folder-header';
-
-          const subTitle = document.createElement('span');
-          subTitle.className = 'tree-folder-title';
-          subTitle.textContent = sub;
-          subHeader.appendChild(subTitle);
-
-          const addTopicBtn = document.createElement('button');
-          addTopicBtn.className = 'tree-action-btn';
-          addTopicBtn.innerHTML = '➕ Topic';
-          addTopicBtn.onclick = (e) => {
-            e.stopPropagation();
-            promptAddTopic(cls, board, sub);
-          };
-          subHeader.appendChild(addTopicBtn);
-
-          const delSubBtn = document.createElement('button');
-          delSubBtn.className = 'tree-action-btn btn-danger';
-          delSubBtn.innerHTML = '🗑 Delete';
-          delSubBtn.onclick = (e) => {
-            e.stopPropagation();
-            confirmDeleteFolder(cls, board, sub, '');
-          };
-          subHeader.appendChild(delSubBtn);
-
-          subFolder.appendChild(subHeader);
-
-          const subContent = document.createElement('div');
-          subContent.className = 'tree-content';
-          subFolder.appendChild(subContent);
-
-          const topics = Object.keys(tree[cls][board][sub]);
-          if (topics.length === 0) {
-            const emptyNote = document.createElement('div');
-            emptyNote.className = 'empty-folder-note';
-            emptyNote.innerHTML = '<span>(Empty Subject folder)</span>';
-            subContent.appendChild(emptyNote);
-          } else {
-            topics.sort().forEach(topic => {
-              const topicFolder = document.createElement('div');
-              topicFolder.className = 'tree-folder';
-              
-              const topicHeader = document.createElement('div');
-              topicHeader.className = 'tree-folder-header';
-
-              const topicTitle = document.createElement('span');
-              topicTitle.className = 'tree-folder-title';
-              topicTitle.textContent = topic;
-              topicHeader.appendChild(topicTitle);
-
-              const addVidBtn = document.createElement('button');
-              addVidBtn.className = 'tree-action-btn';
-              addVidBtn.innerHTML = '➕ Add Video';
-              addVidBtn.onclick = (e) => {
-                e.stopPropagation();
-                promptAddVideo(cls, board, sub, topic);
-              };
-              topicHeader.appendChild(addVidBtn);
-
-              const delTopicBtn = document.createElement('button');
-              delTopicBtn.className = 'tree-action-btn btn-danger';
-              delTopicBtn.innerHTML = '🗑 Delete';
-              delTopicBtn.onclick = (e) => {
-                e.stopPropagation();
-                confirmDeleteFolder(cls, board, sub, topic);
-              };
-              topicHeader.appendChild(delTopicBtn);
-
-              topicFolder.appendChild(topicHeader);
-
-              const topicContent = document.createElement('div');
-              topicContent.className = 'tree-content';
-              topicFolder.appendChild(topicContent);
-
-              const videos = tree[cls][board][sub][topic];
-              if (videos.length === 0) {
-                const emptyNote = document.createElement('div');
-                emptyNote.className = 'empty-folder-note';
-                emptyNote.innerHTML = '<span>(Empty Topic subfolder)</span>';
-                topicContent.appendChild(emptyNote);
-              } else {
-                videos.forEach(video => {
-                  const item = document.createElement('div');
-                  item.className = 'tree-item';
-                  item.innerHTML = `
-                    <div class="tree-item-meta">
-                      <span style="font-size:1rem;">🎥</span>
-                      <span class="tree-item-title">${video.title || 'Untitled Video'}</span>
-                      <span class="tree-item-vid">${video.videoId}</span>
-                    </div>
-                    <button class="tree-item-delete" onclick="deleteVideoRecord('${video.id}')">🗑 Delete</button>
-                  `;
-                  topicContent.appendChild(item);
-                });
-              }
-
-              topicTitle.onclick = (e) => {
-                e.stopPropagation();
-                topicFolder.classList.toggle('collapsed');
-                topicTitle.classList.toggle('open');
-              };
-              subContent.appendChild(topicFolder);
-            });
-          }
-
-          subTitle.onclick = (e) => {
-            e.stopPropagation();
-            subFolder.classList.toggle('collapsed');
-            subTitle.classList.toggle('open');
-          };
-          boardContent.appendChild(subFolder);
-        });
-
-        boardTitle.onclick = (e) => {
-          e.stopPropagation();
-          boardFolder.classList.toggle('collapsed');
-          boardTitle.classList.toggle('open');
-        };
-        clsContent.appendChild(boardFolder);
-      });
-
-      clsTitle.onclick = (e) => {
-        e.stopPropagation();
-        clsFolder.classList.toggle('collapsed');
-        clsTitle.classList.toggle('open');
-      };
-      rootDiv.appendChild(clsFolder);
-    });
-
-    treeContainer.appendChild(rootDiv);
-  };
-
-  // Wire quick create folder form
-  const createFolderForm = document.getElementById('createFolderForm');
-  const folderStatus = document.getElementById('folderCreateStatus');
-  if (createFolderForm) {
-    createFolderForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const cls = document.getElementById('fldrClass').value;
-      const board = document.getElementById('fldrBoard').value || 'general';
-      const sub = document.getElementById('fldrSubject').value.trim();
-      const topic = document.getElementById('fldrTopic').value.trim();
-
-      if (!cls || !sub) return;
-
-      addExplicitFolder(cls, board, sub, topic);
-      
-      if (folderStatus) {
-        folderStatus.textContent = `Folder structure created successfully!`;
-        folderStatus.style.color = '#38a169';
-        setTimeout(() => folderStatus.textContent = '', 3000);
-      }
-      createFolderForm.reset();
-      renderVideos();
+      closeFolderModal();
+      renderDrive();
     });
   }
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('ytVideoInput').value.trim();
-    const vidClass = document.getElementById('vidClass').value;
-    const vidBoard = document.getElementById('vidBoard') ? document.getElementById('vidBoard').value : '';
-    const vidSubject = document.getElementById('vidSubject').value.trim();
-    const vidTopic = document.getElementById('vidTopic').value.trim();
-    const vidTitle = document.getElementById('vidTitle').value.trim();
+  const uploadForm = document.getElementById('driveUploadForm');
+  const uploadStatus = document.getElementById('modalUploadStatus');
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('modalVideoTitleInput').value.trim();
+      const urlInput = document.getElementById('modalVideoUrlInput').value.trim();
 
-    if (!input || !vidClass || !vidSubject || !vidTopic || !vidTitle) return;
+      if (!title || !urlInput) return;
 
-    let videoId = input;
-    if (input.includes('youtube.com') || input.includes('youtu.be')) {
-      try {
-        const url = new URL(input);
-        if (input.includes('youtu.be')) {
-          videoId = url.pathname.slice(1);
-        } else {
-          videoId = url.searchParams.get('v');
+      const videoId = extractYoutubeId(urlInput);
+
+      if (!videoId) {
+        if (uploadStatus) {
+          uploadStatus.textContent = "Could not extract a valid YouTube Video ID from input. Please check the URL or iframe embed code.";
+          uploadStatus.style.color = '#f87171';
         }
-      } catch (err) {
-        status.textContent = "Invalid URL format.";
-        status.style.color = '#e53e3e';
         return;
       }
-    }
 
-    if (videoId) {
+      // Parse current path to set backward compatibility fields
+      const { classLevel, board, subject, topic } = parsePathFields(currentPath);
+
       const newLecture = {
         id: Date.now().toString(),
-        classLevel: vidClass,
-        board: vidBoard,
-        subject: vidSubject,
-        topic: vidTopic,
-        title: vidTitle,
+        path: currentPath,
+        classLevel: classLevel,
+        board: board,
+        subject: subject,
+        topic: topic,
+        title: title,
         videoId: videoId,
         addedAt: new Date().toISOString()
       };
-      const list = read();
-      list.push(newLecture);
-      write(list);
-      
-      status.textContent = 'Lecture added and organized successfully!';
-      status.style.color = '#38a169';
-      setTimeout(() => status.textContent = '', 3000);
-      form.reset();
-      renderVideos();
-    } else {
-      status.textContent = "Could not extract Video ID.";
-      status.style.color = '#e53e3e';
-    }
-  });
 
-  renderVideos();
+      const videos = readVideos();
+      videos.push(newLecture);
+      writeVideos(videos);
+
+      if (uploadStatus) {
+        uploadStatus.textContent = "Video uploaded and organized successfully!";
+        uploadStatus.style.color = '#4ade80';
+      }
+
+      setTimeout(() => {
+        closeUploadModal();
+        renderDrive();
+      }, 1000);
+    });
+  }
+
+  // Initial Drive Render
+  renderDrive();
 }
 
 initThemeToggle();

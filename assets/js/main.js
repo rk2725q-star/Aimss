@@ -2534,3 +2534,65 @@ function initStudentVideo() {
 }
 initStudentVideo();
 
+
+
+/* ══ GLOBAL VIDEO PLAYER ══ */
+function initGlobalVideoPlayer() {
+  if (document.getElementById('globalVidPlayerOverlay')) return; // Already initialized
+
+  const html = `
+    <div class="vid-player-overlay" id="globalVidPlayerOverlay">
+      <div class="vid-player-modal">
+        <div class="vid-player-header">
+          <h3 id="globalVidPlayerTitle">Video Title</h3>
+          <button class="vid-player-close" id="globalVidPlayerClose">✕</button>
+        </div>
+        <div class="vid-iframe-wrap">
+          <iframe id="globalVidPlayerFrame" src="" allowfullscreen allow="autoplay"></iframe>
+        </div>
+        <div class="vid-player-footer">
+          <div class="vid-player-meta" id="globalVidPlayerMeta">Class • Board</div>
+          <button class="btn" id="globalVidPlayerYTBtn">Watch on YouTube</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  const overlay = document.getElementById('globalVidPlayerOverlay');
+  const frame = document.getElementById('globalVidPlayerFrame');
+  const title = document.getElementById('globalVidPlayerTitle');
+  const meta = document.getElementById('globalVidPlayerMeta');
+  const closeBtn = document.getElementById('globalVidPlayerClose');
+  const ytBtn = document.getElementById('globalVidPlayerYTBtn');
+
+  window.openGlobalPlayer = (vid) => {
+    if (title) title.textContent = vid.title || 'Video Lecture';
+    if (meta) {
+      if (vid.classLevel && vid.board) {
+        meta.textContent = `${vid.classLevel} • ${vid.board}`;
+      } else {
+        meta.textContent = 'Aimss Lecture';
+      }
+    }
+    if (frame) frame.src = `https://www.youtube.com/embed/${vid.videoId}?autoplay=1&rel=0&modestbranding=1`;
+    if (ytBtn) ytBtn.onclick = () => window.open('https://www.youtube.com/watch?v=' + vid.videoId, '_blank');
+    if (overlay) {
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closePlayer = () => {
+    if (overlay) overlay.classList.remove('open');
+    if (frame) frame.src = '';
+    document.body.style.overflow = '';
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', closePlayer);
+  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePlayer(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay && overlay.classList.contains('open')) closePlayer(); });
+}
+
+initGlobalVideoPlayer();

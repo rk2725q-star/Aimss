@@ -130,43 +130,7 @@
   <script src="assets/js/ai-resilience.js"></script>
   <script src="assets/js/main.js?v=5"></script>
   <script>
-  const CBSE_COURSES = [
-    // CLASS 6
-    { cls:6, subject:'Science', title:'Light, Shadows & Reflections', videoId:'KA7yzONQiok', rating:4.6, learners:'3.2k', progress:72 },
-    { cls:6, subject:'Mathematics', title:'Introduction to Algebra & Variables', videoId:'NybHckSEQBI', rating:4.5, learners:'2.8k', progress:60 },
-    { cls:6, subject:'Science', title:'Living & Non-Living Things', videoId:'CX5nWCvOH_E', rating:4.4, learners:'2.1k', progress:85 },
-    { cls:6, subject:'Mathematics', title:'Fractions & Decimals Basics', videoId:'nqNSXPMxbF0', rating:4.3, learners:'1.9k', progress:55 },
-    // CLASS 7
-    { cls:7, subject:'Science', title:'Nutrition in Plants & Animals', videoId:'0fKg7e37bQE', rating:4.7, learners:'4.1k', progress:68 },
-    { cls:7, subject:'Mathematics', title:'Integers & Rational Numbers', videoId:'X2jVap1YgwI', rating:4.5, learners:'3.5k', progress:50 },
-    { cls:7, subject:'Science', title:'Heat & Temperature Concepts', videoId:'bX9-HFaJPGk', rating:4.4, learners:'2.7k', progress:40 },
-    { cls:7, subject:'Mathematics', title:'Geometry – Lines & Angles', videoId:'7GEUgRcnfVE', rating:4.6, learners:'3.0k', progress:78 },
-    // CLASS 8
-    { cls:8, subject:'Science', title:'Cell Structure & Functions', videoId:'8IlzKri08kU', rating:4.8, learners:'5.2k', progress:90 },
-    { cls:8, subject:'Mathematics', title:'Linear Equations in One Variable', videoId:'Bq9bGNVMDuM', rating:4.7, learners:'4.8k', progress:62 },
-    { cls:8, subject:'Science', title:'Force & Pressure – NCERT Ch 11', videoId:'MQjgd5MfyFI', rating:4.5, learners:'3.9k', progress:45 },
-    { cls:8, subject:'Mathematics', title:'Algebraic Expressions & Identities', videoId:'NybHckSEQBI', rating:4.4, learners:'3.2k', progress:33 },
-    // CLASS 9
-    { cls:9, subject:'Physics', title:'Motion – Distance, Speed & Velocity', videoId:'ZM8ECpBuQYE', rating:4.8, learners:'7.1k', progress:80 },
-    { cls:9, subject:'Biology', title:'Cell Biology – The Fundamental Unit', videoId:'8IlzKri08kU', rating:4.7, learners:'6.4k', progress:70 },
-    { cls:9, subject:'Chemistry', title:'Matter in Our Surroundings', videoId:'K4_MGKH4pXU', rating:4.6, learners:'5.8k', progress:55 },
-    { cls:9, subject:'Mathematics', title:'Number Systems & Polynomials', videoId:'NybHckSEQBI', rating:4.5, learners:'5.2k', progress:40 },
-    // CLASS 10
-    { cls:10, subject:'Physics', title:'Electricity & Magnetic Effects', videoId:'X3nRHaJPCmk', rating:4.9, learners:'12.4k', progress:88 },
-    { cls:10, subject:'Biology', title:'Life Processes & Control', videoId:'TpGMlhJtcSI', rating:4.8, learners:'10.8k', progress:74 },
-    { cls:10, subject:'Chemistry', title:'Chemical Reactions & Acids Bases', videoId:'K4_MGKH4pXU', rating:4.7, learners:'9.6k', progress:65 },
-    { cls:10, subject:'Mathematics', title:'Real Numbers, Polynomials & Quadratics', videoId:'Bq9bGNVMDuM', rating:4.8, learners:'11.2k', progress:50 },
-    // CLASS 11
-    { cls:11, subject:'Physics', title:'Laws of Motion & Work Energy', videoId:'ZM8ECpBuQYE', rating:4.9, learners:'15.3k', progress:82 },
-    { cls:11, subject:'Chemistry', title:'Organic Chemistry Fundamentals', videoId:'bX9-HFaJPGk', rating:4.8, learners:'13.7k', progress:71 },
-    { cls:11, subject:'Biology', title:'Biological Classification & Plant Kingdom', videoId:'0fKg7e37bQE', rating:4.7, learners:'11.2k', progress:60 },
-    { cls:11, subject:'Mathematics', title:'Sets, Relations & Functions', videoId:'X2jVap1YgwI', rating:4.6, learners:'10.1k', progress:45 },
-    // CLASS 12
-    { cls:12, subject:'Physics', title:'Electrostatics & Current Electricity', videoId:'X3nRHaJPCmk', rating:4.9, learners:'20.5k', progress:92 },
-    { cls:12, subject:'Chemistry', title:'Solid State & Solutions', videoId:'K4_MGKH4pXU', rating:4.8, learners:'18.2k', progress:78 },
-    { cls:12, subject:'Biology', title:'Human Anatomy & Physiology', videoId:'TpGMlhJtcSI', rating:4.9, learners:'22.1k', progress:86 },
-    { cls:12, subject:'Mathematics', title:'Calculus – Differentiation & Integration', videoId:'WUvTyaaNkzM', rating:4.8, learners:'17.4k', progress:67 },
-  ];
+  
 
   const subjectColors = {
     Physics:'#2563eb', Chemistry:'#7c3aed', Biology:'#059669', Mathematics:'#d97706', Science:'#0891b2'

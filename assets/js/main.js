@@ -2536,9 +2536,31 @@ initStudentVideo();
 
 
 
+
 /* ══ GLOBAL VIDEO PLAYER ══ */
 function initGlobalVideoPlayer() {
   if (document.getElementById('globalVidPlayerOverlay')) return; // Already initialized
+
+  // Inject global CSS for the player
+  if (!document.getElementById('globalVidPlayerStyle')) {
+    const style = document.createElement('style');
+    style.id = 'globalVidPlayerStyle';
+    style.textContent = `
+      .vid-player-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 16px; }
+      .vid-player-overlay.open { opacity: 1; pointer-events: all; }
+      .vid-player-modal { background: #fff; width: 100%; max-width: 900px; border-radius: 20px; overflow: hidden; transform: scale(0.95) translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+      .vid-player-overlay.open .vid-player-modal { transform: scale(1) translateY(0); }
+      .vid-player-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+      .vid-player-header h3 { margin: 0; font-size: 1.2rem; font-weight: 800; color: #111; line-height: 1.2; }
+      .vid-player-close { background: rgba(0,0,0,0.05); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: grid; place-items: center; transition: background 0.2s; color: #333; padding: 0; }
+      .vid-player-close:hover { background: rgba(0,0,0,0.1); }
+      .vid-iframe-wrap { position: relative; padding-bottom: 56.25%; height: 0; background: #000; }
+      .vid-iframe-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+      .vid-player-footer { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-top: 1px solid rgba(0,0,0,0.05); }
+      .vid-player-meta { font-size: 0.9rem; color: #555; font-weight: 500; }
+    `;
+    document.head.appendChild(style);
+  }
 
   const html = `
     <div class="vid-player-overlay" id="globalVidPlayerOverlay">

@@ -10,172 +10,161 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
-    body { min-height:100dvh; display:flex; flex-direction:column; background: #040408; background-image: radial-gradient(rgba(255,215,0,0.03) 1px, transparent 1px); background-size: 28px 28px; }
+    body {
+      min-height:100dvh; display:flex; flex-direction:column;
+      background:#040408;
+      background-image:radial-gradient(rgba(255,215,0,0.03) 1px, transparent 1px);
+      background-size:28px 28px;
+    }
     .login-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
 
     .login-card {
-      width:min(460px,100%);
-      background:linear-gradient(160deg,rgba(255,215,0,0.04) 0%,rgba(0,0,0,0.98) 100%);
-      border:1px solid rgba(255,215,0,0.22); border-radius:28px;
-      padding:40px 36px 36px;
-      box-shadow:0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,215,0,0.05), inset 0 1px 0 rgba(255,255,255,0.04);
+      width:min(440px,100%);
+      background:linear-gradient(160deg,rgba(255,215,0,0.045) 0%,rgba(0,0,0,0.98) 100%);
+      border:1px solid rgba(255,215,0,0.2); border-radius:28px;
+      padding:36px 32px 32px;
+      box-shadow:0 40px 100px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.04);
       backdrop-filter:blur(24px); position:relative; overflow:hidden;
     }
     .login-card::before {
       content:''; position:absolute; top:-80px; right:-80px;
       width:200px; height:200px;
-      background:radial-gradient(circle,rgba(255,215,0,0.15),transparent 70%);
+      background:radial-gradient(circle,rgba(255,215,0,0.13),transparent 70%);
       pointer-events:none;
     }
 
+    /* ─── Badge ─── */
     .login-role-badge {
       display:inline-flex; align-items:center; gap:8px;
       background:linear-gradient(135deg,rgba(255,215,0,0.14),rgba(255,153,0,0.05));
       border:1px solid rgba(255,215,0,0.3); border-radius:999px;
       padding:6px 16px; font-size:.78rem; font-weight:700; color:#ffd700;
-      letter-spacing:.04em; text-transform:uppercase; margin-bottom:20px;
+      letter-spacing:.04em; text-transform:uppercase; margin-bottom:22px;
     }
-    .role-dot { width:7px; height:7px; background:#ffd700; border-radius:50%; animation:blink 1.8s ease infinite; box-shadow: 0 0 8px rgba(255,215,0,0.6); }
+    .role-dot { width:7px; height:7px; background:#ffd700; border-radius:50%; animation:blink 1.8s ease infinite; box-shadow:0 0 8px rgba(255,215,0,0.6); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* Tabs */
+    /* ─── MODE TOGGLE (clean pill) ─── */
+    .mode-toggle-wrap {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:20px;
+    }
+    .mode-toggle-label {
+      font-size:.78rem; font-weight:700; color:#94a3b8;
+      letter-spacing:.04em; text-transform:uppercase;
+    }
+    .mode-toggle {
+      display:flex; background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1); border-radius:999px;
+      padding:3px; gap:2px;
+    }
+    .mode-toggle-btn {
+      padding:6px 14px; border-radius:999px; border:none; cursor:pointer;
+      font-family:inherit; font-size:.78rem; font-weight:700;
+      background:transparent; color:#64748b;
+      transition:all .22s; white-space:nowrap;
+    }
+    .mode-toggle-btn.active {
+      background:linear-gradient(135deg,#ffd700,#f59e0b);
+      color:#000; box-shadow:0 2px 10px rgba(255,215,0,0.3);
+    }
+
+    /* Team name — slides in when team selected */
+    .team-name-row {
+      max-height:0; overflow:hidden; opacity:0;
+      transition:max-height .3s ease, opacity .25s ease, margin .25s ease;
+      margin-bottom:0;
+    }
+    .team-name-row.open {
+      max-height:80px; opacity:1; margin-bottom:14px;
+    }
+
+    /* ─── Auth tabs ─── */
     .auth-tabs {
       display:flex; gap:4px; background:rgba(255,255,255,0.05);
       border:1px solid rgba(255,255,255,0.08); border-radius:14px;
-      padding:4px; margin-bottom:28px;
+      padding:4px; margin-bottom:24px;
     }
     .auth-tab {
-      flex:1; padding:10px; border:none; border-radius:10px;
+      flex:1; padding:9px; border:none; border-radius:10px;
       background:transparent; color:#94a3b8; font-family:inherit;
-      font-size:.9rem; font-weight:700; cursor:pointer; transition:all .2s;
+      font-size:.88rem; font-weight:700; cursor:pointer; transition:all .2s;
     }
     .auth-tab.active {
-      background:linear-gradient(135deg, #ffd700, #ff9900);
-      border:1px solid rgba(255,215,0,0.5);
+      background:linear-gradient(135deg,#ffd700,#ff9900);
       color:#000; box-shadow:0 4px 16px rgba(255,215,0,0.25);
     }
 
+    /* ─── Forms ─── */
     .auth-form { display:none; }
     .auth-form.active { display:block; }
 
     .login-field-label {
-      display:block; font-size:.78rem; font-weight:700; color:#cbd5e1;
-      margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase;
+      display:block; font-size:.75rem; font-weight:700; color:#cbd5e1;
+      margin-bottom:5px; letter-spacing:.04em; text-transform:uppercase;
     }
-    .login-field-wrap { position:relative; margin-bottom:14px; }
+    .login-field-wrap { position:relative; margin-bottom:13px; }
     .login-field {
-      width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
-      border-radius:12px; padding:13px 14px 13px 44px; color:#fff;
-      font-family:inherit; font-size:.92rem; font-weight:500; outline:none;
-      transition:border-color .2s, background .2s, box-shadow .2s; box-sizing:border-box;
+      width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.13);
+      border-radius:12px; padding:12px 14px 12px 42px; color:#fff;
+      font-family:inherit; font-size:.9rem; font-weight:500; outline:none;
+      transition:border-color .2s,background .2s,box-shadow .2s; box-sizing:border-box;
     }
     .login-field:focus {
-      border-color:rgba(229,228,227,0.6); background:rgba(229,228,227,0.06);
-      box-shadow:0 0 0 3px rgba(229,228,227,0.12);
+      border-color:rgba(255,215,0,0.55); background:rgba(255,215,0,0.05);
+      box-shadow:0 0 0 3px rgba(255,215,0,0.1);
     }
     .login-field::placeholder { color:#64748b; }
     .f-icon {
       position:absolute; left:13px; top:50%; transform:translateY(-50%);
-      width:18px; height:18px; color:#64748b; pointer-events:none;
+      width:17px; height:17px; color:#64748b; pointer-events:none;
     }
+    /* No icon variant */
+    .login-field.no-icon { padding-left:14px; }
 
     .login-btn {
-      width:100%;
-      background:var(--gold-gradient);
+      width:100%; background:linear-gradient(135deg,#ffd700,#f59e0b);
       color:#000; border:none; border-radius:12px;
-      padding:14px; font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:800;
-      cursor:pointer; margin-top:6px; transition:transform .2s, box-shadow .2s;
+      padding:13px; font-family:'Outfit',sans-serif; font-size:.93rem; font-weight:800;
+      cursor:pointer; margin-top:4px; transition:transform .2s,box-shadow .2s;
       box-shadow:0 8px 24px rgba(255,215,0,0.25);
     }
     .login-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 32px rgba(255,215,0,0.4); }
     .login-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
-    .btn-spinner {
-      display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,0.4);
-      border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    .btn-spinner { display:none; width:18px; height:18px; border:2px solid rgba(0,0,0,0.3); border-top-color:#000; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
+    @keyframes spin { to{ transform:rotate(360deg); } }
     .login-btn.loading .btn-text { display:none; }
     .login-btn.loading .btn-spinner { display:block; }
 
     .login-status {
-      margin-top:12px; padding:11px 14px; border-radius:10px;
-      font-size:.85rem; font-weight:600; display:none; text-align:center; line-height:1.4;
+      margin-top:10px; padding:10px 13px; border-radius:10px;
+      font-size:.83rem; font-weight:600; display:none; text-align:center; line-height:1.4;
     }
     .login-status.error   { display:block; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; }
     .login-status.success { display:block; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); color:#4ade80; }
-    .login-status.info    { display:block; background:rgba(229,228,227,0.08); border:1px solid rgba(229,228,227,0.2); color:#e5e4e3; }
+    .login-status.info    { display:block; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); color:#fde68a; }
 
-    /* Teacher code field — special highlight */
-    .teacher-code-field { border-color:rgba(229,228,227,0.3) !important; }
-    .teacher-code-note {
-      font-size:.75rem; color:#64748b; margin-top:4px; display:block;
-    }
-
-    /* ── Mode Selector ── */
-    .mode-selector {
-      margin-bottom: 24px;
-    }
-    .mode-label {
-      font-size: .75rem; font-weight: 700; color: #94a3b8;
-      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; display: block;
-    }
-    .mode-btns {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    }
-    .mode-btn {
-      padding: 16px 12px; border-radius: 16px; border: 1.5px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.04); cursor: pointer; text-align: left;
-      transition: all .25s cubic-bezier(.34,1.56,.64,1); position: relative; overflow: hidden;
-    }
-    .mode-btn:hover { border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.06); transform: translateY(-2px); }
-    .mode-btn.selected {
-      border-color: rgba(255,215,0,0.7);
-      background: linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,153,0,0.06));
-      box-shadow: 0 0 0 1px rgba(255,215,0,0.2), 0 8px 24px rgba(255,215,0,0.15);
-    }
-    .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
-    .mode-btn .mode-title {
-      font-family: 'Outfit', sans-serif; font-size: .9rem; font-weight: 800; color: #fff; display: block;
-    }
-    .mode-btn .mode-desc {
-      font-size: .72rem; color: #94a3b8; display: block; margin-top: 3px; line-height: 1.4;
-    }
-    .mode-btn.selected .mode-title { color: #ffd700; }
-    .mode-check {
-      position: absolute; top: 10px; right: 10px;
-      width: 18px; height: 18px; background: #ffd700; border-radius: 50%;
-      display: none; align-items: center; justify-content: center;
-    }
-    .mode-btn.selected .mode-check { display: flex; }
-    .mode-check svg { width: 10px; height: 10px; color: #000; }
-
-    .team-field-wrap {
-      margin-bottom: 16px;
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height .35s ease, opacity .3s ease, margin .3s ease;
-    }
-    .team-field-wrap.visible {
-      max-height: 120px;
-      opacity: 1;
-    }
-    .team-hint {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2);
-      border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
-      font-size: .75rem; color: #fbbf24;
+    /* Divider */
+    .field-divider {
+      height:1px; background:rgba(255,255,255,0.06);
+      margin:16px 0;
     }
 
-    .form-section { display: none; }
-    .form-section.visible { display: block; }
+    /* small code note */
+    .code-note { font-size:.72rem; color:#64748b; margin-top:3px; display:block; }
+    .code-field { border-color:rgba(255,215,0,0.28) !important; }
 
-    .switch-portal { text-align:center; margin-top:20px; font-size:.82rem; color:#94a3b8; }
+    /* inst hint */
+    .inst-hint {
+      display:flex; align-items:flex-start; gap:7px;
+      background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.15);
+      border-radius:10px; padding:8px 11px; margin-bottom:12px;
+      font-size:.73rem; color:#fde68a; line-height:1.5;
+    }
+
+    .switch-portal { text-align:center; margin-top:18px; font-size:.82rem; color:#94a3b8; }
     .switch-portal a { color:#ffd700; font-weight:700; }
-    .security-badge {
-      display:flex; align-items:center; justify-content:center;
-      gap:6px; margin-top:18px; font-size:.72rem; color:#64748b;
-    }
+    .security-badge { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:16px; font-size:.72rem; color:#64748b; }
     .security-badge svg { color:#22c55e; }
   </style>
 </head>
@@ -197,48 +186,40 @@
     <div class="login-card">
       <div class="login-role-badge"><span class="role-dot"></span>Teacher Portal</div>
 
-      <!-- ── MODE SELECTOR ── -->
-      <div class="mode-selector" id="modeSelectorWrap">
-        <span class="mode-label">How would you like to sign in?</span>
-        <div class="mode-btns">
-          <button type="button" class="mode-btn" id="modeIndividual" onclick="selectMode('individual')">
-            <div class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <span class="mode-icon">🧑‍🏫</span>
-            <span class="mode-title">Individual Login</span>
-            <span class="mode-desc">Your own personal teacher account with separate credentials.</span>
+      <!-- ── MODE TOGGLE ── -->
+      <div class="mode-toggle-wrap">
+        <span class="mode-toggle-label">Account type</span>
+        <div class="mode-toggle" role="group" aria-label="Login mode">
+          <button type="button" class="mode-toggle-btn active" id="btnIndividual" onclick="selectMode('individual')">
+            🧑 Individual
           </button>
-          <button type="button" class="mode-btn" id="modeTeam" onclick="selectMode('team')">
-            <div class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <span class="mode-icon">👥</span>
-            <span class="mode-title">Team Login</span>
-            <span class="mode-desc">Shared account — all teachers in your department use the same credentials.</span>
+          <button type="button" class="mode-toggle-btn" id="btnTeam" onclick="selectMode('team')">
+            👥 Team
           </button>
         </div>
       </div>
 
-      <!-- Form section — revealed after mode pick -->
-      <div class="form-section" id="formSection">
-
-        <!-- Team name field (only shown in team mode) -->
-        <div class="team-field-wrap" id="teamFieldWrap">
-          <div class="team-hint">👥 Team accounts are shared — all teachers access the same uploads and settings.</div>
-          <label for="teamNameInput" class="login-field-label">Department / Team Name</label>
+      <!-- Team name — shows only in Team mode -->
+      <div class="team-name-row" id="teamNameRow">
+        <div class="login-field-wrap">
+          <label for="teamNameField" class="login-field-label">Department / Team Name</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <input id="teamNameInput" class="login-field" type="text" placeholder="e.g. Science Department" />
+            <input id="teamNameField" class="login-field" type="text" placeholder="e.g. Science Department" />
           </div>
         </div>
+      </div>
 
-        <!-- Tabs -->
-        <div class="auth-tabs" role="tablist">
-          <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
-          <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register</button>
-        </div>
+      <!-- ── SIGN IN / REGISTER TABS ── -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register</button>
+      </div>
 
-        <!-- ── LOGIN FORM ── -->
-        <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
+      <!-- ── SIGN IN FORM ── -->
+      <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
         <div class="login-field-wrap">
-          <label for="loginEmail" class="login-field-label">Teacher Email</label>
+          <label for="loginEmail" class="login-field-label">Email</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             <input id="loginEmail" class="login-field" type="email" placeholder="teacher@draimss.edu" autocomplete="email" required />
@@ -252,13 +233,13 @@
           </div>
         </div>
         <button id="loginBtn" class="login-btn" type="submit">
-          <span class="btn-text">Sign In as Teacher →</span><span class="btn-spinner"></span>
+          <span class="btn-text" id="loginBtnText">Sign In →</span><span class="btn-spinner"></span>
         </button>
         <div id="loginStatus" class="login-status" role="alert"></div>
-        </form>
+      </form>
 
-        <!-- ── SIGNUP FORM ── -->
-        <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
+      <!-- ── REGISTER FORM ── -->
+      <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
         <div class="login-field-wrap">
           <label for="signupEmail" class="login-field-label">Email</label>
           <div style="position:relative;">
@@ -280,35 +261,34 @@
             <input id="signupConfirm" class="login-field" type="password" placeholder="Repeat password" required />
           </div>
         </div>
-        <!-- Teacher registration code -->
+
+        <div class="field-divider"></div>
+
+        <!-- Teacher Code -->
         <div class="login-field-wrap">
           <label for="teacherCode" class="login-field-label">🔑 Teacher Registration Code</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <input id="teacherCode" class="login-field teacher-code-field" type="text" placeholder="Enter the code given by academy" required />
+            <input id="teacherCode" class="login-field code-field" type="text" placeholder="Code from academy admin" required />
           </div>
-          <span class="teacher-code-note">Contact Dr.AIMSS administration to get your teacher registration code.</span>
+          <span class="code-note">Get this code from Dr.AIMSS administration.</span>
         </div>
 
         <!-- Institution Code -->
-        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.18);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:.75rem;color:#fde68a;line-height:1.4;">
-          🏫 Enter your School / Institution Code to link your account to your institution.
-        </div>
+        <div class="inst-hint">🏫 Enter your school's institution code to link your account.</div>
         <div class="login-field-wrap">
           <label for="teacherInstitution" class="login-field-label">🏫 School / Institution Code</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <input id="teacherInstitution" class="login-field" type="text" placeholder="e.g. DRAIMSS or STJOHN2024" required style="border-color:rgba(255,215,0,0.3);" />
+            <input id="teacherInstitution" class="login-field code-field" type="text" placeholder="e.g. DRAIMSS" required />
           </div>
         </div>
 
         <button id="signupBtn" class="login-btn" type="submit">
-          <span class="btn-text">Register as Teacher →</span><span class="btn-spinner"></span>
+          <span class="btn-text">Create Teacher Account →</span><span class="btn-spinner"></span>
         </button>
         <div id="signupStatus" class="login-status" role="alert"></div>
-        </form>
-
-      </div><!-- /form-section -->
+      </form>
 
       <div class="switch-portal">Student? <a href="student-login.html">Student Login →</a></div>
       <div class="security-badge">
@@ -321,35 +301,28 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
   <script>
-    let _loginMode = null; // 'individual' | 'team'
+    let _loginMode = 'individual';
 
-    /* ── Mode Selector ── */
+    /* ─── Mode Toggle ─── */
     function selectMode(mode) {
       _loginMode = mode;
-      document.getElementById('modeIndividual').classList.toggle('selected', mode === 'individual');
-      document.getElementById('modeTeam').classList.toggle('selected', mode === 'team');
 
-      // Show form section
-      const fs = document.getElementById('formSection');
-      fs.classList.add('visible');
+      document.getElementById('btnIndividual').classList.toggle('active', mode === 'individual');
+      document.getElementById('btnTeam').classList.toggle('active', mode === 'team');
 
-      // Show/hide team name field
-      const tf = document.getElementById('teamFieldWrap');
-      if (mode === 'team') {
-        tf.classList.add('visible');
-      } else {
-        tf.classList.remove('visible');
-        document.getElementById('teamNameInput').value = '';
-      }
+      const row = document.getElementById('teamNameRow');
+      row.classList.toggle('open', mode === 'team');
 
       // Update button label
-      const btn = document.getElementById('loginBtn');
-      if (btn) {
-        btn.querySelector('.btn-text').textContent =
-          mode === 'team' ? 'Sign In as Team →' : 'Sign In as Teacher →';
+      const loginBtnText = document.getElementById('loginBtnText');
+      if (loginBtnText) {
+        loginBtnText.textContent = mode === 'team' ? 'Sign In as Team →' : 'Sign In →';
       }
+
+      clearAll();
     }
 
+    /* ─── Tab Switch ─── */
     function switchTab(tab) {
       document.getElementById('loginTab').classList.toggle('active', tab === 'login');
       document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
@@ -357,44 +330,45 @@
       document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
       clearAll();
     }
+
     function setStatus(id, msg, type) {
       const el = document.getElementById(id);
       el.textContent = msg; el.className = 'login-status ' + type;
     }
-    function clearStatus(id) { const el = document.getElementById(id); el.textContent = ''; el.className = 'login-status'; }
+    function clearStatus(id) {
+      const el = document.getElementById(id);
+      el.textContent = ''; el.className = 'login-status';
+    }
     function clearAll() { clearStatus('loginStatus'); clearStatus('signupStatus'); }
 
-    /* ── LOGIN ── */
+    /* ─── SIGN IN ─── */
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!_loginMode) { setStatus('loginStatus', 'Please select a login mode first.', 'error'); return; }
       clearStatus('loginStatus');
-      const btn      = document.getElementById('loginBtn');
-      const email    = document.getElementById('loginEmail').value.trim();
-      const pass     = document.getElementById('loginPassword').value;
-      const teamName = document.getElementById('teamNameInput').value.trim();
+      const btn   = document.getElementById('loginBtn');
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPassword').value;
+      const team  = document.getElementById('teamNameField').value.trim();
 
-      if (!email || !pass) { setStatus('loginStatus', 'Enter your email and password.', 'error'); return; }
-      if (_loginMode === 'team' && !teamName) { setStatus('loginStatus', 'Please enter your Department / Team Name.', 'error'); return; }
+      if (!email || !pass) { setStatus('loginStatus', 'Please enter your email and password.', 'error'); return; }
+      if (_loginMode === 'team' && !team) { setStatus('loginStatus', 'Please enter your Department / Team Name.', 'error'); return; }
 
-      const meta = { loginType: _loginMode, teamName: _loginMode === 'team' ? teamName : null };
+      const meta = { loginType: _loginMode };
+      if (_loginMode === 'team') meta.teamName = team;
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
         const r = await DrAuth.signIn(email, pass, 'teacher', meta);
         if (!r.success) { setStatus('loginStatus', r.error, 'error'); }
         else {
-          const msg = _loginMode === 'team'
-            ? `✓ Team login successful! Redirecting...`
-            : '✓ Welcome! Redirecting to Command Center...';
-          setStatus('loginStatus', msg, 'success');
+          setStatus('loginStatus', _loginMode === 'team' ? `✓ Team login successful! Redirecting...` : '✓ Welcome! Redirecting...', 'success');
           setTimeout(() => { window.location.href = 'command-center.html'; }, 900);
         }
       } catch { setStatus('loginStatus', 'Network error. Please try again.', 'error'); }
       finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    /* ── SIGN UP ── */
+    /* ─── REGISTER ─── */
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       clearStatus('signupStatus');
@@ -405,7 +379,7 @@
       const code     = document.getElementById('teacherCode').value.trim();
       const instCode = document.getElementById('teacherInstitution').value.trim();
 
-      if (!email || !pass || !code) { setStatus('signupStatus', 'Please fill in all fields including the registration code.', 'error'); return; }
+      if (!email || !pass || !code) { setStatus('signupStatus', 'Please fill in all fields.', 'error'); return; }
       if (!instCode || instCode.length < 3) { setStatus('signupStatus', 'Please enter your School / Institution Code.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
       if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
@@ -424,8 +398,21 @@
       finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode','teacherInstitution'].forEach(id => {
+    /* ─── Clear on typing ─── */
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode','teacherInstitution','teamNameField'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
+    });
+
+    /* ─── Guard: redirect if already logged in as teacher ─── */
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const supabase = DrAuth.getClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+          if (data?.role === 'teacher') window.location.href = 'command-center.html';
+        }
+      } catch (_) {}
     });
   </script>
 </body>

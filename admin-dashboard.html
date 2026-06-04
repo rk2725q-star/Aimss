@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Admin Dashboard | Dr.AIMSS</title>
+  <meta name="description" content="Headmaster Admin Dashboard — monitor your institution's teachers and students." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    :root {
+      --red: #dc2626; --red-soft: rgba(220,38,38,0.12); --red-border: rgba(220,38,38,0.28);
+      --gold: #fbbf24; --gold-soft: rgba(251,191,36,0.1); --gold-border: rgba(251,191,36,0.25);
+      --teal: #00e5cc; --teal-soft: rgba(0,229,204,0.1);
+      --surface: rgba(255,255,255,0.04); --surface-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08); --text-muted: #64748b; --text-sub: #94a3b8;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:'Manrope',sans-serif;
+      background:#040206;
+      background-image:
+        radial-gradient(ellipse 70% 50% at 5% 10%, rgba(220,38,38,0.05) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 95% 90%, rgba(251,191,36,0.04) 0%, transparent 55%),
+        radial-gradient(rgba(220,38,38,0.018) 1px, transparent 1px);
+      background-size:auto, auto, 28px 28px;
+      color:#e2e8f0; min-height:100vh;
+    }
+
+    /* ══ TOPBAR ══ */
+    .admin-topbar {
+      position:sticky; top:0; z-index:100; height:64px;
+      background:rgba(4,2,6,0.9); backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(220,38,38,0.18);
+      display:flex; align-items:center; padding:0 24px; gap:14px;
+    }
+    .topbar-brand { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .topbar-brand img { width:34px; height:34px; border-radius:10px; object-fit:cover; }
+    .topbar-brand-text { font-family:'Outfit',sans-serif; font-weight:800; font-size:1rem; color:#fff; }
+    .topbar-brand-text span { color:var(--red); }
+
+    /* Institution pill */
+    .inst-pill {
+      display:inline-flex; align-items:center; gap:7px;
+      background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(220,38,38,0.08));
+      border:1px solid rgba(251,191,36,0.28); border-radius:999px;
+      padding:5px 14px; font-size:.72rem; font-weight:800;
+      color:var(--gold); letter-spacing:.05em; text-transform:uppercase;
+      cursor:default; flex-shrink:0;
+    }
+    .inst-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:blink 1.5s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .admin-badge-top {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--red-soft); border:1px solid var(--red-border); border-radius:999px;
+      padding:4px 12px; font-size:.7rem; font-weight:800; color:#fca5a5;
+      letter-spacing:.06em; text-transform:uppercase; flex-shrink:0;
+    }
+    .topbar-spacer { flex:1; }
+    .topbar-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .topbar-email { font-size:.78rem; color:var(--text-sub); display:none; }
+    @media(min-width:700px){ .topbar-email { display:block; } }
+    .topbar-time { font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; }
+    .logout-btn { background:var(--red-soft); border:1px solid var(--red-border); border-radius:10px; color:#f87171; font-family:inherit; font-size:.78rem; font-weight:700; padding:6px 13px; cursor:pointer; transition:all .2s; }
+    .logout-btn:hover { background:rgba(220,38,38,0.22); color:#fff; }
+
+    /* ══ LAYOUT ══ */
+    .admin-layout { display:flex; min-height:calc(100vh - 64px); }
+
+    /* ── Sidebar ── */
+    .admin-sidebar {
+      width:210px; flex-shrink:0; background:rgba(4,2,6,0.7);
+      border-right:1px solid var(--border); padding:18px 10px;
+      position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto;
+    }
+    .sidebar-label { font-size:.63rem; font-weight:800; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; padding:0 8px; margin:14px 0 5px; }
+    .sidebar-label:first-child { margin-top:0; }
+    .nav-item {
+      display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:10px;
+      cursor:pointer; font-size:.83rem; font-weight:600; color:var(--text-sub);
+      transition:all .2s; border:1px solid transparent; text-decoration:none; margin-bottom:2px;
+    }
+    .nav-item:hover { background:var(--surface-hover); color:#fff; }
+    .nav-item.active { background:var(--red-soft); border-color:var(--red-border); color:#fca5a5; }
+    .nav-item svg { width:15px; height:15px; flex-shrink:0; }
+    .nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:.62rem; font-weight:800; padding:2px 7px; border-radius:999px; min-width:18px; text-align:center; }
+
+    /* ── Main ── */
+    .admin-main { flex:1; overflow-x:hidden; padding:26px; }
+
+    /* ══ INSTITUTION BANNER ══ */
+    .inst-banner {
+      background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(220,38,38,0.04),rgba(0,0,0,0.5));
+      border:1px solid rgba(251,191,36,0.2); border-radius:18px;
+      padding:18px 24px; margin-bottom:24px;
+      display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    }
+    .inst-banner-icon { font-size:2rem; flex-shrink:0; }
+    .inst-banner-body { flex:1; }
+    .inst-banner-title { font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:900; color:#fff; margin-bottom:3px; }
+    .inst-banner-title span { color:var(--gold); }
+    .inst-banner-sub { font-size:.8rem; color:var(--text-sub); }
+    .inst-banner-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.25);
+      border-radius:999px; padding:5px 14px; font-family:'JetBrains Mono',monospace;
+      font-size:.8rem; font-weight:700; color:var(--gold); letter-spacing:.04em;
+    }
+
+    /* ══ PAGE HEADER ══ */
+    .page-header { margin-bottom:22px; }
+    .page-header h1 { font-family:'Outfit',sans-serif; font-size:clamp(1.3rem,3vw,1.9rem); font-weight:900; color:#fff; margin-bottom:5px; }
+    .page-header h1 span { background:linear-gradient(135deg,#dc2626,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .page-header p { color:var(--text-sub); font-size:.88rem; }
+
+    /* ══ STAT CARDS ══ */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:18px; position:relative; overflow:hidden; transition:transform .25s,border-color .25s; }
+    .stat-card:hover { transform:translateY(-3px); border-color:rgba(255,255,255,0.14); }
+    .stat-card::before { content:''; position:absolute; top:-30px; right:-30px; width:90px; height:90px; border-radius:50%; opacity:.1; transition:opacity .3s; }
+    .stat-card:hover::before { opacity:.18; }
+    .stat-card.red::before  { background:var(--red); }
+    .stat-card.gold::before { background:var(--gold); }
+    .stat-card.teal::before { background:var(--teal); }
+    .stat-card.purple::before { background:#8b5cf6; }
+    .stat-card.green::before  { background:#22c55e; }
+    .stat-icon { font-size:1.5rem; margin-bottom:10px; display:block; }
+    .stat-value { font-family:'Outfit',sans-serif; font-size:1.9rem; font-weight:900; color:#fff; line-height:1; margin-bottom:3px; }
+    .stat-card.gold .stat-value   { background:linear-gradient(135deg,#fbbf24,#fde68a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-card.teal .stat-value   { background:linear-gradient(135deg,#00e5cc,#67e8f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-card.purple .stat-value { background:linear-gradient(135deg,#a78bfa,#c4b5fd); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-card.green .stat-value  { background:linear-gradient(135deg,#4ade80,#86efac); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-card.red .stat-value    { background:linear-gradient(135deg,#f87171,#fca5a5); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-label { font-size:.76rem; color:var(--text-muted); font-weight:600; }
+
+    /* ══ PANELS ══ */
+    .section-panel { background:var(--surface); border:1px solid var(--border); border-radius:18px; overflow:hidden; margin-bottom:22px; }
+    .panel-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+    .panel-title { display:flex; align-items:center; gap:9px; font-family:'Outfit',sans-serif; font-size:.95rem; font-weight:800; color:#fff; }
+    .panel-title svg { color:var(--red); }
+    .panel-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .panel-btn { background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--text-sub); font-family:inherit; font-size:.73rem; font-weight:700; padding:5px 11px; cursor:pointer; transition:all .2s; }
+    .panel-btn:hover { background:var(--surface-hover); color:#fff; }
+    .panel-btn.active { background:var(--red-soft); border-color:var(--red-border); color:#fca5a5; }
+    .panel-search { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text-sub); font-family:inherit; font-size:.78rem; outline:none; padding:5px 10px; width:160px; }
+    .panel-search:focus { border-color:rgba(220,38,38,0.4); color:#fff; }
+    .panel-search::placeholder { color:var(--text-muted); }
+    .refresh-btn { display:flex; align-items:center; gap:5px; background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--text-sub); font-family:inherit; font-size:.73rem; font-weight:700; padding:5px 11px; cursor:pointer; transition:all .2s; }
+    .refresh-btn:hover { background:var(--surface-hover); color:#fff; }
+    .refresh-btn svg { transition:transform .3s; }
+    .refresh-btn.spinning svg { animation:spin .7s linear infinite; }
+    @keyframes spin { to{ transform:rotate(360deg); } }
+
+    /* ══ TABLES ══ */
+    .data-table { width:100%; border-collapse:collapse; }
+    .data-table th { padding:9px 14px; text-align:left; font-size:.68rem; font-weight:800; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); }
+    .data-table td { padding:11px 14px; font-size:.83rem; color:#e2e8f0; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tbody tr { transition:background .15s; }
+    .data-table tbody tr:hover { background:rgba(255,255,255,0.03); }
+
+    .user-cell { display:flex; align-items:center; gap:9px; }
+    .user-avatar { width:32px; height:32px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:800; }
+    .avatar-teacher { background:linear-gradient(135deg,rgba(251,191,36,0.18),rgba(245,158,11,0.1)); color:#fbbf24; border:1px solid rgba(251,191,36,0.2); }
+    .avatar-student { background:linear-gradient(135deg,rgba(0,229,204,0.15),rgba(0,184,163,0.08)); color:#00e5cc; border:1px solid rgba(0,229,204,0.2); }
+    .user-name { font-weight:700; color:#fff; font-size:.83rem; }
+    .user-email { font-size:.7rem; color:var(--text-muted); }
+
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:.68rem; font-weight:800; letter-spacing:.03em; }
+    .badge-teacher  { background:rgba(251,191,36,0.1); color:#fbbf24; border:1px solid rgba(251,191,36,0.2); }
+    .badge-student  { background:rgba(0,229,204,0.1); color:#00e5cc; border:1px solid rgba(0,229,204,0.2); }
+    .badge-team     { background:rgba(139,92,246,0.1); color:#c4b5fd; border:1px solid rgba(139,92,246,0.2); }
+    .badge-indiv    { background:rgba(251,191,36,0.08); color:#fde68a; border:1px solid rgba(251,191,36,0.15); }
+    .badge-active   { background:rgba(34,197,94,0.1); color:#4ade80; border:1px solid rgba(34,197,94,0.2); }
+    .badge-pass     { background:rgba(34,197,94,0.1); color:#4ade80; border:1px solid rgba(34,197,94,0.2); }
+    .badge-fail     { background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.2); }
+    .badge-pdf      { background:rgba(249,115,22,0.1); color:#fed7aa; border:1px solid rgba(249,115,22,0.2); }
+    .badge-video    { background:rgba(239,68,68,0.1); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); }
+    .badge-file     { background:rgba(59,130,246,0.1); color:#93c5fd; border:1px solid rgba(59,130,246,0.2); }
+
+    .score-bar { display:flex; align-items:center; gap:7px; }
+    .score-track { flex:1; height:5px; background:rgba(255,255,255,0.07); border-radius:999px; overflow:hidden; }
+    .score-fill { height:100%; border-radius:999px; }
+    .score-text { font-size:.73rem; font-weight:700; font-family:'JetBrains Mono',monospace; min-width:34px; }
+
+    .time-ago { font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-muted); }
+
+    /* ══ ACTIVITY ══ */
+    .activity-feed { padding:6px 0; }
+    .activity-item { display:flex; align-items:flex-start; gap:12px; padding:11px 20px; border-bottom:1px solid rgba(255,255,255,0.04); transition:background .15s; }
+    .activity-item:last-child { border-bottom:none; }
+    .activity-item:hover { background:rgba(255,255,255,0.025); }
+    .activity-icon { width:34px; height:34px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.95rem; }
+    .act-login  { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); }
+    .act-upload { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); }
+    .act-test   { background:rgba(0,229,204,0.1); border:1px solid rgba(0,229,204,0.2); }
+    .act-logout { background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.15); }
+    .activity-body { flex:1; }
+    .activity-title { font-size:.82rem; font-weight:600; color:#e2e8f0; line-height:1.4; }
+    .activity-title strong { color:#fff; }
+    .activity-meta { display:flex; align-items:center; gap:7px; margin-top:3px; flex-wrap:wrap; }
+
+    /* ══ TWO-COL ══ */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    @media(max-width:900px){ .two-col { grid-template-columns:1fr; } }
+
+    /* ══ TABLE FOOTER ══ */
+    .table-footer { display:flex; align-items:center; justify-content:space-between; padding:10px 18px; border-top:1px solid var(--border); font-size:.76rem; color:var(--text-muted); }
+
+    /* ══ EMPTY / LOADING ══ */
+    .loading-row td { text-align:center; padding:36px; color:var(--text-muted); }
+    .spinner-inline { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--red); border-radius:50%; animation:spin .7s linear infinite; }
+    .empty-state { text-align:center; padding:44px 20px; color:var(--text-muted); }
+    .empty-state .empty-icon { font-size:2.2rem; margin-bottom:10px; display:block; opacity:.35; }
+
+    /* ══ TOAST ══ */
+    .toast { position:fixed; bottom:22px; right:22px; z-index:999; background:rgba(4,2,6,0.96); border:1px solid var(--border); border-radius:14px; padding:13px 17px; display:flex; align-items:center; gap:11px; box-shadow:0 20px 60px rgba(0,0,0,0.5); backdrop-filter:blur(16px); transform:translateY(70px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; max-width:300px; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast-icon { font-size:1.1rem; flex-shrink:0; }
+    .toast-text { font-size:.82rem; font-weight:600; color:#e2e8f0; }
+
+    @media(max-width:768px){ .admin-sidebar { display:none; } .admin-main { padding:14px; } .stats-grid { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<header class="admin-topbar">
+  <div class="topbar-brand">
+    <img src="assets/images/logo.jpg" alt="Logo" />
+    <span class="topbar-brand-text">Dr.<span>AIMSS</span></span>
+  </div>
+  <span class="admin-badge-top">🛡️ Admin</span>
+  <div class="inst-pill">
+    <span class="inst-dot"></span>
+    🏫 <span id="instPillText" data-auth-institution>—</span>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-right">
+    <span class="topbar-email" id="adminEmailDisplay" data-auth-email></span>
+    <span class="topbar-time" id="liveClock">--:--:--</span>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+
+<div class="admin-layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-label">Overview</div>
+    <a class="nav-item active" onclick="showSection('overview')" id="nav-overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a class="nav-item" onclick="showSection('activity')" id="nav-activity">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Live Activity
+      <span class="nav-badge" id="activityBadge">—</span>
+    </a>
+
+    <div class="sidebar-label">Users</div>
+    <a class="nav-item" onclick="showSection('teachers')" id="nav-teachers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Teachers
+      <span class="nav-badge" id="teacherCount">—</span>
+    </a>
+    <a class="nav-item" onclick="showSection('students')" id="nav-students">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      Students
+      <span class="nav-badge" id="studentCount">—</span>
+    </a>
+
+    <div class="sidebar-label">Content</div>
+    <a class="nav-item" onclick="showSection('files')" id="nav-files">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Files & Uploads
+    </a>
+    <a class="nav-item" onclick="showSection('tests')" id="nav-tests">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Test Results
+    </a>
+
+    <div class="sidebar-label">Account</div>
+    <a class="nav-item" href="login.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Back to Portal
+    </a>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="admin-main">
+
+    <!-- ─── OVERVIEW ─── -->
+    <div id="section-overview" class="section-area">
+      <div class="page-header">
+        <h1>🛡️ Admin <span>Command Center</span></h1>
+        <p>Showing data scoped to your institution only — other institutions are hidden.</p>
+      </div>
+
+      <!-- Institution Banner -->
+      <div class="inst-banner" id="instBanner">
+        <div class="inst-banner-icon">🏫</div>
+        <div class="inst-banner-body">
+          <div class="inst-banner-title">Monitoring: <span id="instBannerName">—</span></div>
+          <div class="inst-banner-sub">You are viewing only your institution's teachers, students, files and test results. Other institutions are completely isolated.</div>
+        </div>
+        <div class="inst-banner-badge" id="instBannerCode">—</div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card gold">
+          <span class="stat-icon">👨‍🏫</span>
+          <div class="stat-value" id="stat-teachers">—</div>
+          <div class="stat-label">My Teachers</div>
+        </div>
+        <div class="stat-card teal">
+          <span class="stat-icon">🎓</span>
+          <div class="stat-value" id="stat-students">—</div>
+          <div class="stat-label">My Students</div>
+        </div>
+        <div class="stat-card purple">
+          <span class="stat-icon">📁</span>
+          <div class="stat-value" id="stat-files">—</div>
+          <div class="stat-label">Files Uploaded</div>
+        </div>
+        <div class="stat-card green">
+          <span class="stat-icon">📝</span>
+          <div class="stat-value" id="stat-tests">—</div>
+          <div class="stat-label">Tests Attempted</div>
+        </div>
+        <div class="stat-card red">
+          <span class="stat-icon">🔐</span>
+          <div class="stat-value" id="stat-logins">—</div>
+          <div class="stat-label">Total Logins</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Recent Activity -->
+        <div class="section-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Recent Activity
+            </div>
+            <button class="refresh-btn" id="refreshActBtn" onclick="loadActivity()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+          <div class="activity-feed" id="overviewFeed">
+            <div class="empty-state"><span class="spinner-inline"></span></div>
+          </div>
+        </div>
+
+        <!-- Login Breakdown -->
+        <div class="section-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Login Breakdown
+            </div>
+          </div>
+          <div style="padding:18px 20px;" id="loginBreakdown">
+            <div class="empty-state"><span class="spinner-inline"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ACTIVITY ─── -->
+    <div id="section-activity" class="section-area" style="display:none;">
+      <div class="page-header">
+        <h1>⚡ Live <span>Activity Feed</span></h1>
+        <p>All login and activity events from your institution only.</p>
+      </div>
+      <div class="section-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            All Activity Logs
+          </div>
+          <div class="panel-actions">
+            <button class="panel-btn active" id="filterAll" onclick="filterActivity('all')">All</button>
+            <button class="panel-btn" id="filterLogin" onclick="filterActivity('login')">Logins</button>
+            <button class="panel-btn" id="filterUpload" onclick="filterActivity('upload')">Uploads</button>
+            <button class="panel-btn" id="filterTest" onclick="filterActivity('test')">Tests</button>
+            <button class="refresh-btn" onclick="loadActivity()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div class="activity-feed" id="fullActivityFeed">
+          <div class="empty-state"><span class="spinner-inline"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TEACHERS ─── -->
+    <div id="section-teachers" class="section-area" style="display:none;">
+      <div class="page-header">
+        <h1>👨‍🏫 Teacher <span>Accounts</span></h1>
+        <p>All teachers registered under your institution code.</p>
+      </div>
+      <div class="section-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            My Institution's Teachers
+          </div>
+          <div class="panel-actions">
+            <input class="panel-search" type="search" placeholder="Search..." oninput="filterTable('teachersTable', this.value)" />
+            <button class="refresh-btn" onclick="loadTeachers()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="teachersTable">
+            <thead>
+              <tr>
+                <th>Teacher</th><th>Login Type</th><th>Team / Dept</th>
+                <th>Joined</th><th>Last Login</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="teachersBody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner-inline"></span> Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="teacherTotal">— teachers</span></div>
+      </div>
+    </div>
+
+    <!-- ─── STUDENTS ─── -->
+    <div id="section-students" class="section-area" style="display:none;">
+      <div class="page-header">
+        <h1>🎓 Student <span>Accounts</span></h1>
+        <p>All students registered under your institution code.</p>
+      </div>
+      <div class="section-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            My Institution's Students
+          </div>
+          <div class="panel-actions">
+            <input class="panel-search" type="search" placeholder="Search..." oninput="filterTable('studentsTable', this.value)" />
+            <button class="refresh-btn" onclick="loadStudents()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th>Student</th><th>Board</th><th>Class</th>
+                <th>Joined</th><th>Last Login</th><th>Tests</th><th>Avg Score</th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody">
+              <tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="studentTotal">— students</span></div>
+      </div>
+    </div>
+
+    <!-- ─── FILES ─── -->
+    <div id="section-files" class="section-area" style="display:none;">
+      <div class="page-header">
+        <h1>📁 Uploaded <span>Files</span></h1>
+        <p>All files uploaded by your institution's teachers.</p>
+      </div>
+      <div class="section-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Institution Uploads
+          </div>
+          <div class="panel-actions">
+            <button class="panel-btn active" id="fAll" onclick="filterFiles('all')">All</button>
+            <button class="panel-btn" id="fVideo" onclick="filterFiles('video')">Videos</button>
+            <button class="panel-btn" id="fPdf" onclick="filterFiles('pdf')">PDFs</button>
+            <button class="refresh-btn" onclick="loadFiles()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="filesTable">
+            <thead>
+              <tr><th>File Name</th><th>Type</th><th>Uploaded By</th><th>Team</th><th>Date</th><th>Size</th><th>Action</th></tr>
+            </thead>
+            <tbody id="filesBody">
+              <tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="fileTotal">— files</span></div>
+      </div>
+    </div>
+
+    <!-- ─── TESTS ─── -->
+    <div id="section-tests" class="section-area" style="display:none;">
+      <div class="page-header">
+        <h1>📝 Test <span>Results</span></h1>
+        <p>All MCQ test results from your institution's students.</p>
+      </div>
+      <div class="section-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+            Institution Test Results
+          </div>
+          <div class="panel-actions">
+            <button class="panel-btn active" id="tAll" onclick="filterTests('all')">All</button>
+            <button class="panel-btn" id="tPass" onclick="filterTests('pass')">Passed</button>
+            <button class="panel-btn" id="tFail" onclick="filterTests('fail')">Failed</button>
+            <input class="panel-search" type="search" placeholder="Search student..." oninput="filterTable('testsTable', this.value)" />
+            <button class="refresh-btn" onclick="loadTests()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="testsTable">
+            <thead>
+              <tr><th>Student</th><th>Test / Chapter</th><th>Score</th><th>Result</th><th>Questions</th><th>Time</th><th>Date</th></tr>
+            </thead>
+            <tbody id="testsBody">
+              <tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="testTotal">— results</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span class="toast-text" id="toastText"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/supabase-auth.js"></script>
+<script>
+// ════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════
+let _supabase   = null;
+let _instId     = null;  // This admin's institution_id — ALL queries filter by this!
+let _allActivity = [];
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Guard — must be admin
+  await DrAuth.guardPage('admin');
+
+  _supabase = DrAuth.getClient();
+  _instId   = DrAuth.getInstitutionId();
+
+  // Show institution name in topbar and banner
+  const instDisplay = _instId || 'Unknown';
+  document.getElementById('instPillText').textContent = instDisplay;
+  document.getElementById('instBannerName').textContent = instDisplay;
+  document.getElementById('instBannerCode').textContent = instDisplay;
+
+  if (!_instId) {
+    showToast('⚠️', 'No institution linked to your admin account. Contact support.');
+  }
+
+  // Live clock
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Load all scoped data in parallel
+  await Promise.all([loadStats(), loadActivity(), loadTeachers(), loadStudents(), loadFiles(), loadTests()]);
+  showToast('✓', `Loaded data for ${instDisplay}`);
+});
+
+function updateClock() {
+  document.getElementById('liveClock').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour12:false });
+}
+
+function doLogout() { DrAuth.signOut(); }
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+function timeAgo(d) {
+  if (!d) return '—';
+  const diff = Date.now() - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs/24)}d ago`;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+function fmtSize(b) {
+  if (!b) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+function initials(email) { return email ? email.split('@')[0].slice(0,2).toUpperCase() : '?'; }
+function scoreColor(p) { return p >= 75 ? '#4ade80' : p >= 50 ? '#fbbf24' : '#f87171'; }
+function fileTypeBadge(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  if (['mp4','mkv','mov','webm','avi'].includes(ext)) return '<span class="badge badge-video">📹 Video</span>';
+  if (ext === 'pdf') return '<span class="badge badge-pdf">📄 PDF</span>';
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '<span class="badge badge-file">🖼 Image</span>';
+  return '<span class="badge badge-file">📎 File</span>';
+}
+function filterTable(tableId, q) {
+  q = q.toLowerCase();
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION NAV
+// ════════════════════════════════════════════════════
+function showSection(name) {
+  document.querySelectorAll('.section-area').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('section-' + name).style.display = 'block';
+  document.getElementById('nav-' + name)?.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════
+let _toastTimer;
+function showToast(icon, text) {
+  clearTimeout(_toastTimer);
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastText').textContent = text;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD STATS  (all filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadStats() {
+  if (!_instId) {
+    ['stat-teachers','stat-students','stat-files','stat-tests','stat-logins'].forEach(id => {
+      document.getElementById(id).textContent = 'N/A';
+    });
+    return;
+  }
+  try {
+    const [tr, sr, lr] = await Promise.all([
+      _supabase.from('profiles').select('id',{count:'exact',head:true}).eq('role','teacher').eq('institution_id', _instId),
+      _supabase.from('profiles').select('id',{count:'exact',head:true}).eq('role','student').eq('institution_id', _instId),
+      _supabase.from('activity_log').select('id',{count:'exact',head:true}).eq('institution_id', _instId)
+    ]);
+
+    const tc = tr.count ?? 0, sc = sr.count ?? 0, lc = lr.count ?? 0;
+    document.getElementById('stat-teachers').textContent = tc;
+    document.getElementById('stat-students').textContent = sc;
+    document.getElementById('stat-logins').textContent   = lc;
+    document.getElementById('teacherCount').textContent  = tc;
+    document.getElementById('studentCount').textContent  = sc;
+    document.getElementById('activityBadge').textContent = lc > 99 ? '99+' : lc;
+
+    // Files
+    try {
+      const { count: fc } = await _supabase.from('uploads').select('id',{count:'exact',head:true}).eq('institution_id', _instId);
+      document.getElementById('stat-files').textContent = fc ?? '—';
+    } catch { document.getElementById('stat-files').textContent = '—'; }
+
+    // Tests
+    try {
+      const { count: rc } = await _supabase.from('test_results').select('id',{count:'exact',head:true}).eq('institution_id', _instId);
+      document.getElementById('stat-tests').textContent = rc ?? '—';
+    } catch { document.getElementById('stat-tests').textContent = '—'; }
+
+    renderBreakdown();
+  } catch(e) {
+    console.warn('Stats error:', e);
+  }
+}
+
+async function renderBreakdown() {
+  const box = document.getElementById('loginBreakdown');
+  try {
+    const { data: logs } = await _supabase.from('activity_log')
+      .select('meta,role').eq('event','login').eq('institution_id', _instId).limit(300);
+
+    let individual = 0, team = 0, student = 0;
+    (logs || []).forEach(l => {
+      try {
+        const m = JSON.parse(l.meta || '{}');
+        if (l.role === 'student') student++;
+        else if (m.loginType === 'team') team++;
+        else individual++;
+      } catch { student++; }
+    });
+    const total = individual + team + student || 1;
+    const bar = (n, color) => `<div style="height:7px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;"><div style="height:100%;width:${(n/total*100).toFixed(1)}%;background:${color};border-radius:999px;"></div></div>`;
+
+    box.innerHTML = `
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:.78rem;color:#94a3b8;font-weight:600;">Individual Teacher Logins</span><span style="font-size:.78rem;color:#fbbf24;font-weight:800;">${individual}</span></div>
+        ${bar(individual,'linear-gradient(90deg,#fbbf24,#f59e0b)')}
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:.78rem;color:#94a3b8;font-weight:600;">Team Teacher Logins</span><span style="font-size:.78rem;color:#c4b5fd;font-weight:800;">${team}</span></div>
+        ${bar(team,'linear-gradient(90deg,#8b5cf6,#a78bfa)')}
+      </div>
+      <div style="margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:.78rem;color:#94a3b8;font-weight:600;">Student Logins</span><span style="font-size:.78rem;color:#00e5cc;font-weight:800;">${student}</span></div>
+        ${bar(student,'linear-gradient(90deg,#00e5cc,#06b6d4)')}
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;font-size:.76rem;color:#64748b;">
+        <span>Total login events (your institution)</span>
+        <span style="color:#fff;font-weight:800;">${individual+team+student}</span>
+      </div>
+    `;
+  } catch {
+    box.innerHTML = '<div class="empty-state"><span class="empty-icon">📊</span>No login data yet for your institution.</div>';
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD ACTIVITY  (filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadActivity() {
+  const btn = document.getElementById('refreshActBtn');
+  if (btn) btn.classList.add('spinning');
+
+  try {
+    let q = _supabase.from('activity_log').select('*').order('created_at',{ascending:false}).limit(100);
+    if (_instId) q = q.eq('institution_id', _instId);
+    const { data } = await q;
+    _allActivity = data || [];
+    renderActivity('overviewFeed', _allActivity.slice(0,10));
+    renderActivity('fullActivityFeed', _allActivity);
+    document.getElementById('activityBadge').textContent = _allActivity.length > 99 ? '99+' : _allActivity.length;
+  } catch {
+    // Fallback demo data if table doesn't exist
+    _allActivity = [];
+    document.getElementById('overviewFeed').innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span>No activity logged yet for your institution.<br><small>Login events will appear here automatically.</small></div>';
+    document.getElementById('fullActivityFeed').innerHTML = document.getElementById('overviewFeed').innerHTML;
+  }
+
+  if (btn) btn.classList.remove('spinning');
+}
+
+function renderActivity(containerId, items, filter = 'all') {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const filtered = filter === 'all' ? items : items.filter(i => i.event === filter);
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span>No activity found for your institution.</div>';
+    return;
+  }
+  const icons = { login:'🔐', upload:'📤', test:'📝', logout:'🚪' };
+  const cls   = { login:'act-login', upload:'act-upload', test:'act-test', logout:'act-logout' };
+
+  el.innerHTML = filtered.map(item => {
+    let meta = {};
+    try { meta = JSON.parse(item.meta || '{}'); } catch {}
+    const loginTag = meta.loginType
+      ? `<span class="badge ${meta.loginType==='team'?'badge-team':'badge-indiv'}">${meta.loginType==='team'?'👥 Team'+(meta.teamName?': '+meta.teamName:''):'🧑 Individual'}</span>`
+      : '';
+    const roleTag = `<span class="badge badge-${item.role||'student'}">${(item.role||'student').charAt(0).toUpperCase()+(item.role||'student').slice(1)}</span>`;
+
+    let title = '';
+    if (item.event === 'login')  title = `<strong>${item.user_email||'—'}</strong> signed in`;
+    else if (item.event === 'upload') title = `<strong>${item.user_email}</strong> uploaded a file`;
+    else if (item.event === 'test')   title = `<strong>${item.user_email}</strong> attempted a test`;
+    else title = `<strong>${item.user_email}</strong> — ${item.event}`;
+
+    return `
+      <div class="activity-item">
+        <div class="activity-icon ${cls[item.event]||'act-login'}">${icons[item.event]||'⚡'}</div>
+        <div class="activity-body">
+          <div class="activity-title">${title}</div>
+          <div class="activity-meta">${roleTag}${loginTag}<span class="time-ago">${timeAgo(item.created_at)}</span></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+let _actFilter = 'all';
+function filterActivity(f) {
+  _actFilter = f;
+  ['All','Login','Upload','Test'].forEach(x => {
+    const b = document.getElementById('filter'+x);
+    if (b) b.classList.toggle('active', x.toLowerCase()===f||(x==='All'&&f==='all'));
+  });
+  renderActivity('fullActivityFeed', _allActivity, f);
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD TEACHERS  (filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadTeachers() {
+  const tbody = document.getElementById('teachersBody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner-inline"></span> Loading...</td></tr>';
+  try {
+    let q = _supabase.from('profiles').select('*').eq('role','teacher').order('created_at',{ascending:false});
+    if (_instId) q = q.eq('institution_id', _instId);
+    const { data: teachers } = await q;
+
+    document.getElementById('teacherCount').textContent = (teachers||[]).length;
+    document.getElementById('teacherTotal').textContent = `${(teachers||[]).length} teacher${(teachers||[]).length!==1?'s':''}`;
+    document.getElementById('stat-teachers').textContent = (teachers||[]).length;
+
+    if (!(teachers||[]).length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">👨‍🏫</span>No teachers registered under your institution yet.<br><small>Teachers must enter your institution code when registering.</small></div></td></tr>';
+      return;
+    }
+
+    // Get last login meta per teacher
+    const { data: logs } = await _supabase.from('activity_log')
+      .select('user_id,meta,created_at').eq('event','login').eq('institution_id', _instId);
+    const logMap = {};
+    (logs||[]).forEach(l => {
+      if (!logMap[l.user_id] || new Date(l.created_at)>new Date(logMap[l.user_id].created_at)) logMap[l.user_id]=l;
+    });
+
+    tbody.innerHTML = (teachers||[]).map(t => {
+      const ll = logMap[t.id];
+      let meta = {};
+      try { meta = JSON.parse(ll?.meta||'{}'); } catch {}
+      const loginTypeBadge = meta.loginType
+        ? `<span class="badge ${meta.loginType==='team'?'badge-team':'badge-indiv'}">${meta.loginType==='team'?'👥 Team':'🧑 Individual'}</span>`
+        : '<span style="color:#475569;font-size:.73rem;">—</span>';
+
+      return `<tr>
+        <td><div class="user-cell">
+          <div class="user-avatar avatar-teacher">${initials(t.email)}</div>
+          <div><div class="user-name">${t.full_name||t.email?.split('@')[0]||'—'}</div><div class="user-email">${t.email||'—'}</div></div>
+        </div></td>
+        <td>${loginTypeBadge}</td>
+        <td style="color:#94a3b8;font-size:.8rem;">${meta.teamName||'—'}</td>
+        <td><span class="time-ago">${fmtDate(t.created_at)}</span></td>
+        <td><span class="time-ago">${ll?timeAgo(ll.created_at):'—'}</span></td>
+        <td><span class="badge badge-active">● Active</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="6" style="color:#f87171;">Error loading teachers: ${e.message}</td></tr>`;
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD STUDENTS  (filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadStudents() {
+  const tbody = document.getElementById('studentsBody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
+  try {
+    let q = _supabase.from('profiles').select('*').eq('role','student').order('created_at',{ascending:false});
+    if (_instId) q = q.eq('institution_id', _instId);
+    const { data: students } = await q;
+
+    document.getElementById('studentCount').textContent = (students||[]).length;
+    document.getElementById('studentTotal').textContent = `${(students||[]).length} student${(students||[]).length!==1?'s':''}`;
+    document.getElementById('stat-students').textContent = (students||[]).length;
+
+    if (!(students||[]).length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🎓</span>No students registered under your institution yet.</div></td></tr>';
+      return;
+    }
+
+    // Last login + login count per student
+    const { data: loginLogs } = await _supabase.from('activity_log')
+      .select('user_id,created_at').eq('event','login').eq('institution_id', _instId);
+    const loginCnt = {}, lastLogin = {};
+    (loginLogs||[]).forEach(l => {
+      loginCnt[l.user_id] = (loginCnt[l.user_id]||0)+1;
+      if (!lastLogin[l.user_id]||new Date(l.created_at)>new Date(lastLogin[l.user_id])) lastLogin[l.user_id]=l.created_at;
+    });
+
+    // Test results per student — filtered by institution
+    let testMap = {};
+    try {
+      let tq = _supabase.from('test_results').select('user_id,score,total');
+      if (_instId) tq = tq.eq('institution_id', _instId);
+      const { data: results } = await tq;
+      (results||[]).forEach(r => {
+        if (!testMap[r.user_id]) testMap[r.user_id]={count:0,total:0,max:0};
+        testMap[r.user_id].count++;
+        testMap[r.user_id].total += (r.score||0);
+        testMap[r.user_id].max   += (r.total||100);
+      });
+    } catch {}
+
+    tbody.innerHTML = (students||[]).map(s => {
+      const tm = testMap[s.id];
+      const avg = tm&&tm.max>0 ? Math.round(tm.total/tm.max*100) : null;
+      const scoreHtml = avg!==null
+        ? `<div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${avg}%;background:${scoreColor(avg)};"></div></div><span class="score-text" style="color:${scoreColor(avg)};">${avg}%</span></div>`
+        : '<span style="color:#475569;font-size:.73rem;">No tests</span>';
+      const board = s.board || localStorage.getItem('student-board') || '—';
+      const cls   = s.class  || '—';
+
+      return `<tr>
+        <td><div class="user-cell">
+          <div class="user-avatar avatar-student">${initials(s.email)}</div>
+          <div><div class="user-name">${s.full_name||s.email?.split('@')[0]||'—'}</div><div class="user-email">${s.email||'—'}</div></div>
+        </div></td>
+        <td style="color:#94a3b8;font-size:.8rem;">${board}</td>
+        <td style="color:#94a3b8;font-size:.8rem;">${cls}</td>
+        <td><span class="time-ago">${fmtDate(s.created_at)}</span></td>
+        <td><span class="time-ago">${lastLogin[s.id]?timeAgo(lastLogin[s.id]):'—'}</span></td>
+        <td style="color:#e2e8f0;font-weight:700;">${tm?.count??0}</td>
+        <td style="min-width:110px;">${scoreHtml}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="7" style="color:#f87171;">Error loading students: ${e.message}</td></tr>`;
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD FILES  (filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadFiles() {
+  const tbody = document.getElementById('filesBody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
+  try {
+    let q = _supabase.from('uploads').select('*').order('created_at',{ascending:false}).limit(100);
+    if (_instId) q = q.eq('institution_id', _instId);
+    const { data: files } = await q;
+
+    document.getElementById('stat-files').textContent = (files||[]).length;
+    document.getElementById('fileTotal').textContent = `${(files||[]).length} file${(files||[]).length!==1?'s':''}`;
+
+    if (!(files||[]).length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">📁</span>No files uploaded by your institution yet.</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = (files||[]).map(f => {
+      const name = f.file_name||f.name||f.filename||'Unknown';
+      const url  = f.url||f.file_url||'#';
+      let meta = {}; try { meta = JSON.parse(f.meta||'{}'); } catch {}
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1rem;">📄</span>
+          <div><div style="font-weight:700;color:#fff;font-size:.82rem;">${name}</div></div></div></td>
+        <td>${fileTypeBadge(name)}</td>
+        <td style="color:#94a3b8;font-size:.8rem;">${f.uploaded_by||f.user_email||'—'}</td>
+        <td style="color:#94a3b8;font-size:.8rem;">${meta.teamName||f.team_name||'—'}</td>
+        <td><span class="time-ago">${fmtDate(f.created_at)}</span></td>
+        <td style="color:#64748b;font-size:.76rem;">${fmtSize(f.size||f.file_size)}</td>
+        <td>${url!=='#'?`<a href="${url}" target="_blank" style="color:#00e5cc;font-size:.76rem;font-weight:700;text-decoration:none;">View →</a>`:'<span style="color:#475569;font-size:.73rem;">—</span>'}</td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load files. The uploads table may not exist yet.</td></tr>';
+  }
+}
+
+function filterFiles(f) {
+  ['All','Video','Pdf'].forEach(x => {
+    const b = document.getElementById('f'+x); if(b) b.classList.toggle('active', 'f'+x==='f'+f.charAt(0).toUpperCase()+f.slice(1)||(x==='All'&&f==='all'));
+  });
+  document.querySelectorAll('#filesTable tbody tr').forEach(tr => {
+    if (f==='all') { tr.style.display=''; return; }
+    tr.style.display = tr.cells[1]?.textContent?.toLowerCase().includes(f) ? '' : 'none';
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD TESTS  (filtered by institution_id)
+// ════════════════════════════════════════════════════
+async function loadTests() {
+  const tbody = document.getElementById('testsBody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
+  try {
+    let q = _supabase.from('test_results').select('*').order('created_at',{ascending:false}).limit(200);
+    if (_instId) q = q.eq('institution_id', _instId);
+    const { data: results } = await q;
+
+    document.getElementById('stat-tests').textContent = (results||[]).length;
+    document.getElementById('testTotal').textContent  = `${(results||[]).length} result${(results||[]).length!==1?'s':''}`;
+
+    if (!(results||[]).length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">📝</span>No test results for your institution yet.</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = (results||[]).map(r => {
+      const score = r.score??0, total = r.total??100;
+      const pct = Math.round(score/total*100), passed = pct>=50;
+      return `<tr>
+        <td><div class="user-cell">
+          <div class="user-avatar avatar-student">${initials(r.user_email||r.student_email)}</div>
+          <div><div class="user-name">${r.student_name||r.user_email?.split('@')[0]||'—'}</div><div class="user-email">${r.user_email||r.student_email||'—'}</div></div>
+        </div></td>
+        <td style="color:#e2e8f0;font-size:.8rem;">${r.test_name||r.chapter||r.subject||'MCQ Test'}</td>
+        <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${pct}%;background:${scoreColor(pct)};"></div></div><span class="score-text" style="color:${scoreColor(pct)};">${score}/${total}</span></div></td>
+        <td><span class="badge ${passed?'badge-pass':'badge-fail'}">${passed?'✓ Pass':'✗ Fail'}</span></td>
+        <td style="color:#94a3b8;">${r.total_questions||r.total||'—'} Qs</td>
+        <td style="color:#64748b;font-size:.76rem;">${r.time_taken?r.time_taken+' min':'—'}</td>
+        <td><span class="time-ago">${fmtDate(r.created_at)}</span></td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load test results. The test_results table may not exist yet.</td></tr>';
+  }
+}
+
+function filterTests(f) {
+  ['All','Pass','Fail'].forEach(x => {
+    const b = document.getElementById('t'+x); if(b) b.classList.toggle('active', x.toLowerCase()===f||(x==='All'&&f==='all'));
+  });
+  document.querySelectorAll('#testsTable tbody tr').forEach(tr => {
+    if (f==='all') { tr.style.display=''; return; }
+    tr.style.display = tr.cells[3]?.textContent?.toLowerCase().includes(f) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

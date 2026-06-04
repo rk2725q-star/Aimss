@@ -63,7 +63,22 @@
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
-    @media (max-width: 560px) { .role-cards { grid-template-columns: 1fr; } }
+    /* Admin card spans full width on its own row */
+    .role-card.admin-card {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: center;
+      gap: 24px;
+      padding: 28px 36px;
+    }
+    .admin-card .role-info { flex: 1; text-align: left; }
+    .admin-card .role-perks { margin-top: 8px; }
+    .admin-card .role-arrow { margin-top: 0; margin-left: auto; white-space: nowrap; }
+    @media (max-width: 560px) {
+      .role-cards { grid-template-columns: 1fr; }
+      .role-card.admin-card { flex-direction: column; align-items: flex-start; }
+      .admin-card .role-arrow { margin-left: 0; }
+    }
 
     .role-card {
       position: relative;
@@ -115,6 +130,30 @@
     .role-card.teacher:hover {
       border-color: rgba(229,228,227,0.55);
       box-shadow: 0 24px 60px rgba(229,228,227,0.15);
+    }
+
+    /* Admin card */
+    .role-card.admin-card {
+      background: linear-gradient(135deg, rgba(220,38,38,0.07) 0%, rgba(234,179,8,0.04) 50%, rgba(0,0,0,0.97) 100%);
+      border-color: rgba(220,38,38,0.28);
+    }
+    .role-card.admin-card::before {
+      background: linear-gradient(135deg, rgba(220,38,38,0.18), rgba(234,179,8,0.08), transparent);
+    }
+    .role-card.admin-card:hover {
+      border-color: rgba(220,38,38,0.65);
+      box-shadow: 0 24px 60px rgba(220,38,38,0.18), 0 0 0 1px rgba(234,179,8,0.1);
+    }
+    .admin-card .role-icon { background: rgba(220,38,38,0.15); color: #f87171; }
+    .admin-card .role-perk { background: rgba(220,38,38,0.1); color: #fca5a5; border: 1px solid rgba(220,38,38,0.2); }
+    .admin-card .role-arrow { color: #f87171; }
+    .admin-card .role-name { font-size: 1.2rem; }
+    .admin-shield {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.25);
+      border-radius: 999px; padding: 3px 12px;
+      font-size: .7rem; font-weight: 800; color: #fbbf24;
+      letter-spacing: .05em; text-transform: uppercase;
     }
 
     .role-icon {
@@ -251,6 +290,31 @@
             </svg>
           </div>
         </a>
+
+        <!-- Admin / Headmaster Card -->
+        <a class="role-card admin-card" href="admin-login.html" id="adminRoleCard">
+          <div class="role-icon">🛡️</div>
+          <div class="role-info">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <p class="role-name" style="margin:0;">Admin / Headmaster</p>
+              <span class="admin-shield">👑 Restricted Access</span>
+            </div>
+            <p class="role-desc" style="margin:0;">Monitor all teacher and student activity, uploaded files, test results, and login events from one unified command center.</p>
+            <div class="role-perks">
+              <span class="role-perk">Live Monitor</span>
+              <span class="role-perk">All Users</span>
+              <span class="role-perk">File Audit</span>
+              <span class="role-perk">Test Reports</span>
+              <span class="role-perk">Activity Logs</span>
+            </div>
+          </div>
+          <div class="role-arrow">
+            Headmaster Portal
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </a>
       </div>
 
       <div class="portal-footer">
@@ -285,6 +349,7 @@
         const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
         if (data?.role === 'student') window.location.href = 'student-dashboard.html';
         else if (data?.role === 'teacher') window.location.href = 'command-center.html';
+        else if (data?.role === 'admin') window.location.href = 'admin-dashboard.html';
       } catch (_) {
         // Silent fail — just show role selector
       }

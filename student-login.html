@@ -123,15 +123,20 @@
     .pwd-strength { margin-top:6px; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden; }
     .pwd-strength-bar { height:100%; width:0%; border-radius:2px; transition:width .3s,background .3s; }
 
-    /* Select dropdowns (board, class) */
-    .login-field option {
-      background: #0d0d18;
-      color: #fff;
+    /* Institution code field */
+    .inst-code-field { border-color:rgba(0,229,204,0.35) !important; }
+    .inst-hint {
+      display:flex; align-items:center; gap:8px;
+      background:rgba(0,229,204,0.06); border:1px solid rgba(0,229,204,0.18);
+      border-radius:10px; padding:8px 12px; margin-bottom:14px;
+      font-size:.75rem; color:#67e8f9; line-height:1.4;
     }
+
+    /* Select dropdowns (board, class) */
+    .login-field option { background: #0d0d18; color: #fff; }
     select.login-field {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
+      background-repeat: no-repeat; background-position: right 14px center;
     }
   </style>
 </head>
@@ -241,6 +246,17 @@
             <input id="signupConfirm" class="login-field" type="password" placeholder="Repeat password" required />
           </div>
         </div>
+
+        <!-- Institution Code -->
+        <div class="inst-hint">🏫 Enter the School Code given by your institution's admin to link your account.</div>
+        <div class="login-field-wrap">
+          <label for="signupInstitution" class="login-field-label">🏫 School / Institution Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <input id="signupInstitution" class="login-field inst-code-field" type="text" placeholder="e.g. DRAIMSS or STJOHN2024" required />
+          </div>
+        </div>
+
         <button id="signupBtn" class="login-btn" type="submit">
           <span class="btn-text">Create Student Account →</span><span class="btn-spinner"></span>
         </button>
@@ -316,27 +332,28 @@
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       clearStatus('signupStatus');
-      const btn     = document.getElementById('signupBtn');
-      const email   = document.getElementById('signupEmail').value.trim();
-      const pass    = document.getElementById('signupPassword').value;
-      const confirm = document.getElementById('signupConfirm').value;
-      const board   = document.getElementById('signupBoard').value;
-      const cls     = document.getElementById('signupClass').value;
+      const btn      = document.getElementById('signupBtn');
+      const email    = document.getElementById('signupEmail').value.trim();
+      const pass     = document.getElementById('signupPassword').value;
+      const confirm  = document.getElementById('signupConfirm').value;
+      const board    = document.getElementById('signupBoard').value;
+      const cls      = document.getElementById('signupClass').value;
+      const instCode = document.getElementById('signupInstitution').value.trim();
 
       if (!email || !pass) { setStatus('signupStatus', 'Please fill in all fields.', 'error'); return; }
       if (!board) { setStatus('signupStatus', 'Please select your board (Stateboard / CBSE / etc.).', 'error'); return; }
       if (!cls)   { setStatus('signupStatus', 'Please select your class.', 'error'); return; }
+      if (!instCode || instCode.length < 3) { setStatus('signupStatus', 'Please enter your School / Institution Code.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
       if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
-        const r = await DrAuth.signUp(email, pass, 'student');
+        const r = await DrAuth.signUp(email, pass, 'student', { institutionCode: instCode });
         if (!r.success) { setStatus('signupStatus', r.error, 'error'); }
         else if (r.needsConfirmation) {
           setStatus('signupStatus', '📧 ' + r.message, 'info');
         } else {
-          // Save board and class selection for personalized experience
           localStorage.setItem('student-board', board);
           localStorage.setItem('student-class', cls);
           setStatus('signupStatus', '✓ Account created! Redirecting to dashboard...', 'success');
@@ -346,8 +363,7 @@
       finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    // Clear status on typing
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','signupBoard','signupClass'].forEach(id => {
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','signupBoard','signupClass','signupInstitution'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
       document.getElementById(id)?.addEventListener('change', clearAll);
     });

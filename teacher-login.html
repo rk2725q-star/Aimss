@@ -111,6 +111,65 @@
       font-size:.75rem; color:#64748b; margin-top:4px; display:block;
     }
 
+    /* ── Mode Selector ── */
+    .mode-selector {
+      margin-bottom: 24px;
+    }
+    .mode-label {
+      font-size: .75rem; font-weight: 700; color: #94a3b8;
+      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; display: block;
+    }
+    .mode-btns {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .mode-btn {
+      padding: 16px 12px; border-radius: 16px; border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); cursor: pointer; text-align: left;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1); position: relative; overflow: hidden;
+    }
+    .mode-btn:hover { border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.06); transform: translateY(-2px); }
+    .mode-btn.selected {
+      border-color: rgba(255,215,0,0.7);
+      background: linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,153,0,0.06));
+      box-shadow: 0 0 0 1px rgba(255,215,0,0.2), 0 8px 24px rgba(255,215,0,0.15);
+    }
+    .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+    .mode-btn .mode-title {
+      font-family: 'Outfit', sans-serif; font-size: .9rem; font-weight: 800; color: #fff; display: block;
+    }
+    .mode-btn .mode-desc {
+      font-size: .72rem; color: #94a3b8; display: block; margin-top: 3px; line-height: 1.4;
+    }
+    .mode-btn.selected .mode-title { color: #ffd700; }
+    .mode-check {
+      position: absolute; top: 10px; right: 10px;
+      width: 18px; height: 18px; background: #ffd700; border-radius: 50%;
+      display: none; align-items: center; justify-content: center;
+    }
+    .mode-btn.selected .mode-check { display: flex; }
+    .mode-check svg { width: 10px; height: 10px; color: #000; }
+
+    .team-field-wrap {
+      margin-bottom: 16px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .35s ease, opacity .3s ease, margin .3s ease;
+    }
+    .team-field-wrap.visible {
+      max-height: 120px;
+      opacity: 1;
+    }
+    .team-hint {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+      font-size: .75rem; color: #fbbf24;
+    }
+
+    .form-section { display: none; }
+    .form-section.visible { display: block; }
+
     .switch-portal { text-align:center; margin-top:20px; font-size:.82rem; color:#94a3b8; }
     .switch-portal a { color:#ffd700; font-weight:700; }
     .security-badge {
@@ -138,14 +197,46 @@
     <div class="login-card">
       <div class="login-role-badge"><span class="role-dot"></span>Teacher Portal</div>
 
-      <!-- Tabs -->
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
-        <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register</button>
+      <!-- ── MODE SELECTOR ── -->
+      <div class="mode-selector" id="modeSelectorWrap">
+        <span class="mode-label">How would you like to sign in?</span>
+        <div class="mode-btns">
+          <button type="button" class="mode-btn" id="modeIndividual" onclick="selectMode('individual')">
+            <div class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="mode-icon">🧑‍🏫</span>
+            <span class="mode-title">Individual Login</span>
+            <span class="mode-desc">Your own personal teacher account with separate credentials.</span>
+          </button>
+          <button type="button" class="mode-btn" id="modeTeam" onclick="selectMode('team')">
+            <div class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="mode-icon">👥</span>
+            <span class="mode-title">Team Login</span>
+            <span class="mode-desc">Shared account — all teachers in your department use the same credentials.</span>
+          </button>
+        </div>
       </div>
 
-      <!-- ── LOGIN FORM ── -->
-      <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
+      <!-- Form section — revealed after mode pick -->
+      <div class="form-section" id="formSection">
+
+        <!-- Team name field (only shown in team mode) -->
+        <div class="team-field-wrap" id="teamFieldWrap">
+          <div class="team-hint">👥 Team accounts are shared — all teachers access the same uploads and settings.</div>
+          <label for="teamNameInput" class="login-field-label">Department / Team Name</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <input id="teamNameInput" class="login-field" type="text" placeholder="e.g. Science Department" />
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
+          <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register</button>
+        </div>
+
+        <!-- ── LOGIN FORM ── -->
+        <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
         <div class="login-field-wrap">
           <label for="loginEmail" class="login-field-label">Teacher Email</label>
           <div style="position:relative;">
@@ -164,10 +255,10 @@
           <span class="btn-text">Sign In as Teacher →</span><span class="btn-spinner"></span>
         </button>
         <div id="loginStatus" class="login-status" role="alert"></div>
-      </form>
+        </form>
 
-      <!-- ── SIGNUP FORM ── -->
-      <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
+        <!-- ── SIGNUP FORM ── -->
+        <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
         <div class="login-field-wrap">
           <label for="signupEmail" class="login-field-label">Email</label>
           <div style="position:relative;">
@@ -198,11 +289,26 @@
           </div>
           <span class="teacher-code-note">Contact Dr.AIMSS administration to get your teacher registration code.</span>
         </div>
+
+        <!-- Institution Code -->
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.18);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:.75rem;color:#fde68a;line-height:1.4;">
+          🏫 Enter your School / Institution Code to link your account to your institution.
+        </div>
+        <div class="login-field-wrap">
+          <label for="teacherInstitution" class="login-field-label">🏫 School / Institution Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <input id="teacherInstitution" class="login-field" type="text" placeholder="e.g. DRAIMSS or STJOHN2024" required style="border-color:rgba(255,215,0,0.3);" />
+          </div>
+        </div>
+
         <button id="signupBtn" class="login-btn" type="submit">
           <span class="btn-text">Register as Teacher →</span><span class="btn-spinner"></span>
         </button>
         <div id="signupStatus" class="login-status" role="alert"></div>
-      </form>
+        </form>
+
+      </div><!-- /form-section -->
 
       <div class="switch-portal">Student? <a href="student-login.html">Student Login →</a></div>
       <div class="security-badge">
@@ -215,6 +321,35 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
   <script>
+    let _loginMode = null; // 'individual' | 'team'
+
+    /* ── Mode Selector ── */
+    function selectMode(mode) {
+      _loginMode = mode;
+      document.getElementById('modeIndividual').classList.toggle('selected', mode === 'individual');
+      document.getElementById('modeTeam').classList.toggle('selected', mode === 'team');
+
+      // Show form section
+      const fs = document.getElementById('formSection');
+      fs.classList.add('visible');
+
+      // Show/hide team name field
+      const tf = document.getElementById('teamFieldWrap');
+      if (mode === 'team') {
+        tf.classList.add('visible');
+      } else {
+        tf.classList.remove('visible');
+        document.getElementById('teamNameInput').value = '';
+      }
+
+      // Update button label
+      const btn = document.getElementById('loginBtn');
+      if (btn) {
+        btn.querySelector('.btn-text').textContent =
+          mode === 'team' ? 'Sign In as Team →' : 'Sign In as Teacher →';
+      }
+    }
+
     function switchTab(tab) {
       document.getElementById('loginTab').classList.toggle('active', tab === 'login');
       document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
@@ -232,18 +367,27 @@
     /* ── LOGIN ── */
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!_loginMode) { setStatus('loginStatus', 'Please select a login mode first.', 'error'); return; }
       clearStatus('loginStatus');
-      const btn   = document.getElementById('loginBtn');
-      const email = document.getElementById('loginEmail').value.trim();
-      const pass  = document.getElementById('loginPassword').value;
+      const btn      = document.getElementById('loginBtn');
+      const email    = document.getElementById('loginEmail').value.trim();
+      const pass     = document.getElementById('loginPassword').value;
+      const teamName = document.getElementById('teamNameInput').value.trim();
+
       if (!email || !pass) { setStatus('loginStatus', 'Enter your email and password.', 'error'); return; }
+      if (_loginMode === 'team' && !teamName) { setStatus('loginStatus', 'Please enter your Department / Team Name.', 'error'); return; }
+
+      const meta = { loginType: _loginMode, teamName: _loginMode === 'team' ? teamName : null };
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
-        const r = await DrAuth.signIn(email, pass, 'teacher');
+        const r = await DrAuth.signIn(email, pass, 'teacher', meta);
         if (!r.success) { setStatus('loginStatus', r.error, 'error'); }
         else {
-          setStatus('loginStatus', '✓ Welcome! Redirecting to Command Center...', 'success');
+          const msg = _loginMode === 'team'
+            ? `✓ Team login successful! Redirecting...`
+            : '✓ Welcome! Redirecting to Command Center...';
+          setStatus('loginStatus', msg, 'success');
           setTimeout(() => { window.location.href = 'command-center.html'; }, 900);
         }
       } catch { setStatus('loginStatus', 'Network error. Please try again.', 'error'); }
@@ -254,19 +398,21 @@
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       clearStatus('signupStatus');
-      const btn     = document.getElementById('signupBtn');
-      const email   = document.getElementById('signupEmail').value.trim();
-      const pass    = document.getElementById('signupPassword').value;
-      const confirm = document.getElementById('signupConfirm').value;
-      const code    = document.getElementById('teacherCode').value.trim();
+      const btn      = document.getElementById('signupBtn');
+      const email    = document.getElementById('signupEmail').value.trim();
+      const pass     = document.getElementById('signupPassword').value;
+      const confirm  = document.getElementById('signupConfirm').value;
+      const code     = document.getElementById('teacherCode').value.trim();
+      const instCode = document.getElementById('teacherInstitution').value.trim();
 
       if (!email || !pass || !code) { setStatus('signupStatus', 'Please fill in all fields including the registration code.', 'error'); return; }
+      if (!instCode || instCode.length < 3) { setStatus('signupStatus', 'Please enter your School / Institution Code.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
       if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
-        const r = await DrAuth.signUp(email, pass, 'teacher', code);
+        const r = await DrAuth.signUp(email, pass, 'teacher', { teacherCode: code, institutionCode: instCode });
         if (!r.success) { setStatus('signupStatus', r.error, 'error'); }
         else if (r.needsConfirmation) {
           setStatus('signupStatus', '📧 ' + r.message, 'info');
@@ -278,7 +424,7 @@
       finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode'].forEach(id => {
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode','teacherInstitution'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
     });
   </script>

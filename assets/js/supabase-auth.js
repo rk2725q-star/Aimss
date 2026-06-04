@@ -1,20 +1,24 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- *  Dr.AIMSS  —  Supabase Auth Module  v2.0
+ *  Dr.AIMSS  —  Supabase Auth Module  v4.0  (Multi-Tenant)
  *
- *  EXPORTS (window.DrAuth):
- *    signIn(email, password, expectedRole)       → Promise
- *    signUp(email, password, role, teacherCode?) → Promise
- *    guardPage(expectedRole)                     → async, redirects if unauthed
- *    signOut()                                   → Promise
- *    getUser()                                   → cached user or null
- *    getRole()                                   → cached role or null
+ *  EXPORTS (window.DrAuth)
+ *    signIn(email, password, expectedRole, meta?)  → Promise
+ *    signUp(email, password, role, opts?)          → Promise
+ *      opts = { teacherCode, institutionCode }
+ *    guardPage(expectedRole)                       → async, redirects
+ *    signOut()                                     → Promise
+ *    getUser()                                     → cached user or null
+ *    getRole()                                     → cached role or null
+ *    getInstitutionId()                            → institution_id or null
+ *    getLoginMeta()                                → { loginType, teamName } or null
+ *    getClient()                                   → supabase client
  *
- *  SECURITY:
- *    • Students  → self-register freely
- *    • Teachers  → must enter TEACHER_CODE to register
- *    • Roles stored in `profiles` table with RLS (server-side enforced)
- *    • Publishable (anon) key is safe to expose — RLS protects the data
+ *  MULTI-TENANT:
+ *    Each user (teacher/student/admin) belongs to an institution.
+ *    institution_id is stored in the `profiles` table.
+ *    Admin can ONLY see users from their own institution.
+ *    Teachers/Students must enter their institution's code to register.
  * ═══════════════════════════════════════════════════════════════
  */
 
@@ -25,8 +29,7 @@
   const SUPABASE_URL  = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
   const SUPABASE_KEY  = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
 
-  // Secret code teachers enter when registering.
-  // Change this to anything you like — share only with your teachers.
+  // Teacher registration code (institution-independent gate)
   const TEACHER_CODE  = 'DRAIMSS2024';
 
   /* ── Init Supabase client (singleton) ──────────────────────── */
@@ -43,46 +46,55 @@
   }
 
   /* ── Internal cache ─────────────────────────────────────────── */
-  let _cachedUser = null;
-  let _cachedRole = null;
+  let _cachedUser        = null;
+  let _cachedRole        = null;
+  let _cachedInstitution = null;
+  let _loginMeta         = null;
 
-  /* ── Fetch role from DB (RLS-protected, cannot be spoofed) ──── */
-  async function fetchRole(supabase, userId) {
+  /* ── Fetch profile from DB ──────────────────────────────────── */
+  async function fetchProfile(supabase, userId) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, institution_id')
       .eq('id', userId)
       .single();
     if (error || !data) return null;
-    return data.role;
+    return data; // { role, institution_id }
   }
 
   /* ══════════════════════════════════════════════════════════════
-     SIGN UP — users register themselves
-     Students: just email + password
-     Teachers: must provide the secret TEACHER_CODE
+     SIGN UP — with institution support
   ══════════════════════════════════════════════════════════════ */
-  async function signUp(email, password, role, teacherCode = '') {
+  async function signUp(email, password, role, opts = {}) {
     const supabase = getClient();
     if (!supabase) return { success: false, error: 'Auth service unavailable.' };
 
-    // Validate teacher code BEFORE calling Supabase
+    const { teacherCode = '', institutionCode = '' } = opts;
+
+    // Validate teacher code
     if (role === 'teacher') {
       if (!teacherCode || teacherCode.trim().toUpperCase() !== TEACHER_CODE) {
         return { success: false, error: 'Invalid teacher registration code. Contact the academy admin.' };
       }
     }
 
+    // Institution code required for everyone (teacher + student)
+    if (!institutionCode || institutionCode.trim().length < 3) {
+      return { success: false, error: 'Please enter a valid School / Institution Code.' };
+    }
+
     if (!['student', 'teacher'].includes(role)) {
       return { success: false, error: 'Invalid role selected.' };
     }
 
-    // Sign up — pass role in metadata so trigger auto-creates profile
+    const instId = institutionCode.trim().toUpperCase();
+
+    // Sign up — pass role + institution_id in metadata so trigger stores it
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { role }   // trigger reads this → inserts into profiles table
+        data: { role, institution_id: instId }
       }
     });
 
@@ -99,27 +111,35 @@
     const user = data?.user;
     if (!user) return { success: false, error: 'Signup failed. Please try again.' };
 
-    // If email confirmation is disabled in Supabase, user is instantly active
-    // If enabled, they get an email — inform them
+    // Also upsert profile with institution_id (belt-and-suspenders in case trigger doesn't handle it)
+    try {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        role,
+        institution_id: instId,
+        email
+      }, { onConflict: 'id' });
+    } catch (_) { /* non-blocking */ }
+
     const needsConfirmation = !data.session;
     if (needsConfirmation) {
       return {
         success: true,
         needsConfirmation: true,
-        message: 'Account created! Please check your email to verify your account, then sign in.'
+        message: 'Account created! Please check your email to verify, then sign in.'
       };
     }
 
-    // Auto-signed in after signup (email confirmation off)
-    _cachedUser = user;
-    _cachedRole = role;
-    return { success: true, user, role, needsConfirmation: false };
+    _cachedUser        = user;
+    _cachedRole        = role;
+    _cachedInstitution = instId;
+    return { success: true, user, role, institutionId: instId, needsConfirmation: false };
   }
 
   /* ══════════════════════════════════════════════════════════════
-     SIGN IN — existing users login
+     SIGN IN — existing users
   ══════════════════════════════════════════════════════════════ */
-  async function signIn(email, password, expectedRole) {
+  async function signIn(email, password, expectedRole, meta = null) {
     const supabase = getClient();
     if (!supabase) return { success: false, error: 'Auth service unavailable.' };
 
@@ -138,25 +158,51 @@
     const user = data?.user;
     if (!user) return { success: false, error: 'Login failed. Please try again.' };
 
-    // Fetch and verify role from DB
-    const role = await fetchRole(supabase, user.id);
-    if (!role) {
+    // Fetch role + institution from DB
+    const profile = await fetchProfile(supabase, user.id);
+    if (!profile || !profile.role) {
       await supabase.auth.signOut();
       return { success: false, error: 'Account setup incomplete. Please register again or contact admin.' };
     }
 
-    if (role !== expectedRole) {
+    if (profile.role !== expectedRole) {
       await supabase.auth.signOut();
-      const portalName = role === 'teacher' ? 'Teacher Login' : 'Student Login';
+      const portalMap = { teacher: 'Teacher Login', student: 'Student Login', admin: 'Admin Login' };
       return {
         success: false,
-        error: `This is a ${role} account. Please use the ${portalName} page.`
+        error: `This is a ${profile.role} account. Please use the ${portalMap[profile.role] || profile.role} page.`
       };
     }
 
-    _cachedUser = user;
-    _cachedRole = role;
-    return { success: true, user, role };
+    _cachedUser        = user;
+    _cachedRole        = profile.role;
+    _cachedInstitution = profile.institution_id || null;
+
+    // Store login metadata (team name etc.)
+    if (meta) {
+      _loginMeta = meta;
+      try { sessionStorage.setItem('draimss_login_meta', JSON.stringify(meta)); } catch(_) {}
+    }
+
+    // Store institution in sessionStorage for use on dashboard pages
+    if (_cachedInstitution) {
+      try { sessionStorage.setItem('draimss_institution_id', _cachedInstitution); } catch(_) {}
+    }
+
+    // Log login event (best-effort)
+    try {
+      await supabase.from('activity_log').insert({
+        user_id:    user.id,
+        user_email: user.email,
+        role:       profile.role,
+        institution_id: _cachedInstitution,
+        event:      'login',
+        meta:       meta ? JSON.stringify(meta) : null,
+        created_at: new Date().toISOString()
+      });
+    } catch(_) { /* non-blocking */ }
+
+    return { success: true, user, role: profile.role, institutionId: _cachedInstitution };
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -169,23 +215,40 @@
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session) { window.location.href = 'login.html'; return; }
 
-    const user  = session.user;
-    const role  = await fetchRole(supabase, user.id);
+    const user    = session.user;
+    const profile = await fetchProfile(supabase, user.id);
 
-    if (!role || role !== expectedRole) {
+    if (!profile || profile.role !== expectedRole) {
       await supabase.auth.signOut();
       window.location.href = 'login.html';
       return;
     }
 
-    _cachedUser = user;
-    _cachedRole = role;
+    _cachedUser        = user;
+    _cachedRole        = profile.role;
+    _cachedInstitution = profile.institution_id || null;
 
-    // Auto-fill any [data-auth-email] or [data-auth-role] elements
+    // Restore login meta from session storage
+    try {
+      const raw = sessionStorage.getItem('draimss_login_meta');
+      if (raw) _loginMeta = JSON.parse(raw);
+    } catch(_) {}
+
+    // Restore institution from session storage as fallback
+    if (!_cachedInstitution) {
+      try { _cachedInstitution = sessionStorage.getItem('draimss_institution_id'); } catch(_) {}
+    }
+
+    // Auto-fill UI elements
     document.querySelectorAll('[data-auth-email]').forEach(el => { el.textContent = user.email || ''; });
     document.querySelectorAll('[data-auth-role]').forEach(el => {
-      el.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+      el.textContent = profile.role.charAt(0).toUpperCase() + profile.role.slice(1);
     });
+    document.querySelectorAll('[data-auth-institution]').forEach(el => {
+      el.textContent = _cachedInstitution || '—';
+    });
+
+    return { user, role: profile.role, institutionId: _cachedInstitution };
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -194,8 +257,14 @@
   async function signOut() {
     const supabase = getClient();
     if (supabase) await supabase.auth.signOut();
-    _cachedUser = null;
-    _cachedRole = null;
+    _cachedUser        = null;
+    _cachedRole        = null;
+    _cachedInstitution = null;
+    _loginMeta         = null;
+    try {
+      sessionStorage.removeItem('draimss_login_meta');
+      sessionStorage.removeItem('draimss_institution_id');
+    } catch(_) {}
     window.location.href = 'login.html';
   }
 
@@ -205,8 +274,11 @@
     signUp,
     guardPage,
     signOut,
-    getUser: () => _cachedUser,
-    getRole: () => _cachedRole
+    getUser:          () => _cachedUser,
+    getRole:          () => _cachedRole,
+    getInstitutionId: () => _cachedInstitution,
+    getLoginMeta:     () => _loginMeta,
+    getClient
   };
 
   /* ── Auto-wire logout buttons ───────────────────────────────── */

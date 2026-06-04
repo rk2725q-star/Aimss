@@ -264,14 +264,11 @@
 
         <div class="field-divider"></div>
 
-        <!-- Teacher Code -->
-        <div class="login-field-wrap">
-          <label for="teacherCode" class="login-field-label">🔑 Teacher Registration Code</label>
-          <div style="position:relative;">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <input id="teacherCode" class="login-field code-field" type="text" placeholder="Code from academy admin" required />
-          </div>
-          <span class="code-note">Get this code from Dr.AIMSS administration.</span>
+        <!-- Teacher Code — fixed common code, shown as text -->
+        <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+          <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">🔑 Teacher Registration Code</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:#ffd700;letter-spacing:.04em;">DRAIMSS2024</div>
+          <div style="font-size:.72rem;color:#64748b;margin-top:4px;">Common code for all teachers — automatically used.</div>
         </div>
 
         <!-- Institution Code -->
@@ -368,7 +365,7 @@
       finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    /* ─── REGISTER ─── */
+    /* ── REGISTER ── */
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       clearStatus('signupStatus');
@@ -376,10 +373,10 @@
       const email    = document.getElementById('signupEmail').value.trim();
       const pass     = document.getElementById('signupPassword').value;
       const confirm  = document.getElementById('signupConfirm').value;
-      const code     = document.getElementById('teacherCode').value.trim();
+      const code     = 'DRAIMSS2024'; // common teacher code, auto-used
       const instCode = document.getElementById('teacherInstitution').value.trim();
 
-      if (!email || !pass || !code) { setStatus('signupStatus', 'Please fill in all fields.', 'error'); return; }
+      if (!email || !pass) { setStatus('signupStatus', 'Please fill in all fields.', 'error'); return; }
       if (!instCode || instCode.length < 3) { setStatus('signupStatus', 'Please enter your School / Institution Code.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
       if (pass !== confirm) { setStatus('signupStatus', 'Passwords do not match.', 'error'); return; }
@@ -399,7 +396,7 @@
     });
 
     /* ─── Clear on typing ─── */
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherCode','teacherInstitution','teamNameField'].forEach(id => {
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupConfirm','teacherInstitution','teamNameField'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
     });
 

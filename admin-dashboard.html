@@ -310,6 +310,38 @@
         <div class="inst-banner-badge" id="instBannerCode">—</div>
       </div>
 
+      <!-- Share Codes Card -->
+      <div style="background:linear-gradient(135deg,rgba(251,191,36,0.07),rgba(220,38,38,0.04));border:1px solid rgba(251,191,36,0.22);border-radius:18px;padding:20px 24px;margin-bottom:24px;">
+        <div style="font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          📢 Share These Codes With Your Staff
+          <span style="font-size:.68rem;font-weight:700;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:999px;padding:2px 10px;color:#fbbf24;">Required to register</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+          <!-- School Code -->
+          <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(251,191,36,0.2);border-radius:13px;padding:14px 16px;">
+            <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">🔖 School / Institution Code</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:#fbbf24;letter-spacing:.04em;margin-bottom:6px;" id="shareSchoolCode">—</div>
+            <div style="font-size:.71rem;color:#64748b;margin-bottom:10px;">Share with <strong style="color:#94a3b8;">teachers AND students</strong> when they register.</div>
+            <button onclick="copyCode('shareSchoolCode','schoolCopyBtn')" id="schoolCopyBtn" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:8px;color:#fbbf24;font-family:inherit;font-size:.72rem;font-weight:700;padding:5px 12px;cursor:pointer;transition:all .2s;">📋 Copy Code</button>
+          </div>
+
+          <!-- Teacher Code -->
+          <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(139,92,246,0.2);border-radius:13px;padding:14px 16px;">
+            <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">🔑 Teacher Registration Code</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:#c4b5fd;letter-spacing:.04em;margin-bottom:6px;">DRAIMSS2024</div>
+            <div style="font-size:.71rem;color:#64748b;margin-bottom:10px;">Share with <strong style="color:#94a3b8;">teachers only</strong> — common for all schools.</div>
+            <button onclick="copyCode('teacherCodeDisplay','teacherCopyBtn')" id="teacherCopyBtn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:8px;color:#c4b5fd;font-family:inherit;font-size:.72rem;font-weight:700;padding:5px 12px;cursor:pointer;transition:all .2s;">📋 Copy Code</button>
+            <span id="teacherCodeDisplay" style="display:none;">DRAIMSS2024</span>
+          </div>
+
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:.75rem;color:#64748b;display:flex;gap:16px;flex-wrap:wrap;">
+          <span>👨‍🏫 Teacher registration needs: <strong style="color:#94a3b8;">School Code + Teacher Code</strong></span>
+          <span>🎓 Student registration needs: <strong style="color:#94a3b8;">School Code only</strong></span>
+        </div>
+      </div>
+
       <!-- Stat Cards -->
       <div class="stats-grid">
         <div class="stat-card gold">
@@ -582,6 +614,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('instPillText').textContent = instDisplay;
   document.getElementById('instBannerName').textContent = instDisplay;
   document.getElementById('instBannerCode').textContent = instDisplay;
+  document.getElementById('shareSchoolCode').textContent = _instId || '—';
 
   if (!_instId) {
     showToast('⚠️', 'No institution linked to your admin account. Contact support.');
@@ -639,6 +672,16 @@ function filterTable(tableId, q) {
   q = q.toLowerCase();
   document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
     tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+function copyCode(sourceId, btnId) {
+  const text = document.getElementById(sourceId)?.textContent?.trim();
+  if (!text || text === '—') return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = '📋 Copy Code', 2000); }
+  }).catch(() => {
+    showToast('📋', 'Code: ' + text);
   });
 }
 

@@ -29,8 +29,12 @@
   const SUPABASE_URL  = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
   const SUPABASE_KEY  = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
 
-  // Teacher registration code (institution-independent gate)
+  // Teacher registration gate code
   const TEACHER_CODE  = 'DRAIMSS2024';
+
+  // Admin (Headmaster) self-registration gate code
+  // Share this code ONLY with school headmasters who want to use the platform
+  const ADMIN_CODE    = 'AIMSS-HEADMASTER-2024';
 
   /* ── Init Supabase client (singleton) ──────────────────────── */
   function getClient() {
@@ -69,32 +73,42 @@
     const supabase = getClient();
     if (!supabase) return { success: false, error: 'Auth service unavailable.' };
 
-    const { teacherCode = '', institutionCode = '' } = opts;
+    const { teacherCode = '', institutionCode = '', adminCode = '', institutionName = '' } = opts;
 
-    // Validate teacher code
+    // ── Admin self-registration ──
+    if (role === 'admin') {
+      if (!adminCode || adminCode.trim() !== ADMIN_CODE) {
+        return { success: false, error: 'Invalid Headmaster Registration Code. Contact Dr.AIMSS platform support.' };
+      }
+      if (!institutionCode || institutionCode.trim().length < 3) {
+        return { success: false, error: 'Please enter a School Code (min 3 characters).' };
+      }
+    }
+
+    // ── Teacher registration ──
     if (role === 'teacher') {
       if (!teacherCode || teacherCode.trim().toUpperCase() !== TEACHER_CODE) {
         return { success: false, error: 'Invalid teacher registration code. Contact the academy admin.' };
       }
     }
 
-    // Institution code required for everyone (teacher + student)
-    if (!institutionCode || institutionCode.trim().length < 3) {
+    // Institution code required for teacher + student
+    if (role !== 'admin' && (!institutionCode || institutionCode.trim().length < 3)) {
       return { success: false, error: 'Please enter a valid School / Institution Code.' };
     }
 
-    if (!['student', 'teacher'].includes(role)) {
+    if (!['student', 'teacher', 'admin'].includes(role)) {
       return { success: false, error: 'Invalid role selected.' };
     }
 
     const instId = institutionCode.trim().toUpperCase();
 
-    // Sign up — pass role + institution_id in metadata so trigger stores it
+    // Sign up
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { role, institution_id: instId }
+        data: { role, institution_id: instId, institution_name: institutionName.trim() }
       }
     });
 
@@ -111,12 +125,13 @@
     const user = data?.user;
     if (!user) return { success: false, error: 'Signup failed. Please try again.' };
 
-    // Also upsert profile with institution_id (belt-and-suspenders in case trigger doesn't handle it)
+    // Upsert profile with role + institution_id
     try {
       await supabase.from('profiles').upsert({
         id: user.id,
         role,
         institution_id: instId,
+        institution_name: institutionName.trim() || null,
         email
       }, { onConflict: 'id' });
     } catch (_) { /* non-blocking */ }

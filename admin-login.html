@@ -3,102 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Admin Login | Dr.AIMSS EDUCATIONAL ACADEMY</title>
-  <meta name="description" content="Headmaster / Admin secure login for Dr.AIMSS Educational Academy." />
+  <title>Admin / Headmaster Login | Dr.AIMSS</title>
+  <meta name="description" content="Admin headmaster login and self-registration for Dr.AIMSS Educational Platform." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
     body {
       min-height:100dvh; display:flex; flex-direction:column;
-      background: #040206;
+      background:#040206;
       background-image:
-        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(220,38,38,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 50% at 80% 80%, rgba(234,179,8,0.05) 0%, transparent 60%),
-        radial-gradient(rgba(220,38,38,0.025) 1px, transparent 1px);
-      background-size: auto, auto, 28px 28px;
+        radial-gradient(ellipse 60% 50% at 10% 20%, rgba(220,38,38,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(251,191,36,0.05) 0%, transparent 60%),
+        radial-gradient(rgba(220,38,38,0.02) 1px, transparent 1px);
+      background-size:auto, auto, 28px 28px;
     }
     .login-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
 
-    /* ── Glowing orb behind card ── */
-    .admin-glow {
-      position:fixed; top:50%; left:50%; transform:translate(-50%,-60%);
-      width:500px; height:400px; pointer-events:none;
-      background: radial-gradient(ellipse, rgba(220,38,38,0.12) 0%, rgba(234,179,8,0.06) 40%, transparent 70%);
-      filter: blur(40px);
-      animation: glowPulse 4s ease-in-out infinite;
-    }
-    @keyframes glowPulse { 0%,100%{opacity:0.7;transform:translate(-50%,-60%) scale(1)} 50%{opacity:1;transform:translate(-50%,-62%) scale(1.05)} }
-
     .login-card {
-      width:min(480px,100%);
-      background:linear-gradient(160deg,rgba(220,38,38,0.06) 0%,rgba(234,179,8,0.03) 40%,rgba(0,0,0,0.98) 100%);
-      border:1px solid rgba(220,38,38,0.3); border-radius:28px;
-      padding:44px 40px 40px;
-      box-shadow:0 0 0 1px rgba(234,179,8,0.06), 0 40px 120px rgba(0,0,0,0.9), 0 0 80px rgba(220,38,38,0.08);
-      backdrop-filter:blur(24px); position:relative; overflow:hidden; z-index:1;
+      width:min(460px,100%);
+      background:linear-gradient(160deg,rgba(220,38,38,0.06) 0%,rgba(4,2,6,0.98) 100%);
+      border:1px solid rgba(220,38,38,0.25); border-radius:28px;
+      padding:38px 34px 34px;
+      box-shadow:0 40px 100px rgba(0,0,0,0.9),0 0 0 1px rgba(220,38,38,0.06),inset 0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter:blur(24px); position:relative; overflow:hidden;
     }
     .login-card::before {
-      content:''; position:absolute; top:-60px; right:-60px;
-      width:200px; height:200px;
-      background:radial-gradient(circle,rgba(220,38,38,0.18),rgba(234,179,8,0.08),transparent 70%);
-      pointer-events:none; animation:cornerGlow 3s ease-in-out infinite;
+      content:''; position:absolute; top:-80px; right:-80px;
+      width:220px; height:220px;
+      background:radial-gradient(circle,rgba(220,38,38,0.14),transparent 70%);
+      pointer-events:none;
     }
-    @keyframes cornerGlow { 0%,100%{opacity:0.6} 50%{opacity:1} }
     .login-card::after {
       content:''; position:absolute; bottom:-60px; left:-60px;
       width:160px; height:160px;
-      background:radial-gradient(circle,rgba(234,179,8,0.1),transparent 70%);
+      background:radial-gradient(circle,rgba(251,191,36,0.08),transparent 70%);
       pointer-events:none;
     }
 
-    /* ── Crown Badge ── */
-    .admin-crown {
-      display:flex; align-items:center; gap:12px; margin-bottom:28px;
+    /* ─── Badge ─── */
+    .admin-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,rgba(220,38,38,0.15),rgba(251,191,36,0.08));
+      border:1px solid rgba(220,38,38,0.3); border-radius:999px;
+      padding:6px 16px; font-size:.78rem; font-weight:800; color:#fca5a5;
+      letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;
     }
-    .crown-icon {
-      width:56px; height:56px; border-radius:18px;
-      background:linear-gradient(135deg,rgba(220,38,38,0.2),rgba(234,179,8,0.15));
-      border:1px solid rgba(220,38,38,0.4);
-      display:flex; align-items:center; justify-content:center; font-size:1.8rem;
-      box-shadow:0 0 20px rgba(220,38,38,0.2);
-      animation:crownPulse 2.5s ease-in-out infinite;
-    }
-    @keyframes crownPulse { 0%,100%{box-shadow:0 0 20px rgba(220,38,38,0.2)} 50%{box-shadow:0 0 32px rgba(220,38,38,0.4),0 0 12px rgba(234,179,8,0.2)} }
-    .crown-text {}
-    .crown-label {
-      display:flex; align-items:center; gap:8px;
-      font-size:.72rem; font-weight:800; color:#fbbf24;
-      letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px;
-    }
-    .admin-dot { width:7px; height:7px; background:#dc2626; border-radius:50%; animation:blink 1.8s ease infinite; box-shadow:0 0 8px rgba(220,38,38,0.7); }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    .crown-title {
-      font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:800; color:#fff; margin:0; line-height:1.1;
-    }
-    .crown-title span { background:linear-gradient(135deg,#dc2626,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .badge-dot { width:7px; height:7px; background:#dc2626; border-radius:50%; animation:blink 1.8s ease infinite; box-shadow:0 0 8px rgba(220,38,38,0.8); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* ── Warning strip ── */
-    .admin-warning {
-      display:flex; align-items:center; gap:10px;
-      background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.22); border-radius:12px;
-      padding:10px 14px; margin-bottom:24px;
-      font-size:.78rem; color:#fca5a5; line-height:1.4;
+    .card-title {
+      font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:900; color:#fff;
+      margin-bottom:4px; line-height:1.2;
     }
-    .admin-warning svg { flex-shrink:0; color:#dc2626; }
+    .card-title span { background:linear-gradient(135deg,#dc2626,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .card-sub { font-size:.82rem; color:#64748b; margin-bottom:24px; }
 
-    /* ── Fields ── */
+    /* ─── Tabs ─── */
+    .auth-tabs {
+      display:flex; gap:4px; background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08); border-radius:14px;
+      padding:4px; margin-bottom:24px;
+    }
+    .auth-tab {
+      flex:1; padding:10px; border:none; border-radius:10px;
+      background:transparent; color:#94a3b8; font-family:inherit;
+      font-size:.88rem; font-weight:700; cursor:pointer; transition:all .2s;
+    }
+    .auth-tab.active {
+      background:linear-gradient(135deg,#dc2626,#b91c1c);
+      color:#fff; box-shadow:0 4px 16px rgba(220,38,38,0.3);
+    }
+    .auth-form { display:none; }
+    .auth-form.active { display:block; }
+
+    /* ─── Fields ─── */
     .login-field-label {
-      display:block; font-size:.78rem; font-weight:700; color:#cbd5e1;
-      margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase;
+      display:block; font-size:.75rem; font-weight:700; color:#cbd5e1;
+      margin-bottom:5px; letter-spacing:.04em; text-transform:uppercase;
     }
-    .login-field-wrap { position:relative; margin-bottom:16px; }
+    .login-field-wrap { position:relative; margin-bottom:13px; }
     .login-field {
-      width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
-      border-radius:12px; padding:13px 14px 13px 44px; color:#fff;
-      font-family:inherit; font-size:.92rem; font-weight:500; outline:none;
-      transition:border-color .2s, background .2s, box-shadow .2s; box-sizing:border-box;
+      width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.13);
+      border-radius:12px; padding:12px 14px 12px 42px; color:#fff;
+      font-family:inherit; font-size:.9rem; font-weight:500; outline:none;
+      transition:border-color .2s,background .2s,box-shadow .2s; box-sizing:border-box;
     }
     .login-field:focus {
       border-color:rgba(220,38,38,0.6); background:rgba(220,38,38,0.05);
@@ -107,68 +97,68 @@
     .login-field::placeholder { color:#475569; }
     .f-icon {
       position:absolute; left:13px; top:50%; transform:translateY(-50%);
-      width:18px; height:18px; color:#64748b; pointer-events:none;
+      width:17px; height:17px; color:#64748b; pointer-events:none;
     }
 
-    /* ── Button ── */
+    /* ─── Divider ─── */
+    .field-divider { height:1px; background:rgba(255,255,255,0.06); margin:16px 0; }
+
+    /* ─── Secret code field ─── */
+    .secret-field { border-color:rgba(251,191,36,0.3) !important; }
+    .secret-field:focus { border-color:rgba(251,191,36,0.6) !important; background:rgba(251,191,36,0.04) !important; box-shadow:0 0 0 3px rgba(251,191,36,0.1) !important; }
+    .secret-hint {
+      display:flex; align-items:flex-start; gap:8px;
+      background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.18);
+      border-radius:10px; padding:10px 12px; margin-bottom:14px;
+      font-size:.76rem; color:#fde68a; line-height:1.5;
+    }
+
+    /* ─── Button ─── */
     .login-btn {
-      width:100%;
-      background:linear-gradient(135deg,#dc2626,#b91c1c 50%,#fbbf24);
+      width:100%; background:linear-gradient(135deg,#dc2626,#b91c1c);
       color:#fff; border:none; border-radius:12px;
-      padding:15px; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:800;
-      cursor:pointer; margin-top:4px; transition:transform .2s, box-shadow .2s;
-      box-shadow:0 8px 24px rgba(220,38,38,0.3), 0 0 0 1px rgba(234,179,8,0.1);
-      position:relative; overflow:hidden;
+      padding:13px; font-family:'Outfit',sans-serif; font-size:.93rem; font-weight:800;
+      cursor:pointer; margin-top:4px; transition:transform .2s,box-shadow .2s;
+      box-shadow:0 8px 24px rgba(220,38,38,0.3);
     }
-    .login-btn::before {
-      content:''; position:absolute; inset:0;
-      background:linear-gradient(135deg,rgba(255,255,255,0.08),transparent);
-      pointer-events:none;
-    }
-    .login-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 16px 40px rgba(220,38,38,0.4),0 0 0 1px rgba(234,179,8,0.2); }
-    .login-btn:disabled { opacity:.55; cursor:not-allowed; transform:none; }
-    .btn-spinner {
-      display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,0.4);
-      border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    .login-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 32px rgba(220,38,38,0.5); }
+    .login-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .btn-spinner { display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
+    @keyframes spin { to{ transform:rotate(360deg); } }
     .login-btn.loading .btn-text { display:none; }
     .login-btn.loading .btn-spinner { display:block; }
 
+    /* ─── Status ─── */
     .login-status {
-      margin-top:12px; padding:11px 14px; border-radius:10px;
-      font-size:.85rem; font-weight:600; display:none; text-align:center; line-height:1.4;
+      margin-top:10px; padding:10px 13px; border-radius:10px;
+      font-size:.83rem; font-weight:600; display:none; text-align:center; line-height:1.4;
     }
-    .login-status.error   { display:block; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.28); color:#f87171; }
-    .login-status.success { display:block; background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.22); color:#4ade80; }
+    .login-status.error   { display:block; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; }
+    .login-status.success { display:block; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); color:#4ade80; }
+    .login-status.info    { display:block; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); color:#fde68a; }
 
-    /* ── Access divider ── */
-    .access-divider {
-      display:flex; align-items:center; gap:12px; margin:20px 0;
+    /* ─── Warning bar ─── */
+    .warning-bar {
+      display:flex; align-items:center; gap:8px;
+      background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.2);
+      border-radius:10px; padding:10px 13px; margin-bottom:22px;
+      font-size:.76rem; color:#fca5a5; line-height:1.4;
     }
-    .access-divider::before, .access-divider::after {
-      content:''; flex:1; height:1px; background:rgba(255,255,255,0.08);
-    }
-    .access-divider span { font-size:.72rem; color:#475569; white-space:nowrap; font-weight:600; letter-spacing:.04em; }
 
-    /* ── Security strip ── */
-    .security-strip {
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      margin-top:20px; font-size:.73rem; color:#475569;
-    }
-    .security-strip svg { color:#22c55e; }
-    .back-link {
-      display:block; text-align:center; margin-top:14px;
-      font-size:.8rem; color:#64748b;
-    }
-    .back-link a { color:#fbbf24; font-weight:700; text-decoration:none; }
-    .back-link a:hover { color:#fde68a; }
+    /* ─── What you get section ─── */
+    .perks { display:flex; flex-direction:column; gap:7px; margin-bottom:20px; }
+    .perk-item { display:flex; align-items:center; gap:9px; font-size:.8rem; color:#94a3b8; }
+    .perk-icon { width:28px; height:28px; border-radius:8px; background:rgba(220,38,38,0.1); border:1px solid rgba(220,38,38,0.2); display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+
+    .switch-portal { text-align:center; margin-top:18px; font-size:.82rem; color:#64748b; }
+    .switch-portal a { color:#f87171; font-weight:700; }
+    .security-badge { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px; font-size:.72rem; color:#475569; }
+    .security-badge svg { color:#22c55e; }
   </style>
 </head>
 <body>
   <div class="grid-noise"></div>
-  <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div><div class="orb four"></div>
-  <div class="admin-glow"></div>
+  <div class="orb one"></div><div class="orb two"></div>
 
   <header class="topbar">
     <div class="container nav">
@@ -182,101 +172,207 @@
 
   <div class="login-wrap">
     <div class="login-card">
+      <div class="admin-badge"><span class="badge-dot"></span>🛡️ Admin / Headmaster</div>
+      <div class="card-title">School <span>Command Center</span></div>
+      <div class="card-sub">Monitor all teachers & students in your institution</div>
 
-      <!-- Crown Header -->
-      <div class="admin-crown">
-        <div class="crown-icon">🛡️</div>
-        <div class="crown-text">
-          <div class="crown-label">
-            <span class="admin-dot"></span>
-            Restricted Access
-          </div>
-          <h1 class="crown-title">Admin <span>Headmaster</span></h1>
-        </div>
+      <!-- ── TABS ── -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="loginTab" role="tab" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="signupTab" role="tab" onclick="switchTab('signup')">Register School</button>
       </div>
 
-      <!-- Warning -->
-      <div class="admin-warning">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>This portal is for authorised administrators only. All access attempts are logged and monitored.</span>
-      </div>
-
-      <!-- Login Form -->
-      <form id="adminLoginForm" autocomplete="on" novalidate>
+      <!-- ══ SIGN IN FORM ══ -->
+      <form id="loginForm" class="auth-form active" autocomplete="on" novalidate>
         <div class="login-field-wrap">
-          <label for="adminEmail" class="login-field-label">Admin Email</label>
+          <label for="loginEmail" class="login-field-label">Admin Email</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            <input id="adminEmail" class="login-field" type="email" placeholder="headmaster@draimss.edu" autocomplete="email" required />
+            <input id="loginEmail" class="login-field" type="email" placeholder="headmaster@yourschool.com" autocomplete="email" required />
           </div>
         </div>
         <div class="login-field-wrap">
-          <label for="adminPassword" class="login-field-label">Password</label>
+          <label for="loginPassword" class="login-field-label">Password</label>
           <div style="position:relative;">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input id="adminPassword" class="login-field" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+            <input id="loginPassword" class="login-field" type="password" placeholder="Your password" autocomplete="current-password" required />
+          </div>
+        </div>
+        <button id="loginBtn" class="login-btn" type="submit">
+          <span class="btn-text">Sign In as Admin →</span><span class="btn-spinner"></span>
+        </button>
+        <div id="loginStatus" class="login-status" role="alert"></div>
+      </form>
+
+      <!-- ══ REGISTER FORM ══ -->
+      <form id="signupForm" class="auth-form" autocomplete="off" novalidate>
+
+        <!-- What you get -->
+        <div class="perks">
+          <div class="perk-item"><div class="perk-icon">👨‍🏫</div>Monitor all your teachers</div>
+          <div class="perk-item"><div class="perk-icon">🎓</div>Track all student activity & test scores</div>
+          <div class="perk-item"><div class="perk-icon">📁</div>See all uploaded files & content</div>
+        </div>
+
+        <!-- Email & Password -->
+        <div class="login-field-wrap">
+          <label for="signupEmail" class="login-field-label">Your Email</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input id="signupEmail" class="login-field" type="email" placeholder="headmaster@yourschool.com" required />
+          </div>
+        </div>
+        <div class="login-field-wrap">
+          <label for="signupPassword" class="login-field-label">Password</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="signupPassword" class="login-field" type="password" placeholder="Min. 8 characters" required />
           </div>
         </div>
 
-        <button id="adminLoginBtn" class="login-btn" type="submit">
-          <span class="btn-text">🛡️ Access Admin Dashboard →</span>
-          <span class="btn-spinner"></span>
+        <div class="field-divider"></div>
+
+        <!-- School info -->
+        <div class="login-field-wrap">
+          <label for="signupSchoolName" class="login-field-label">🏫 School / Institution Name</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <input id="signupSchoolName" class="login-field" type="text" placeholder="e.g. Dr.AIMSS Educational Academy" required />
+          </div>
+        </div>
+        <div class="login-field-wrap">
+          <label for="signupSchoolCode" class="login-field-label">🔖 Create Your School Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8l-2 4h12z"/></svg>
+            <input id="signupSchoolCode" class="login-field" type="text" placeholder="e.g. DRAIMSS or STJOHN2024" required style="text-transform:uppercase;" />
+          </div>
+          <span style="font-size:.72rem;color:#64748b;margin-top:3px;display:block;">⚠️ Share this code with your teachers & students when they register.</span>
+        </div>
+
+        <div class="field-divider"></div>
+
+        <!-- Admin secret code -->
+        <div class="secret-hint">🔑 The <strong>Headmaster Code</strong> is given by Dr.AIMSS platform. Contact us to get yours before registering.</div>
+        <div class="login-field-wrap">
+          <label for="signupAdminCode" class="login-field-label">🔑 Headmaster Registration Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            <input id="signupAdminCode" class="login-field secret-field" type="text" placeholder="Code from Dr.AIMSS support" required />
+          </div>
+        </div>
+
+        <button id="signupBtn" class="login-btn" type="submit">
+          <span class="btn-text">Register My School →</span><span class="btn-spinner"></span>
         </button>
-        <div id="adminLoginStatus" class="login-status" role="alert"></div>
+        <div id="signupStatus" class="login-status" role="alert"></div>
       </form>
 
-      <div class="access-divider"><span>secure channel</span></div>
-
-      <div class="security-strip">
+      <div class="switch-portal">Teacher? <a href="teacher-login.html">Teacher Login →</a></div>
+      <div class="security-badge">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        256-bit encrypted · Session monitored · All logins audited
+        All access attempts are logged &amp; monitored
       </div>
-
-      <div class="back-link">Not an admin? <a href="login.html">Return to Portal →</a></div>
     </div>
   </div>
-
-  <footer class="footer"><div class="container">Admin Portal | Dr.AIMSS EDUCATIONAL ACADEMY</div></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
   <script>
-    function setStatus(msg, type) {
-      const el = document.getElementById('adminLoginStatus');
+    /* ─── Tab Switch ─── */
+    function switchTab(tab) {
+      document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+      document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+      document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+      document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
+      clearAll();
+    }
+    function setStatus(id, msg, type) {
+      const el = document.getElementById(id);
       el.textContent = msg; el.className = 'login-status ' + type;
     }
+    function clearStatus(id) {
+      const el = document.getElementById(id);
+      el.textContent = ''; el.className = 'login-status';
+    }
+    function clearAll() { clearStatus('loginStatus'); clearStatus('signupStatus'); }
 
-    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+    /* ─── Auto uppercase school code ─── */
+    document.getElementById('signupSchoolCode').addEventListener('input', function() {
+      const pos = this.selectionStart;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(pos, pos);
+    });
+
+    /* ─── SIGN IN ─── */
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      setStatus('', '');
-      const btn   = document.getElementById('adminLoginBtn');
-      const email = document.getElementById('adminEmail').value.trim();
-      const pass  = document.getElementById('adminPassword').value;
-
-      if (!email || !pass) { setStatus('Enter your admin email and password.', 'error'); return; }
+      clearStatus('loginStatus');
+      const btn   = document.getElementById('loginBtn');
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPassword').value;
+      if (!email || !pass) { setStatus('loginStatus', 'Please enter your email and password.', 'error'); return; }
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
         const r = await DrAuth.signIn(email, pass, 'admin');
-        if (!r.success) {
-          setStatus(r.error, 'error');
-        } else {
-          setStatus('✓ Access granted. Loading Admin Dashboard...', 'success');
-          setTimeout(() => { window.location.href = 'admin-dashboard.html'; }, 800);
+        if (!r.success) { setStatus('loginStatus', r.error, 'error'); }
+        else {
+          setStatus('loginStatus', '✓ Access granted! Loading dashboard...', 'success');
+          setTimeout(() => { window.location.href = 'admin-dashboard.html'; }, 900);
         }
-      } catch {
-        setStatus('Network error. Please try again.', 'error');
-      } finally {
-        btn.classList.remove('loading'); btn.disabled = false;
-      }
+      } catch { setStatus('loginStatus', 'Network error. Please try again.', 'error'); }
+      finally { btn.classList.remove('loading'); btn.disabled = false; }
     });
 
-    // Clear status on input
-    ['adminEmail', 'adminPassword'].forEach(id => {
-      document.getElementById(id)?.addEventListener('input', () => {
-        const el = document.getElementById('adminLoginStatus');
-        el.textContent = ''; el.className = 'login-status';
-      });
+    /* ─── REGISTER ─── */
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus('signupStatus');
+      const btn        = document.getElementById('signupBtn');
+      const email      = document.getElementById('signupEmail').value.trim();
+      const pass       = document.getElementById('signupPassword').value;
+      const schoolName = document.getElementById('signupSchoolName').value.trim();
+      const schoolCode = document.getElementById('signupSchoolCode').value.trim().toUpperCase();
+      const adminCode  = document.getElementById('signupAdminCode').value.trim();
+
+      if (!email || !pass) { setStatus('signupStatus', 'Please enter your email and password.', 'error'); return; }
+      if (!schoolName)     { setStatus('signupStatus', 'Please enter your school name.', 'error'); return; }
+      if (!schoolCode || schoolCode.length < 3) { setStatus('signupStatus', 'Please create a School Code (min 3 characters).', 'error'); return; }
+      if (!adminCode)      { setStatus('signupStatus', 'Please enter your Headmaster Registration Code.', 'error'); return; }
+      if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
+
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const r = await DrAuth.signUp(email, pass, 'admin', {
+          adminCode,
+          institutionCode: schoolCode,
+          institutionName: schoolName
+        });
+        if (!r.success) { setStatus('signupStatus', r.error, 'error'); }
+        else if (r.needsConfirmation) {
+          setStatus('signupStatus', '📧 Check your email to verify your account, then sign in.', 'info');
+        } else {
+          setStatus('signupStatus', `✓ School "${schoolName}" registered! Loading dashboard...`, 'success');
+          setTimeout(() => { window.location.href = 'admin-dashboard.html'; }, 1200);
+        }
+      } catch { setStatus('signupStatus', 'Network error. Please try again.', 'error'); }
+      finally { btn.classList.remove('loading'); btn.disabled = false; }
+    });
+
+    /* ─── Auto-redirect if already admin ─── */
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const supabase = DrAuth.getClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+          if (data?.role === 'admin') window.location.href = 'admin-dashboard.html';
+        }
+      } catch (_) {}
+    });
+
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupSchoolName','signupSchoolCode','signupAdminCode'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', clearAll);
     });
   </script>
 </body>

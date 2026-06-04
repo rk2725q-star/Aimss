@@ -251,14 +251,11 @@
 
         <div class="field-divider"></div>
 
-        <!-- Admin secret code -->
-        <div class="secret-hint">🔑 The <strong>Headmaster Code</strong> is given by Dr.AIMSS platform. Contact us to get yours before registering.</div>
-        <div class="login-field-wrap">
-          <label for="signupAdminCode" class="login-field-label">🔑 Headmaster Registration Code</label>
-          <div style="position:relative;">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <input id="signupAdminCode" class="login-field secret-field" type="text" placeholder="Code from Dr.AIMSS support" required />
-          </div>
+        <!-- Admin code — shown as fixed text, used automatically -->
+        <div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+          <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">🔑 Headmaster Registration Code</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:#fbbf24;letter-spacing:.04em;">AIMSS-HEADMASTER-2024</div>
+          <div style="font-size:.72rem;color:#64748b;margin-top:4px;">This code is automatically used — no need to type anything.</div>
         </div>
 
         <button id="signupBtn" class="login-btn" type="submit">
@@ -333,12 +330,11 @@
       const pass       = document.getElementById('signupPassword').value;
       const schoolName = document.getElementById('signupSchoolName').value.trim();
       const schoolCode = document.getElementById('signupSchoolCode').value.trim().toUpperCase();
-      const adminCode  = document.getElementById('signupAdminCode').value.trim();
+      const adminCode  = 'AIMSS-HEADMASTER-2024';
 
       if (!email || !pass) { setStatus('signupStatus', 'Please enter your email and password.', 'error'); return; }
       if (!schoolName)     { setStatus('signupStatus', 'Please enter your school name.', 'error'); return; }
       if (!schoolCode || schoolCode.length < 3) { setStatus('signupStatus', 'Please create a School Code (min 3 characters).', 'error'); return; }
-      if (!adminCode)      { setStatus('signupStatus', 'Please enter your Headmaster Registration Code.', 'error'); return; }
       if (pass.length < 8) { setStatus('signupStatus', 'Password must be at least 8 characters.', 'error'); return; }
 
       btn.classList.add('loading'); btn.disabled = true;
@@ -371,7 +367,7 @@
       } catch (_) {}
     });
 
-    ['loginEmail','loginPassword','signupEmail','signupPassword','signupSchoolName','signupSchoolCode','signupAdminCode'].forEach(id => {
+    ['loginEmail','loginPassword','signupEmail','signupPassword','signupSchoolName','signupSchoolCode'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', clearAll);
     });
   </script>

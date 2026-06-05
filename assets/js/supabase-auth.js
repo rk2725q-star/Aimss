@@ -189,9 +189,24 @@
       };
     }
 
+    // If profile has no institution_id but meta carries one, update the profile now
+    const metaInstId = meta?.institutionCode
+      ? meta.institutionCode.trim().toUpperCase()
+      : null;
+
+    let finalInstId = profile.institution_id || metaInstId || null;
+
+    // Update profile institution_id if it was missing
+    if (!profile.institution_id && finalInstId) {
+      try {
+        await supabase.from('profiles').update({ institution_id: finalInstId })
+          .eq('id', user.id);
+      } catch(_) { /* non-blocking */ }
+    }
+
     _cachedUser        = user;
     _cachedRole        = profile.role;
-    _cachedInstitution = profile.institution_id || null;
+    _cachedInstitution = finalInstId;
 
     // Store login metadata (team name etc.)
     if (meta) {
@@ -210,14 +225,14 @@
         user_id:    user.id,
         user_email: user.email,
         role:       profile.role,
-        institution_id: _cachedInstitution,
+        institution_id: finalInstId,
         event:      'login',
         meta:       meta ? JSON.stringify(meta) : null,
         created_at: new Date().toISOString()
       });
     } catch(_) { /* non-blocking */ }
 
-    return { success: true, user, role: profile.role, institutionId: _cachedInstitution };
+    return { success: true, user, role: profile.role, institutionId: finalInstId };
   }
 
   /* ══════════════════════════════════════════════════════════════

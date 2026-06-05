@@ -232,6 +232,14 @@
             <input id="loginPassword" class="login-field" type="password" placeholder="Your password" autocomplete="current-password" required />
           </div>
         </div>
+        <div class="login-field-wrap">
+          <label for="loginInstCode" class="login-field-label">🏫 School / Institution Code</label>
+          <div style="position:relative;">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <input id="loginInstCode" class="login-field code-field" type="text" placeholder="e.g. JARVIS@2005" style="text-transform:uppercase;" />
+          </div>
+          <span style="font-size:.71rem;color:#64748b;margin-top:3px;display:block;">Enter your school code so admin can monitor your account.</span>
+        </div>
         <button id="loginBtn" class="login-btn" type="submit">
           <span class="btn-text" id="loginBtnText">Sign In →</span><span class="btn-spinner"></span>
         </button>
@@ -355,6 +363,8 @@
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
+        const instCode = document.getElementById('loginInstCode').value.trim();
+        const meta = { loginType: _loginMode, ...(instCode ? { institutionCode: instCode } : {}), ...(_loginMode === 'team' ? { teamName: team } : {}) };
         const r = await DrAuth.signIn(email, pass, 'teacher', meta);
         if (!r.success) { setStatus('loginStatus', r.error, 'error'); }
         else {

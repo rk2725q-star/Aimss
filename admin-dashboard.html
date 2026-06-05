@@ -446,18 +446,22 @@
             My Institution's Teachers
           </div>
           <div class="panel-actions">
-            <input class="panel-search" type="search" placeholder="Search..." oninput="filterTable('teachersTable', this.value)" />
+            <input class="panel-search" type="search" placeholder="Search teacher..." oninput="filterTeacherTable(this.value)" />
             <button class="refresh-btn" onclick="loadTeachers()">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               Refresh
             </button>
           </div>
         </div>
+        <!-- Department Filter Chips -->
+        <div id="deptFilterBar" style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <button class="panel-btn active" id="deptAll" onclick="filterByDept('all')">🏫 All Depts</button>
+        </div>
         <div style="overflow-x:auto;">
           <table class="data-table" id="teachersTable">
             <thead>
               <tr>
-                <th>Teacher</th><th>Login Type</th><th>Team / Dept</th>
+                <th>Teacher</th><th>Login Type</th><th>Department / Team</th>
                 <th>Joined</th><th>Last Login</th><th>Status</th>
               </tr>
             </thead>
@@ -483,12 +487,33 @@
             My Institution's Students
           </div>
           <div class="panel-actions">
-            <input class="panel-search" type="search" placeholder="Search..." oninput="filterTable('studentsTable', this.value)" />
+            <input class="panel-search" type="search" placeholder="Search student..." oninput="filterStudentTable(this.value)" />
             <button class="refresh-btn" onclick="loadStudents()">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               Refresh
             </button>
           </div>
+        </div>
+        <!-- Class Filter Chips -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.06);align-items:center;">
+          <span style="font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Class:</span>
+          <button class="panel-btn active" id="cls-all"  onclick="filterByClass('all')">All</button>
+          <button class="panel-btn" id="cls-6"   onclick="filterByClass('6')">Class 6</button>
+          <button class="panel-btn" id="cls-7"   onclick="filterByClass('7')">Class 7</button>
+          <button class="panel-btn" id="cls-8"   onclick="filterByClass('8')">Class 8</button>
+          <button class="panel-btn" id="cls-9"   onclick="filterByClass('9')">Class 9</button>
+          <button class="panel-btn" id="cls-10"  onclick="filterByClass('10')">Class 10</button>
+          <button class="panel-btn" id="cls-11"  onclick="filterByClass('11')">Class 11</button>
+          <button class="panel-btn" id="cls-12"  onclick="filterByClass('12')">Class 12</button>
+          <button class="panel-btn" id="cls-neet" onclick="filterByClass('neet')">NEET</button>
+          <button class="panel-btn" id="cls-jee"  onclick="filterByClass('jee')">JEE</button>
+          <span style="width:1px;height:18px;background:rgba(255,255,255,0.08);margin:0 4px;"></span>
+          <span style="font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;">Board:</span>
+          <button class="panel-btn active" id="board-all" onclick="filterByBoard('all')">All</button>
+          <button class="panel-btn" id="board-stateboard" onclick="filterByBoard('stateboard')">Stateboard</button>
+          <button class="panel-btn" id="board-cbse" onclick="filterByBoard('cbse')">CBSE</button>
+          <button class="panel-btn" id="board-neet" onclick="filterByBoard('neet')">NEET</button>
+          <button class="panel-btn" id="board-jee" onclick="filterByBoard('jee')">JEE</button>
         </div>
         <div style="overflow-x:auto;">
           <table class="data-table" id="studentsTable">
@@ -529,6 +554,14 @@
             </button>
           </div>
         </div>
+        <!-- Teacher Filter -->
+        <div style="display:flex;gap:8px;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">
+          <span style="font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;">Filter by Teacher:</span>
+          <select id="fileTeacherFilter" onchange="filterFilesByTeacher(this.value)" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#94a3b8;font-family:inherit;font-size:.75rem;padding:4px 10px;outline:none;cursor:pointer;">
+            <option value="all">All Teachers</option>
+          </select>
+          <input class="panel-search" type="search" placeholder="Search file name..." oninput="filterFilesByName(this.value)" style="width:180px;" />
+        </div>
         <div style="overflow-x:auto;">
           <table class="data-table" id="filesTable">
             <thead>
@@ -566,10 +599,24 @@
             </button>
           </div>
         </div>
+        <!-- Class Filter for Tests -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.06);align-items:center;">
+          <span style="font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Filter by Class:</span>
+          <button class="panel-btn active" id="tcls-all" onclick="filterTestsByClass('all')">All</button>
+          <button class="panel-btn" id="tcls-6" onclick="filterTestsByClass('6')">Class 6</button>
+          <button class="panel-btn" id="tcls-7" onclick="filterTestsByClass('7')">Class 7</button>
+          <button class="panel-btn" id="tcls-8" onclick="filterTestsByClass('8')">Class 8</button>
+          <button class="panel-btn" id="tcls-9" onclick="filterTestsByClass('9')">Class 9</button>
+          <button class="panel-btn" id="tcls-10" onclick="filterTestsByClass('10')">Class 10</button>
+          <button class="panel-btn" id="tcls-11" onclick="filterTestsByClass('11')">Class 11</button>
+          <button class="panel-btn" id="tcls-12" onclick="filterTestsByClass('12')">Class 12</button>
+          <button class="panel-btn" id="tcls-neet" onclick="filterTestsByClass('neet')">NEET</button>
+          <button class="panel-btn" id="tcls-jee" onclick="filterTestsByClass('jee')">JEE</button>
+        </div>
         <div style="overflow-x:auto;">
           <table class="data-table" id="testsTable">
             <thead>
-              <tr><th>Student</th><th>Test / Chapter</th><th>Score</th><th>Result</th><th>Questions</th><th>Time</th><th>Date</th></tr>
+              <tr><th>Student</th><th>Class</th><th>Test / Chapter</th><th>Score</th><th>Result</th><th>Questions</th><th>Date</th></tr>
             </thead>
             <tbody id="testsBody">
               <tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>
@@ -864,8 +911,10 @@ function filterActivity(f) {
 }
 
 // ════════════════════════════════════════════════════
-//  LOAD TEACHERS  (filtered by institution_id)
+//  LOAD TEACHERS  (with dept filter)
 // ════════════════════════════════════════════════════
+let _allTeachers = [], _deptFilter = 'all', _teacherSearch = '';
+
 async function loadTeachers() {
   const tbody = document.getElementById('teachersBody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner-inline"></span> Loading...</td></tr>';
@@ -875,11 +924,11 @@ async function loadTeachers() {
     const { data: teachers } = await q;
 
     document.getElementById('teacherCount').textContent = (teachers||[]).length;
-    document.getElementById('teacherTotal').textContent = `${(teachers||[]).length} teacher${(teachers||[]).length!==1?'s':''}`;
     document.getElementById('stat-teachers').textContent = (teachers||[]).length;
 
     if (!(teachers||[]).length) {
-      tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">👨‍🏫</span>No teachers registered under your institution yet.<br><small>Teachers must enter your institution code when registering.</small></div></td></tr>';
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">👨‍🏫</span>No teachers registered yet.<br><small>Teachers must enter your school code when signing in.</small></div></td></tr>';
+      document.getElementById('teacherTotal').textContent = '0 teachers';
       return;
     }
 
@@ -891,34 +940,89 @@ async function loadTeachers() {
       if (!logMap[l.user_id] || new Date(l.created_at)>new Date(logMap[l.user_id].created_at)) logMap[l.user_id]=l;
     });
 
-    tbody.innerHTML = (teachers||[]).map(t => {
+    // Build teacher data with dept
+    _allTeachers = (teachers||[]).map(t => {
       const ll = logMap[t.id];
       let meta = {};
       try { meta = JSON.parse(ll?.meta||'{}'); } catch {}
-      const loginTypeBadge = meta.loginType
-        ? `<span class="badge ${meta.loginType==='team'?'badge-team':'badge-indiv'}">${meta.loginType==='team'?'👥 Team':'🧑 Individual'}</span>`
-        : '<span style="color:#475569;font-size:.73rem;">—</span>';
+      return { ...t, _meta: meta, _lastLogin: ll };
+    });
 
-      return `<tr>
-        <td><div class="user-cell">
-          <div class="user-avatar avatar-teacher">${initials(t.email)}</div>
-          <div><div class="user-name">${t.full_name||t.email?.split('@')[0]||'—'}</div><div class="user-email">${t.email||'—'}</div></div>
-        </div></td>
-        <td>${loginTypeBadge}</td>
-        <td style="color:#94a3b8;font-size:.8rem;">${meta.teamName||'—'}</td>
-        <td><span class="time-ago">${fmtDate(t.created_at)}</span></td>
-        <td><span class="time-ago">${ll?timeAgo(ll.created_at):'—'}</span></td>
-        <td><span class="badge badge-active">● Active</span></td>
-      </tr>`;
+    // Build dept filter chips dynamically
+    const depts = [...new Set(_allTeachers.map(t => t._meta.teamName).filter(Boolean))];
+    const bar = document.getElementById('deptFilterBar');
+    const deptBtns = depts.map(d => {
+      const safe = d.replace(/'/g, '&apos;');
+      return '<button class="panel-btn' + (_deptFilter===d?' active':'') + '" onclick="filterByDept(decodeURIComponent(\'' + encodeURIComponent(d) + '\'))">' + d + '</button>';
     }).join('');
+    bar.innerHTML = '<button class="panel-btn ' + (_deptFilter==='all'?'active':'') + '" id="deptAll" onclick="filterByDept(\'all\')">\uD83C\uDFEB All Depts</button>'
+      + '<button class="panel-btn ' + (_deptFilter==='individual'?'active':'') + '" onclick="filterByDept(\'individual\')">\uD83E\uDDD1 Individual</button>'
+      + deptBtns;
+
+    renderTeachers();
   } catch(e) {
-    tbody.innerHTML = `<tr class="loading-row"><td colspan="6" style="color:#f87171;">Error loading teachers: ${e.message}</td></tr>`;
+    document.getElementById('teachersBody').innerHTML = `<tr class="loading-row"><td colspan="6" style="color:#f87171;">Error: ${e.message}</td></tr>`;
   }
 }
 
+function renderTeachers() {
+  const tbody = document.getElementById('teachersBody');
+  const filtered = _allTeachers.filter(t => {
+    const dept  = t._meta.teamName || '';
+    const type  = t._meta.loginType || '';
+    const deptOk = _deptFilter==='all' || (_deptFilter==='individual' && type==='individual') || dept===_deptFilter;
+    const q = _teacherSearch.toLowerCase();
+    const searchOk = !q || (t.email||'').toLowerCase().includes(q) || dept.toLowerCase().includes(q);
+    return deptOk && searchOk;
+  });
+  document.getElementById('teacherTotal').textContent = `${filtered.length} teacher${filtered.length!==1?'s':''}${_deptFilter!=='all'?' (filtered)':''}`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="empty-state"><span class="empty-icon">🔍</span>No teachers found for this filter.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(t => {
+    const loginTypeBadge = t._meta.loginType
+      ? `<span class="badge ${t._meta.loginType==='team'?'badge-team':'badge-indiv'}">${t._meta.loginType==='team'?'👥 Team':'🧑 Individual'}</span>`
+      : '<span style="color:#475569;font-size:.73rem;">—</span>';
+    const dept = t._meta.teamName || t.department || '—';
+    return `<tr data-dept="${dept}" data-type="${t._meta.loginType||''}"><td><div class="user-cell">
+        <div class="user-avatar avatar-teacher">${initials(t.email)}</div>
+        <div><div class="user-name">${t.full_name||t.email?.split('@')[0]||'—'}</div><div class="user-email">${t.email||'—'}</div></div>
+      </div></td>
+      <td>${loginTypeBadge}</td>
+      <td style="color:#fbbf24;font-size:.82rem;font-weight:700;">${dept}</td>
+      <td><span class="time-ago">${fmtDate(t.created_at)}</span></td>
+      <td><span class="time-ago">${t._lastLogin?timeAgo(t._lastLogin.created_at):'—'}</span></td>
+      <td><span class="badge badge-active">● Active</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterByDept(d) {
+  _deptFilter = d;
+  document.querySelectorAll('#deptFilterBar .panel-btn').forEach(b => b.classList.remove('active'));
+  renderTeachers();
+  // re-highlight clicked button
+  const bar = document.getElementById('deptFilterBar');
+  bar.querySelectorAll('.panel-btn').forEach(b => {
+    if ((d==='all' && b.textContent.includes('All Depts')) ||
+        (d==='individual' && b.textContent.includes('Individual')) ||
+        b.textContent.trim()===d) b.classList.add('active');
+  });
+}
+
+function filterTeacherTable(q) {
+  _teacherSearch = q;
+  renderTeachers();
+}
+
 // ════════════════════════════════════════════════════
-//  LOAD STUDENTS  (filtered by institution_id)
+//  LOAD STUDENTS  (with class + board filter)
 // ════════════════════════════════════════════════════
+let _allStudents = [], _classFilter = 'all', _boardFilter = 'all', _studentSearch = '';
+
 async function loadStudents() {
   const tbody = document.getElementById('studentsBody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
@@ -928,11 +1032,11 @@ async function loadStudents() {
     const { data: students } = await q;
 
     document.getElementById('studentCount').textContent = (students||[]).length;
-    document.getElementById('studentTotal').textContent = `${(students||[]).length} student${(students||[]).length!==1?'s':''}`;
     document.getElementById('stat-students').textContent = (students||[]).length;
 
     if (!(students||[]).length) {
-      tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🎓</span>No students registered under your institution yet.</div></td></tr>';
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🎓</span>No students registered yet.<br><small>Students must enter your school code when signing in.</small></div></td></tr>';
+      document.getElementById('studentTotal').textContent = '0 students';
       return;
     }
 
@@ -945,7 +1049,7 @@ async function loadStudents() {
       if (!lastLogin[l.user_id]||new Date(l.created_at)>new Date(lastLogin[l.user_id])) lastLogin[l.user_id]=l.created_at;
     });
 
-    // Test results per student — filtered by institution
+    // Test results per student
     let testMap = {};
     try {
       let tq = _supabase.from('test_results').select('user_id,score,total');
@@ -959,36 +1063,78 @@ async function loadStudents() {
       });
     } catch {}
 
-    tbody.innerHTML = (students||[]).map(s => {
-      const tm = testMap[s.id];
-      const avg = tm&&tm.max>0 ? Math.round(tm.total/tm.max*100) : null;
-      const scoreHtml = avg!==null
-        ? `<div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${avg}%;background:${scoreColor(avg)};"></div></div><span class="score-text" style="color:${scoreColor(avg)};">${avg}%</span></div>`
-        : '<span style="color:#475569;font-size:.73rem;">No tests</span>';
-      const board = s.board || localStorage.getItem('student-board') || '—';
-      const cls   = s.class  || '—';
-
-      return `<tr>
-        <td><div class="user-cell">
-          <div class="user-avatar avatar-student">${initials(s.email)}</div>
-          <div><div class="user-name">${s.full_name||s.email?.split('@')[0]||'—'}</div><div class="user-email">${s.email||'—'}</div></div>
-        </div></td>
-        <td style="color:#94a3b8;font-size:.8rem;">${board}</td>
-        <td style="color:#94a3b8;font-size:.8rem;">${cls}</td>
-        <td><span class="time-ago">${fmtDate(s.created_at)}</span></td>
-        <td><span class="time-ago">${lastLogin[s.id]?timeAgo(lastLogin[s.id]):'—'}</span></td>
-        <td style="color:#e2e8f0;font-weight:700;">${tm?.count??0}</td>
-        <td style="min-width:110px;">${scoreHtml}</td>
-      </tr>`;
-    }).join('');
+    _allStudents = (students||[]).map(s => ({ ...s, _loginCnt: loginCnt[s.id]||0, _lastLogin: lastLogin[s.id], _tests: testMap[s.id] }));
+    renderStudents();
   } catch(e) {
-    tbody.innerHTML = `<tr class="loading-row"><td colspan="7" style="color:#f87171;">Error loading students: ${e.message}</td></tr>`;
+    document.getElementById('studentsBody').innerHTML = `<tr class="loading-row"><td colspan="7" style="color:#f87171;">Error: ${e.message}</td></tr>`;
   }
 }
 
+function renderStudents() {
+  const tbody = document.getElementById('studentsBody');
+  const filtered = _allStudents.filter(s => {
+    const cls   = (s.class_name||'').toLowerCase();
+    const board = (s.board||'').toLowerCase();
+    const clsOk   = _classFilter==='all' || cls===_classFilter.toLowerCase();
+    const boardOk  = _boardFilter==='all' || board===_boardFilter.toLowerCase();
+    const q = _studentSearch.toLowerCase();
+    const searchOk = !q || (s.email||'').toLowerCase().includes(q) || cls.includes(q) || board.includes(q);
+    return clsOk && boardOk && searchOk;
+  });
+  document.getElementById('studentTotal').textContent = `${filtered.length} student${filtered.length!==1?'s':''}${(_classFilter!=='all'||_boardFilter!=='all')?' (filtered)':''}`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🔍</span>No students found for this filter.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(s => {
+    const tm = s._tests;
+    const avg = tm&&tm.max>0 ? Math.round(tm.total/tm.max*100) : null;
+    const scoreHtml = avg!==null
+      ? `<div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${avg}%;background:${scoreColor(avg)};"></div></div><span class="score-text" style="color:${scoreColor(avg)}">${avg}%</span></div>`
+      : '<span style="color:#475569;font-size:.73rem;">No tests</span>';
+    const cls   = s.class_name || '—';
+    const board = s.board || '—';
+    const clsLabel = cls!=='—' ? `Class ${cls}` : '—';
+    return `<tr data-class="${cls}" data-board="${board}"><td><div class="user-cell">
+        <div class="user-avatar avatar-student">${initials(s.email)}</div>
+        <div><div class="user-name">${s.email?.split('@')[0]||'—'}</div><div class="user-email">${s.email||'—'}</div></div>
+      </div></td>
+      <td><span style="color:#00e5cc;font-size:.8rem;font-weight:700;">${board}</span></td>
+      <td><span style="color:#67e8f9;font-size:.8rem;font-weight:700;">${clsLabel}</span></td>
+      <td><span class="time-ago">${fmtDate(s.created_at)}</span></td>
+      <td><span class="time-ago">${s._lastLogin?timeAgo(s._lastLogin):'—'}</span></td>
+      <td style="color:#e2e8f0;font-weight:700;">${tm?.count??0}</td>
+      <td style="min-width:110px;">${scoreHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterByClass(c) {
+  _classFilter = c;
+  ['all','6','7','8','9','10','11','12','neet','jee'].forEach(x => {
+    const b = document.getElementById('cls-'+x); if(b) b.classList.toggle('active', x===c);
+  });
+  renderStudents();
+}
+function filterByBoard(b) {
+  _boardFilter = b;
+  ['all','stateboard','cbse','neet','jee'].forEach(x => {
+    const el = document.getElementById('board-'+x); if(el) el.classList.toggle('active', x===b);
+  });
+  renderStudents();
+}
+function filterStudentTable(q) {
+  _studentSearch = q;
+  renderStudents();
+}
+
 // ════════════════════════════════════════════════════
-//  LOAD FILES  (filtered by institution_id)
+//  LOAD FILES  (with teacher filter)
 // ════════════════════════════════════════════════════
+let _allFiles = [], _fileTeacher = 'all', _fileName = '', _fileType = 'all';
+
 async function loadFiles() {
   const tbody = document.getElementById('filesBody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
@@ -997,47 +1143,78 @@ async function loadFiles() {
     if (_instId) q = q.eq('institution_id', _instId);
     const { data: files } = await q;
 
-    document.getElementById('stat-files').textContent = (files||[]).length;
-    document.getElementById('fileTotal').textContent = `${(files||[]).length} file${(files||[]).length!==1?'s':''}`;
+    _allFiles = files || [];
+    document.getElementById('stat-files').textContent = _allFiles.length;
 
-    if (!(files||[]).length) {
+    if (!_allFiles.length) {
       tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">📁</span>No files uploaded by your institution yet.</div></td></tr>';
+      document.getElementById('fileTotal').textContent = '0 files';
       return;
     }
 
-    tbody.innerHTML = (files||[]).map(f => {
-      const name = f.file_name||f.name||f.filename||'Unknown';
-      const url  = f.url||f.file_url||'#';
-      let meta = {}; try { meta = JSON.parse(f.meta||'{}'); } catch {}
-      return `<tr>
-        <td><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1rem;">📄</span>
-          <div><div style="font-weight:700;color:#fff;font-size:.82rem;">${name}</div></div></div></td>
-        <td>${fileTypeBadge(name)}</td>
-        <td style="color:#94a3b8;font-size:.8rem;">${f.uploaded_by||f.user_email||'—'}</td>
-        <td style="color:#94a3b8;font-size:.8rem;">${meta.teamName||f.team_name||'—'}</td>
-        <td><span class="time-ago">${fmtDate(f.created_at)}</span></td>
-        <td style="color:#64748b;font-size:.76rem;">${fmtSize(f.size||f.file_size)}</td>
-        <td>${url!=='#'?`<a href="${url}" target="_blank" style="color:#00e5cc;font-size:.76rem;font-weight:700;text-decoration:none;">View →</a>`:'<span style="color:#475569;font-size:.73rem;">—</span>'}</td>
-      </tr>`;
-    }).join('');
+    // Populate teacher filter dropdown
+    const teachers = [...new Set(_allFiles.map(f => f.uploaded_by||f.user_email).filter(Boolean))];
+    const sel = document.getElementById('fileTeacherFilter');
+    if (sel) {
+      sel.innerHTML = '<option value="all">All Teachers</option>' + teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    renderFiles();
   } catch {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load files. The uploads table may not exist yet.</td></tr>';
+    document.getElementById('filesBody').innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load files. The uploads table may not exist yet.</td></tr>';
   }
 }
 
-function filterFiles(f) {
-  ['All','Video','Pdf'].forEach(x => {
-    const b = document.getElementById('f'+x); if(b) b.classList.toggle('active', 'f'+x==='f'+f.charAt(0).toUpperCase()+f.slice(1)||(x==='All'&&f==='all'));
+function renderFiles() {
+  const tbody = document.getElementById('filesBody');
+  const filtered = _allFiles.filter(f => {
+    const name    = (f.file_name||f.name||f.filename||'').toLowerCase();
+    const teacher = (f.uploaded_by||f.user_email||'').toLowerCase();
+    let meta = {}; try { meta = JSON.parse(f.meta||'{}'); } catch {}
+    const typeOk    = _fileType==='all' || name.includes(_fileType);
+    const teacherOk = _fileTeacher==='all' || teacher===_fileTeacher.toLowerCase();
+    const nameOk    = !_fileName || name.includes(_fileName.toLowerCase());
+    return typeOk && teacherOk && nameOk;
   });
-  document.querySelectorAll('#filesTable tbody tr').forEach(tr => {
-    if (f==='all') { tr.style.display=''; return; }
-    tr.style.display = tr.cells[1]?.textContent?.toLowerCase().includes(f) ? '' : 'none';
-  });
+  document.getElementById('fileTotal').textContent = `${filtered.length} file${filtered.length!==1?'s':''}`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🔍</span>No files found for this filter.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(f => {
+    const name = f.file_name||f.name||f.filename||'Unknown';
+    const url  = f.url||f.file_url||'#';
+    let meta = {}; try { meta = JSON.parse(f.meta||'{}'); } catch {}
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1rem;">📄</span>
+        <div><div style="font-weight:700;color:#fff;font-size:.82rem;">${name}</div></div></div></td>
+      <td>${fileTypeBadge(name)}</td>
+      <td style="color:#94a3b8;font-size:.8rem;">${f.uploaded_by||f.user_email||'—'}</td>
+      <td style="color:#94a3b8;font-size:.8rem;">${meta.teamName||f.team_name||'—'}</td>
+      <td><span class="time-ago">${fmtDate(f.created_at)}</span></td>
+      <td style="color:#64748b;font-size:.76rem;">${fmtSize(f.size||f.file_size)}</td>
+      <td>${url!=='#'?`<a href="${url}" target="_blank" style="color:#00e5cc;font-size:.76rem;font-weight:700;text-decoration:none;">View →</a>`:'<span style="color:#475569;font-size:.73rem;">—</span>'}</td>
+    </tr>`;
+  }).join('');
 }
 
+function filterFiles(f) {
+  _fileType = f;
+  ['All','Video','Pdf'].forEach(x => {
+    const b = document.getElementById('f'+x); if(b) b.classList.toggle('active', (x.toLowerCase()===f||(x==='All'&&f==='all')));
+  });
+  renderFiles();
+}
+function filterFilesByTeacher(t) { _fileTeacher = t; renderFiles(); }
+function filterFilesByName(n)    { _fileName    = n; renderFiles(); }
+
 // ════════════════════════════════════════════════════
-//  LOAD TESTS  (filtered by institution_id)
+//  LOAD TESTS  (with class filter)
 // ════════════════════════════════════════════════════
+let _allTests = [], _testClassFilter = 'all', _testPassFilter = 'all';
+
 async function loadTests() {
   const tbody = document.getElementById('testsBody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner-inline"></span> Loading...</td></tr>';
@@ -1046,43 +1223,79 @@ async function loadTests() {
     if (_instId) q = q.eq('institution_id', _instId);
     const { data: results } = await q;
 
-    document.getElementById('stat-tests').textContent = (results||[]).length;
-    document.getElementById('testTotal').textContent  = `${(results||[]).length} result${(results||[]).length!==1?'s':''}`;
+    _allTests = results || [];
+    document.getElementById('stat-tests').textContent = _allTests.length;
 
-    if (!(results||[]).length) {
+    if (!_allTests.length) {
       tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">📝</span>No test results for your institution yet.</div></td></tr>';
+      document.getElementById('testTotal').textContent = '0 results';
       return;
     }
 
-    tbody.innerHTML = (results||[]).map(r => {
-      const score = r.score??0, total = r.total??100;
-      const pct = Math.round(score/total*100), passed = pct>=50;
-      return `<tr>
-        <td><div class="user-cell">
-          <div class="user-avatar avatar-student">${initials(r.user_email||r.student_email)}</div>
-          <div><div class="user-name">${r.student_name||r.user_email?.split('@')[0]||'—'}</div><div class="user-email">${r.user_email||r.student_email||'—'}</div></div>
-        </div></td>
-        <td style="color:#e2e8f0;font-size:.8rem;">${r.test_name||r.chapter||r.subject||'MCQ Test'}</td>
-        <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${pct}%;background:${scoreColor(pct)};"></div></div><span class="score-text" style="color:${scoreColor(pct)};">${score}/${total}</span></div></td>
-        <td><span class="badge ${passed?'badge-pass':'badge-fail'}">${passed?'✓ Pass':'✗ Fail'}</span></td>
-        <td style="color:#94a3b8;">${r.total_questions||r.total||'—'} Qs</td>
-        <td style="color:#64748b;font-size:.76rem;">${r.time_taken?r.time_taken+' min':'—'}</td>
-        <td><span class="time-ago">${fmtDate(r.created_at)}</span></td>
-      </tr>`;
-    }).join('');
+    // Enrich with student class from _allStudents cache
+    const studentClassMap = {};
+    _allStudents.forEach(s => { studentClassMap[s.id] = { class_name: s.class_name, board: s.board }; });
+
+    _allTests = _allTests.map(r => ({
+      ...r,
+      _class: studentClassMap[r.user_id]?.class_name || r.class_name || null
+    }));
+
+    renderTests();
   } catch {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load test results. The test_results table may not exist yet.</td></tr>';
+    document.getElementById('testsBody').innerHTML = '<tr class="loading-row"><td colspan="7" style="color:#f87171;">Could not load test results. The test_results table may not exist yet.</td></tr>';
   }
 }
 
+function renderTests() {
+  const tbody = document.getElementById('testsBody');
+  const filtered = _allTests.filter(r => {
+    const pct = Math.round((r.score??0)/(r.total??100)*100);
+    const passed = pct >= 50;
+    const passOk  = _testPassFilter==='all' || (_testPassFilter==='pass'&&passed) || (_testPassFilter==='fail'&&!passed);
+    const clsOk   = _testClassFilter==='all' || (r._class||'').toLowerCase()===_testClassFilter.toLowerCase();
+    return passOk && clsOk;
+  });
+  document.getElementById('testTotal').textContent = `${filtered.length} result${filtered.length!==1?'s':''}`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="empty-state"><span class="empty-icon">🔍</span>No results found for this filter.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const score = r.score??0, total = r.total??100;
+    const pct = Math.round(score/total*100), passed = pct>=50;
+    const cls = r._class ? `Class ${r._class}` : '—';
+    return `<tr>
+      <td><div class="user-cell">
+        <div class="user-avatar avatar-student">${initials(r.user_email||r.student_email)}</div>
+        <div><div class="user-name">${r.student_name||r.user_email?.split('@')[0]||'—'}</div><div class="user-email">${r.user_email||r.student_email||'—'}</div></div>
+      </div></td>
+      <td><span style="color:#67e8f9;font-size:.78rem;font-weight:700;">${cls}</span></td>
+      <td style="color:#e2e8f0;font-size:.8rem;">${r.test_name||r.chapter||r.subject||'MCQ Test'}</td>
+      <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${pct}%;background:${scoreColor(pct)};"></div></div><span class="score-text" style="color:${scoreColor(pct)};">${score}/${total}</span></div></td>
+      <td><span class="badge ${passed?'badge-pass':'badge-fail'}">${passed?'✓ Pass':'✗ Fail'}</span></td>
+      <td style="color:#94a3b8;">${r.total_questions||r.total||'—'} Qs</td>
+      <td><span class="time-ago">${fmtDate(r.created_at)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
 function filterTests(f) {
+  _testPassFilter = f;
   ['All','Pass','Fail'].forEach(x => {
     const b = document.getElementById('t'+x); if(b) b.classList.toggle('active', x.toLowerCase()===f||(x==='All'&&f==='all'));
   });
-  document.querySelectorAll('#testsTable tbody tr').forEach(tr => {
-    if (f==='all') { tr.style.display=''; return; }
-    tr.style.display = tr.cells[3]?.textContent?.toLowerCase().includes(f) ? '' : 'none';
+  renderTests();
+}
+
+function filterTestsByClass(c) {
+  _testClassFilter = c;
+  ['all','6','7','8','9','10','11','12','neet','jee'].forEach(x => {
+    const b = document.getElementById('tcls-'+x); if(b) b.classList.toggle('active', x===c);
   });
+  renderTests();
 }
 </script>
 </body>

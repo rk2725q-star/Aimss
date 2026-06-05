@@ -359,7 +359,10 @@
 
       btn.classList.add('loading'); btn.disabled = true;
       try {
-        const r = await DrAuth.signUp(email, pass, 'student', { institutionCode: instCode });
+        const r = await DrAuth.signUp(email, pass, 'student', {
+          institutionCode: instCode,
+          extraFields: { board, class_name: cls }
+        });
         if (!r.success) { setStatus('signupStatus', r.error, 'error'); }
         else if (r.needsConfirmation) {
           setStatus('signupStatus', '📧 ' + r.message, 'info');

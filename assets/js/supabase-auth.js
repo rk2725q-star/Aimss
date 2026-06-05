@@ -73,7 +73,7 @@
     const supabase = getClient();
     if (!supabase) return { success: false, error: 'Auth service unavailable.' };
 
-    const { teacherCode = '', institutionCode = '', adminCode = '', institutionName = '' } = opts;
+    const { teacherCode = '', institutionCode = '', adminCode = '', institutionName = '', extraFields = {} } = opts;
 
     // ── Admin self-registration ──
     if (role === 'admin') {
@@ -125,14 +125,15 @@
     const user = data?.user;
     if (!user) return { success: false, error: 'Signup failed. Please try again.' };
 
-    // Upsert profile with role + institution_id
+    // Upsert profile with role + institution_id + extra fields
     try {
       await supabase.from('profiles').upsert({
         id: user.id,
         role,
         institution_id: instId,
         institution_name: institutionName.trim() || null,
-        email
+        email,
+        ...extraFields
       }, { onConflict: 'id' });
     } catch (_) { /* non-blocking */ }
 

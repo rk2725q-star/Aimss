@@ -614,10 +614,10 @@
             if (id === defaultModel.toLowerCase()) {
               return false; // Skip duplicate default model
             }
-            if (id.includes('embed') || id.includes('rerank') || id.includes('clip') || id.includes('similarity')) {
+            if (id.includes('embed') || id.includes('rerank') || id.includes('clip') || id.includes('similarity') || id.includes('moderation') || id.includes('guard')) {
               return false;
             }
-            return id.includes('instruct') || id.includes('-it') || id.includes('chat') || id.includes('large') || id.includes('flash') || id.includes('pro') || id.includes('kimi');
+            return true;
           });
 
           filtered.sort((a, b) => a.id.localeCompare(b.id));

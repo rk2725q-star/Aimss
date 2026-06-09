@@ -290,11 +290,13 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
   }
 
   const selectedModel = getSelectedModel(providerId);
+  const isKimi = selectedModel.toLowerCase().includes('kimi');
+  const temp = isKimi ? 0.3 : 0.7;
   const payload = JSON.stringify({
     model: selectedModel,
     messages,
     max_tokens: maxTokens,
-    temperature: 0.7,
+    temperature: temp,
     top_p: 0.9,
     stream: false
   });

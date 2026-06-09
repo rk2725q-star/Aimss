@@ -8,6 +8,46 @@ import sys
 PORT = 5000
 
 class AIMSSRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api/models':
+            try:
+                # Extract api key from client request headers
+                api_key = self.headers.get('Authorization', '')
+                
+                # Forward request to NVIDIA models endpoint
+                req = urllib.request.Request(
+                    'https://integrate.api.nvidia.com/v1/models',
+                    headers={
+                        'Authorization': api_key
+                    },
+                    method='GET'
+                )
+                
+                with urllib.request.urlopen(req, timeout=15) as response:
+                    res_data = response.read()
+                    self.send_response(response.status)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(res_data)
+                    
+            except urllib.error.HTTPError as e:
+                # Pass back API errors safely
+                self.send_response(e.code)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(e.read())
+            except Exception as e:
+                # Generic internal errors
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+        else:
+            super().do_GET()
+
     def do_POST(self):
         if self.path == '/api/ai':
             try:

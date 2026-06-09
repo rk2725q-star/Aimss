@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dr.AIMSS AI Assistant - Settings & Token Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030307;
+      --surface: rgba(13, 13, 24, 0.7);
+      --surface-card: rgba(20, 20, 35, 0.5);
+      --line: rgba(0, 229, 204, 0.15);
+      --line-glow: rgba(0, 229, 204, 0.3);
+      --accent: #00e5cc;
+      --accent-gradient: linear-gradient(135deg, #00e5cc, #7b61ff);
+      --ink: #ffffff;
+      --muted: #a0aec0;
+      --muted-dark: #4a5568;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius: 20px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 229, 204, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(123, 97, 255, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 20px;
+      flex: 1;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 15px rgba(0, 229, 204, 0.3);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    p.subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .btn-back {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-back:hover {
+      background: rgba(0, 229, 204, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateX(-3px);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    @media (min-width: 768px) {
+      .grid {
+        grid-template-columns: 1.2fr 1.8fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 30px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(0, 229, 204, 0.25);
+    }
+
+    select option {
+      background: #0a0a14;
+      color: #fff;
+      padding: 12px;
+    }
+
+    .btn-action {
+      background: var(--accent-gradient);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-action:hover {
+      box-shadow: 0 0 20px rgba(0, 229, 204, 0.4);
+      transform: translateY(-1.5px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .status-msg {
+      font-size: 0.82rem;
+      font-weight: 600;
+      min-height: 20px;
+      transition: color 0.2s;
+    }
+    .status-msg.loading { color: var(--warning); }
+    .status-msg.success { color: var(--success); }
+    .status-msg.error { color: var(--error); }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 500px) {
+      .token-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .token-card {
+      background: var(--surface-card);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .token-card:hover {
+      border-color: var(--line);
+      background: rgba(0, 229, 204, 0.02);
+      transform: translateY(-2px);
+    }
+
+    .token-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .token-card.total .token-val {
+      background: var(--accent-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .token-lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .meter-container {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .meter-bar {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .meter-fill-prompt {
+      height: 100%;
+      background: #7b61ff;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .meter-fill-comp {
+      height: 100%;
+      background: #00e5cc;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .meter-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .legend-dot.prompt { background: #7b61ff; }
+    .legend-dot.comp { background: #00e5cc; }
+
+    .usage-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 20px;
+    }
+
+    .month-selector-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .month-select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: #fff;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error);
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--error);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+    }
+
+    .model-info-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .model-info-box strong {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-title">
+        <img src="assets/images/logo.jpg" alt="Logo" class="logo-img" onerror="this.src='assets/images/ai-bot.png'">
+        <div>
+          <h1>Dr.AIMSS AI Settings</h1>
+          <p class="subtitle">Select your preferred model and track token usage</p>
+        </div>
+      </div>
+      <a href="index.html" class="btn-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Academy
+      </a>
+    </header>
+
+    <div class="grid">
+      <!-- Left side: Model selection -->
+      <section class="card">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+          Model Configuration
+        </h2>
+        
+        <!-- NVIDIA Provider Section -->
+        <div class="provider-config-group" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 20px; margin-bottom: 20px;">
+          <h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <span>⚡</span> NVIDIA Provider Models
+          </h3>
+          <div class="input-section" style="margin-bottom: 12px;">
+            <label for="nvidiaModelSelect">Preferred Model</label>
+            <select id="nvidiaModelSelect">
+              <option value="">meta/llama-3.1-8b-instruct (Default)</option>
+            </select>
+          </div>
+          <button id="refreshNvidiaBtn" class="btn-action btn-secondary" style="width: 100%;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh NVIDIA Models
+          </button>
+          <div id="nvidiaStatus" class="status-msg" style="margin-top: 8px;"></div>
+        </div>
+
+        <!-- Gemini Pro Provider Section -->
+        <div class="provider-config-group">
+          <h3 style="font-size: 1rem; color: #7b61ff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <span>🧠</span> Gemini Pro Provider Models
+          </h3>
+          <div class="input-section" style="margin-bottom: 12px;">
+            <label for="geminiModelSelect">Preferred Model</label>
+            <select id="geminiModelSelect">
+              <option value="">meta/llama-3.1-8b-instruct (Default)</option>
+            </select>
+          </div>
+          <button id="refreshGeminiBtn" class="btn-action btn-secondary" style="width: 100%;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh Gemini Pro Models
+          </button>
+          <div id="geminiStatus" class="status-msg" style="margin-top: 8px;"></div>
+        </div>
+
+        <div class="model-info-box" style="margin-top: 20px;">
+          <p>This settings dashboard is pre-configured with the academy's official NVIDIA developer keys. Changes made here apply instantly to the AI chatbot across all active tabs.</p>
+        </div>
+      </section>
+
+      <!-- Right side: Token Tracker Dashboard -->
+      <section class="card">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Monthly Token Dashboard
+        </h2>
+
+        <div class="token-grid">
+          <div class="token-card">
+            <div id="promptVal" class="token-val">0</div>
+            <div class="token-lbl">Input (Prompt)</div>
+          </div>
+          <div class="token-card">
+            <div id="compVal" class="token-val">0</div>
+            <div class="token-lbl">Output (Reply)</div>
+          </div>
+          <div class="token-card total">
+            <div id="totalVal" class="token-val">0</div>
+            <div class="token-lbl">Total Tokens</div>
+          </div>
+        </div>
+
+        <!-- Meter bar showing ratio -->
+        <div class="meter-container">
+          <label>Token Distribution Ratio</label>
+          <div class="meter-bar">
+            <div id="promptBar" class="meter-fill-prompt" style="width: 50%"></div>
+            <div id="compBar" class="meter-fill-comp" style="width: 50%"></div>
+          </div>
+          <div class="meter-legend">
+            <div class="legend-item">
+              <span class="legend-dot prompt"></span>
+              <span id="promptPct">Input: 50%</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot comp"></span>
+              <span id="compPct">Output: 50%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="usage-footer">
+          <div class="month-selector-group">
+            <label for="monthSelect">Month</label>
+            <select id="monthSelect" class="month-select">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <button id="resetStatsBtn" class="btn-reset">Reset Statistics</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="assets/js/ai-resilience.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const nvidiaModelSelect = document.getElementById('nvidiaModelSelect');
+      const refreshNvidiaBtn = document.getElementById('refreshNvidiaBtn');
+      const nvidiaStatus = document.getElementById('nvidiaStatus');
+
+      const geminiModelSelect = document.getElementById('geminiModelSelect');
+      const refreshGeminiBtn = document.getElementById('refreshGeminiBtn');
+      const geminiStatus = document.getElementById('geminiStatus');
+
+      const promptVal = document.getElementById('promptVal');
+      const compVal = document.getElementById('compVal');
+      const totalVal = document.getElementById('totalVal');
+
+      const promptBar = document.getElementById('promptBar');
+      const compBar = document.getElementById('compBar');
+      const promptPct = document.getElementById('promptPct');
+      const compPct = document.getElementById('compPct');
+
+      const monthSelect = document.getElementById('monthSelect');
+      const resetStatsBtn = document.getElementById('resetStatsBtn');
+
+      // Populate months list (current month and any in localStorage)
+      const initMonthList = () => {
+        monthSelect.innerHTML = '';
+        const now = new Date();
+        const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        let months = [currentYM];
+        try {
+          const stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
+          Object.keys(stats).forEach(k => {
+            if (!months.includes(k)) months.push(k);
+          });
+        } catch (_) {}
+        
+        // Sort months descending
+        months.sort((a, b) => b.localeCompare(a));
+        
+        months.forEach(ym => {
+          const opt = document.createElement('option');
+          opt.value = ym;
+          // Format month name (e.g. "June 2026")
+          const [year, month] = ym.split('-');
+          const date = new Date(year, parseInt(month) - 1);
+          opt.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          monthSelect.appendChild(opt);
+        });
+      };
+
+      // Refresh Token Stats display based on selected month
+      const updateTokenStatsUI = () => {
+        const ym = monthSelect.value;
+        if (!ym) return;
+
+        const stats = typeof getTokenUsageForMonth === 'function' 
+          ? getTokenUsageForMonth(ym) 
+          : { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+
+        promptVal.textContent = stats.prompt_tokens.toLocaleString();
+        compVal.textContent = stats.completion_tokens.toLocaleString();
+        totalVal.textContent = stats.total_tokens.toLocaleString();
+
+        const total = stats.total_tokens;
+        if (total > 0) {
+          const pPct = Math.round((stats.prompt_tokens / total) * 100);
+          const cPct = 100 - pPct;
+          
+          promptBar.style.width = `${pPct}%`;
+          compBar.style.width = `${cPct}%`;
+          
+          promptPct.textContent = `Input: ${pPct}%`;
+          compPct.textContent = `Output: ${cPct}%`;
+        } else {
+          promptBar.style.width = `50%`;
+          compBar.style.width = `50%`;
+          
+          promptPct.textContent = `Input: 50%`;
+          compPct.textContent = `Output: 50%`;
+        }
+      };
+
+      // Model Listing dropdown population helper
+      const populateDropdown = (selectEl, models, activeModel) => {
+        selectEl.innerHTML = '<option value="">meta/llama-3.1-8b-instruct (Default)</option>';
+        if (models && models.length > 0) {
+          const filtered = models.filter(m => {
+            const id = m.id.toLowerCase();
+            return !(id.includes('embed') || id.includes('rerank') || id.includes('clip') || id.includes('similarity'));
+          });
+
+          filtered.sort((a, b) => a.id.localeCompare(b.id));
+
+          filtered.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.id;
+            if (m.id === activeModel) {
+              opt.selected = true;
+            }
+            selectEl.appendChild(opt);
+          });
+        }
+      };
+
+      const fetchNvidiaBrandModels = async (showStatus = true) => {
+        if (showStatus) {
+          nvidiaStatus.textContent = '⏳ Fetching NVIDIA models...';
+          nvidiaStatus.className = 'status-msg loading';
+        }
+        refreshNvidiaBtn.disabled = true;
+
+        try {
+          const key = window.NVIDIA_KEY_PRIMARY || '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';
+          const models = await fetchNvidiaModels(key);
+          if (models && models.length > 0) {
+            const currentModel = localStorage.getItem('aimss-selected-nvidia-model') || '';
+            populateDropdown(nvidiaModelSelect, models, currentModel);
+            localStorage.setItem('aimss-cached-nvidia-models', JSON.stringify(models));
+            
+            if (showStatus) {
+              nvidiaStatus.textContent = `✅ Loaded ${models.length} models!`;
+              nvidiaStatus.className = 'status-msg success';
+            }
+          } else {
+            if (showStatus) {
+              nvidiaStatus.textContent = '❌ Failed to fetch models.';
+              nvidiaStatus.className = 'status-msg error';
+            }
+          }
+        } catch (err) {
+          if (showStatus) {
+            nvidiaStatus.textContent = '❌ Error fetching models.';
+            nvidiaStatus.className = 'status-msg error';
+          }
+        } finally {
+          refreshNvidiaBtn.disabled = false;
+        }
+      };
+
+      const fetchGeminiBrandModels = async (showStatus = true) => {
+        if (showStatus) {
+          geminiStatus.textContent = '⏳ Fetching Gemini Pro models...';
+          geminiStatus.className = 'status-msg loading';
+        }
+        refreshGeminiBtn.disabled = true;
+
+        try {
+          const key = window.NVIDIA_KEY_FALLBACK || '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';
+          const models = await fetchNvidiaModels(key);
+          if (models && models.length > 0) {
+            const currentModel = localStorage.getItem('aimss-selected-geminipro-model') || '';
+            populateDropdown(geminiModelSelect, models, currentModel);
+            localStorage.setItem('aimss-cached-geminipro-models', JSON.stringify(models));
+            
+            if (showStatus) {
+              geminiStatus.textContent = `✅ Loaded ${models.length} models!`;
+              geminiStatus.className = 'status-msg success';
+            }
+          } else {
+            if (showStatus) {
+              geminiStatus.textContent = '❌ Failed to fetch models.';
+              geminiStatus.className = 'status-msg error';
+            }
+          }
+        } catch (err) {
+          if (showStatus) {
+            geminiStatus.textContent = '❌ Error fetching models.';
+            geminiStatus.className = 'status-msg error';
+          }
+        } finally {
+          refreshGeminiBtn.disabled = false;
+        }
+      };
+
+      // Event listeners
+      nvidiaModelSelect.addEventListener('change', () => {
+        const val = nvidiaModelSelect.value;
+        if (val) {
+          localStorage.setItem('aimss-selected-nvidia-model', val);
+        } else {
+          localStorage.removeItem('aimss-selected-nvidia-model');
+        }
+        
+        nvidiaStatus.textContent = '✅ NVIDIA model updated!';
+        nvidiaStatus.className = 'status-msg success';
+        setTimeout(() => {
+          if (nvidiaStatus.className === 'status-msg success' && nvidiaStatus.textContent === '✅ NVIDIA model updated!') {
+            nvidiaStatus.textContent = '';
+          }
+        }, 3000);
+      });
+
+      geminiModelSelect.addEventListener('change', () => {
+        const val = geminiModelSelect.value;
+        if (val) {
+          localStorage.setItem('aimss-selected-geminipro-model', val);
+        } else {
+          localStorage.removeItem('aimss-selected-geminipro-model');
+        }
+        
+        geminiStatus.textContent = '✅ Gemini Pro model updated!';
+        geminiStatus.className = 'status-msg success';
+        setTimeout(() => {
+          if (geminiStatus.className === 'status-msg success' && geminiStatus.textContent === '✅ Gemini Pro model updated!') {
+            geminiStatus.textContent = '';
+          }
+        }, 3000);
+      });
+
+      refreshNvidiaBtn.addEventListener('click', () => fetchNvidiaBrandModels(true));
+      refreshGeminiBtn.addEventListener('click', () => fetchGeminiBrandModels(true));
+
+      monthSelect.addEventListener('change', updateTokenStatsUI);
+
+      resetStatsBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset token usage statistics for this month?')) {
+          const ym = monthSelect.value;
+          try {
+            const stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
+            delete stats[ym];
+            localStorage.setItem('aimss-token-usage', JSON.stringify(stats));
+            updateTokenStatsUI();
+          } catch (_) {}
+        }
+      });
+
+      // Listen to cross-tab updates to refresh usage live
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'aimss-token-usage') {
+          updateTokenStatsUI();
+        }
+      });
+
+      // Initialize
+      initMonthList();
+      updateTokenStatsUI();
+
+      // Load cached models
+      const cachedNvidiaRaw = localStorage.getItem('aimss-cached-nvidia-models');
+      const activeNvidiaModel = localStorage.getItem('aimss-selected-nvidia-model') || '';
+      if (cachedNvidiaRaw) {
+        try {
+          populateDropdown(nvidiaModelSelect, JSON.parse(cachedNvidiaRaw), activeNvidiaModel);
+        } catch (_) {}
+      } else {
+        fetchNvidiaBrandModels(false);
+      }
+
+      const cachedGeminiRaw = localStorage.getItem('aimss-cached-geminipro-models');
+      const activeGeminiModel = localStorage.getItem('aimss-selected-geminipro-model') || '';
+      if (cachedGeminiRaw) {
+        try {
+          populateDropdown(geminiModelSelect, JSON.parse(cachedGeminiRaw), activeGeminiModel);
+        } catch (_) {}
+      } else {
+        fetchGeminiBrandModels(false);
+      }
+    });
+  </script>
+</body>
+</html>

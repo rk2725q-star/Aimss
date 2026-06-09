@@ -268,7 +268,13 @@ const HealthMonitor = (() => {
    SECTION 8 — CORE FETCH (with retry + circuit breaker per provider)
    ───────────────────────────────────────────────────────────── */
 async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
-  const apiKey  = AI_PROVIDERS[providerId].key;
+  let apiKey  = AI_PROVIDERS[providerId].key;
+  if (providerId === 'nvidia') {
+    const customKey = localStorage.getItem('aimss-custom-nvidia-key');
+    if (customKey && customKey.trim()) {
+      apiKey = customKey.trim();
+    }
+  }
   const breaker = CIRCUIT_BREAKERS[providerId];
 
   if (!breaker.isAvailable()) {
@@ -277,8 +283,11 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
     return null;
   }
 
+  const selectedModel = providerId === 'geminipro'
+    ? (localStorage.getItem('aimss-selected-geminipro-model') || NVIDIA_MODEL)
+    : (localStorage.getItem('aimss-selected-nvidia-model') || NVIDIA_MODEL);
   const payload = JSON.stringify({
-    model: NVIDIA_MODEL,
+    model: selectedModel,
     messages,
     max_tokens: maxTokens,
     temperature: 0.7,
@@ -318,6 +327,11 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
         if (content && content.trim()) {
           breaker.recordSuccess();
           HealthMonitor.recordSuccess(providerId);
+          
+          if (data.usage) {
+            recordTokenUsage(data.usage.prompt_tokens, data.usage.completion_tokens);
+          }
+
           return content.trim();
         }
       } catch (err) {
@@ -390,6 +404,89 @@ async function callAIWithFallback(messages, maxTokens = 320, opts = {}) {
     return null; // both providers exhausted
   }, pos);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 9.5 — TOKEN TRACKER & MODEL FETCHING
+   ───────────────────────────────────────────────────────────── */
+
+function recordTokenUsage(promptTokens, completionTokens) {
+  try {
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    let stats = {};
+    try {
+      stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
+    } catch (_) {}
+    
+    if (!stats[yearMonth]) {
+      stats[yearMonth] = {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+        requests: 0
+      };
+    }
+    
+    stats[yearMonth].prompt_tokens += promptTokens;
+    stats[yearMonth].completion_tokens += completionTokens;
+    stats[yearMonth].total_tokens += (promptTokens + completionTokens);
+    stats[yearMonth].requests += 1;
+    
+    localStorage.setItem('aimss-token-usage', JSON.stringify(stats));
+    
+    window.dispatchEvent(new CustomEvent('aimss-token-usage-updated', {
+      detail: { yearMonth, data: stats[yearMonth] }
+    }));
+  } catch (e) {
+    console.error('Failed to record token usage:', e);
+  }
+}
+
+function getTokenUsageForMonth(yearMonth) {
+  try {
+    const stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
+    return stats[yearMonth] || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
+  } catch (_) {
+    return { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
+  }
+}
+
+async function fetchNvidiaModels(customKey = null) {
+  const key = customKey || localStorage.getItem('aimss-custom-nvidia-key') || NVIDIA_KEY_PRIMARY;
+  const authHeaders = {
+    'Authorization': `Bearer ${key}`
+  };
+
+  const endpoints = [
+    '/api/models',
+    'https://integrate.api.nvidia.com/v1/models'
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: authHeaders
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.data) {
+          return data.data;
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to fetch models from ${url}:`, err);
+    }
+  }
+  return null;
+}
+
+window.recordTokenUsage = recordTokenUsage;
+window.getTokenUsageForMonth = getTokenUsageForMonth;
+window.fetchNvidiaModels = fetchNvidiaModels;
+window.NVIDIA_KEY_PRIMARY = NVIDIA_KEY_PRIMARY;
+window.NVIDIA_KEY_FALLBACK = NVIDIA_KEY_FALLBACK;
 
 /**
  * Simplified wrapper used by sidebar chat & search (no fromCache / provider info needed).

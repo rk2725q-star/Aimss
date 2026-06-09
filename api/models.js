@@ -3,10 +3,6 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
     let authHeader = req.headers.authorization;
     if (!authHeader || authHeader === 'Bearer undefined' || authHeader === 'Bearer null' || !authHeader.startsWith('Bearer nvapi-')) {
@@ -14,18 +10,16 @@ export default async function handler(req, res) {
       authHeader = `Bearer ${defaultKey}`;
     }
 
-    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-      method: 'POST',
+    const response = await fetch('https://integrate.api.nvidia.com/v1/models', {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: authHeader
-      },
-      body: JSON.stringify(req.body)
+      }
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(502).json({ error: `NVIDIA API request failed: ${errText}` });
+      return res.status(502).json({ error: `NVIDIA API models request failed: ${errText}` });
     }
 
     const data = await response.json();

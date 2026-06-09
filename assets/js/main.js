@@ -1,4 +1,4 @@
-﻿function initReveal() {
+function initReveal() {
   const items = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('show'); });
@@ -187,7 +187,23 @@ function initFloatingChat() {
         <strong>Dr.AIMSS AI</strong>
         <span id="cpActiveModelLabel">${isGeminiPro ? '🧠 Gemini Pro' : '⚡ NVIDIA'} &mdash; Active</span>
       </div>
-      <button id="chatClose" class="cp-close" aria-label="Close">✕</button>
+      <div class="cp-header-actions">
+        <a href="ai-settings.html" target="_blank" id="chatSettingsToggle" class="cp-settings-btn" aria-label="Settings" title="API Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </a>
+        <button id="chatMaximize" class="cp-maximize" aria-label="Maximize" title="Toggle Fullscreen">
+          <svg class="maximize-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+          </svg>
+          <svg class="restore-icon" style="display:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>
+          </svg>
+        </button>
+        <button id="chatClose" class="cp-close" aria-label="Close">✕</button>
+      </div>
     </div>
 
     <div class="cp-mode-indicator" id="cpModeIndicator" style="--mode-color:${CHAT_MODES[ACTIVE_CHAT_MODE].color}">
@@ -232,6 +248,18 @@ function initFloatingChat() {
   `;
 
   const close      = panel.querySelector('#chatClose');
+
+  // Settings & window controls selectors
+  const settingsToggle = panel.querySelector('#chatSettingsToggle');
+  const maximizeToggle = panel.querySelector('#chatMaximize');
+
+  /* ── Window controls & maximize state ── */
+  if (maximizeToggle) {
+    maximizeToggle.addEventListener('click', () => {
+      panel.classList.toggle('maximized');
+    });
+  }
+
   const input      = panel.querySelector('#chatInput');
   const sendBtn    = panel.querySelector('#chatSend');
   const log        = panel.querySelector('#chatLog');

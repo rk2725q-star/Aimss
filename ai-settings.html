@@ -435,7 +435,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="nvidiaModelSelect">Preferred Model</label>
             <select id="nvidiaModelSelect">
-              <option value="">meta/llama-3.1-8b-instruct (Default)</option>
+              <option value="">moonshotai/kimi-k2.6 (Default)</option>
             </select>
           </div>
           <button id="refreshNvidiaBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -453,7 +453,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="geminiModelSelect">Preferred Model</label>
             <select id="geminiModelSelect">
-              <option value="">meta/llama-3.1-8b-instruct (Default)</option>
+              <option value="">moonshotai/kimi-k2.6 (Default)</option>
             </select>
           </div>
           <button id="refreshGeminiBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -607,7 +607,7 @@
 
       // Model Listing dropdown population helper
       const populateDropdown = (selectEl, models, activeModel) => {
-        selectEl.innerHTML = '<option value="">meta/llama-3.1-8b-instruct (Default)</option>';
+        selectEl.innerHTML = '<option value="">moonshotai/kimi-k2.6 (Default)</option>';
         if (models && models.length > 0) {
           const filtered = models.filter(m => {
             const id = m.id.toLowerCase();

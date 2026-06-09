@@ -292,14 +292,26 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
   const selectedModel = getSelectedModel(providerId);
   const isKimi = selectedModel.toLowerCase().includes('kimi');
   const temp = isKimi ? 0.3 : 0.7;
-  const payload = JSON.stringify({
+  
+  const payloadObj = {
     model: selectedModel,
     messages,
-    max_tokens: maxTokens,
-    temperature: temp,
-    top_p: 0.9,
     stream: false
-  });
+  };
+
+  // Reasoning models often reject extra parameters like temperature or max_tokens
+  const isReasoning = selectedModel.toLowerCase().includes('deepseek') || 
+                      selectedModel.toLowerCase().includes('r1') || 
+                      selectedModel.toLowerCase().includes('o1') || 
+                      selectedModel.toLowerCase().includes('o3');
+
+  if (!isReasoning) {
+    payloadObj.max_tokens = maxTokens;
+    payloadObj.temperature = temp;
+    payloadObj.top_p = 0.9;
+  }
+  
+  const payload = JSON.stringify(payloadObj);
 
   const authHeaders = {
     'Content-Type': 'application/json',
@@ -313,12 +325,29 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
         const ctrl = new AbortController();
         const tid  = setTimeout(() => ctrl.abort(), 60_000);
 
-        const res = await fetch(url, {
+        let res = await fetch(url, {
           method:  'POST',
           headers: authHeaders,
           body:    payload,
           signal:  ctrl.signal
         });
+        
+        // 400 Bad Request: Model might reject specific parameters or 'system' roles
+        if (res.status === 400) {
+          const fallbackMessages = messages.map(m => m.role === 'system' ? { ...m, role: 'user' } : m);
+          const fallbackPayload = JSON.stringify({
+            model: selectedModel,
+            messages: fallbackMessages,
+            stream: false
+          });
+          res = await fetch(url, {
+            method:  'POST',
+            headers: authHeaders,
+            body:    fallbackPayload,
+            signal:  ctrl.signal
+          });
+        }
+        
         clearTimeout(tid);
 
         // 429 or 5xx — trigger backoff retry

@@ -267,6 +267,12 @@ const HealthMonitor = (() => {
 /* ─────────────────────────────────────────────────────────────
    SECTION 8 — CORE FETCH (with retry + circuit breaker per provider)
    ───────────────────────────────────────────────────────────── */
+function getSelectedModel(providerId) {
+  const key = providerId === 'geminipro' ? 'aimss-selected-geminipro-model' : 'aimss-selected-nvidia-model';
+  const val = localStorage.getItem(key);
+  return (val && val.trim()) ? val.trim() : NVIDIA_MODEL;
+}
+
 async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
   let apiKey  = AI_PROVIDERS[providerId].key;
   if (providerId === 'nvidia') {
@@ -283,9 +289,7 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
     return null;
   }
 
-  const selectedModel = providerId === 'geminipro'
-    ? (localStorage.getItem('aimss-selected-geminipro-model') || NVIDIA_MODEL)
-    : (localStorage.getItem('aimss-selected-nvidia-model') || NVIDIA_MODEL);
+  const selectedModel = getSelectedModel(providerId);
   const payload = JSON.stringify({
     model: selectedModel,
     messages,
@@ -381,7 +385,8 @@ async function callAIWithFallback(messages, maxTokens = 320, opts = {}) {
   return AIQueue.enqueue(async () => {
 
     /* ── Layers 3 + 4: Circuit Breaker + Exponential Backoff (per provider) ── */
-    const order = ACTIVE_AI_PROVIDER === 'nvidia'
+    const activeProvider = localStorage.getItem('aimss-ai-provider') || ACTIVE_AI_PROVIDER;
+    const order = activeProvider === 'nvidia'
       ? ['nvidia', 'geminipro']
       : ['geminipro', 'nvidia'];
 
@@ -397,9 +402,7 @@ async function callAIWithFallback(messages, maxTokens = 320, opts = {}) {
 
       const text = await _callNvidiaEndpoint(providerId, messages, maxTokens);
       if (text) {
-        const selectedModel = providerId === 'geminipro'
-          ? (localStorage.getItem('aimss-selected-geminipro-model') || NVIDIA_MODEL)
-          : (localStorage.getItem('aimss-selected-nvidia-model') || NVIDIA_MODEL);
+        const selectedModel = getSelectedModel(providerId);
         return { text, usedProvider: providerId, usedModel: selectedModel };
       }
     }

@@ -435,7 +435,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="nvidiaModelSelect">Preferred Model</label>
             <select id="nvidiaModelSelect">
-              <option value="">moonshotai/kimi-k2.6 (Default)</option>
+              <option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6 (Default)</option>
             </select>
           </div>
           <button id="refreshNvidiaBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -453,7 +453,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="geminiModelSelect">Preferred Model</label>
             <select id="geminiModelSelect">
-              <option value="">moonshotai/kimi-k2.6 (Default)</option>
+              <option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6 (Default)</option>
             </select>
           </div>
           <button id="refreshGeminiBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -522,7 +522,7 @@
     </div>
   </div>
 
-  <script src="assets/js/ai-resilience.js"></script>
+  <script src="assets/js/ai-resilience.js?v=10"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const nvidiaModelSelect = document.getElementById('nvidiaModelSelect');
@@ -606,10 +606,14 @@
       };
 
       const populateDropdown = (selectEl, models, activeModel) => {
-        selectEl.innerHTML = '<option value="">moonshotai/kimi-k2.6 (Default)</option>';
+        const defaultModel = 'moonshotai/kimi-k2.6';
+        selectEl.innerHTML = `<option value="${defaultModel}">${defaultModel} (Default)</option>`;
         if (models && models.length > 0) {
           const filtered = models.filter(m => {
             const id = m.id.toLowerCase();
+            if (id === defaultModel.toLowerCase()) {
+              return false; // Skip duplicate default model
+            }
             if (id.includes('embed') || id.includes('rerank') || id.includes('clip') || id.includes('similarity')) {
               return false;
             }
@@ -622,12 +626,11 @@
             const opt = document.createElement('option');
             opt.value = m.id;
             opt.textContent = m.id;
-            if (m.id === activeModel) {
-              opt.selected = true;
-            }
             selectEl.appendChild(opt);
           });
         }
+        // Robust value assignment
+        selectEl.value = activeModel || defaultModel;
       };
 
       const fetchNvidiaBrandModels = async (showStatus = true) => {
@@ -706,7 +709,7 @@
         if (val) {
           localStorage.setItem('aimss-selected-nvidia-model', val);
         } else {
-          localStorage.removeItem('aimss-selected-nvidia-model');
+          localStorage.setItem('aimss-selected-nvidia-model', 'moonshotai/kimi-k2.6');
         }
         
         nvidiaStatus.textContent = '✅ NVIDIA model updated!';
@@ -723,7 +726,7 @@
         if (val) {
           localStorage.setItem('aimss-selected-geminipro-model', val);
         } else {
-          localStorage.removeItem('aimss-selected-geminipro-model');
+          localStorage.setItem('aimss-selected-geminipro-model', 'moonshotai/kimi-k2.6');
         }
         
         geminiStatus.textContent = '✅ Gemini Pro model updated!';

@@ -806,7 +806,7 @@ Requirements:
 - Use CAPS for section headings (e.g. INTRODUCTION, KEY CONCEPTS, EXAMPLES)
 - Write in clear flowing paragraphs, no bullet symbols, no markdown
 - Include key definitions, examples, and important exam points
-- Plain text only — no **, *, #, ~~, or backticks`;
+- Plain text only — do not use markdown formatting`;
 
         try {
           const r = await callAIWithFallback([{role:'user', content:chPrompt}], 2500);

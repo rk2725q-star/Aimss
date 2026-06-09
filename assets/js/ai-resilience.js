@@ -397,7 +397,10 @@ async function callAIWithFallback(messages, maxTokens = 320, opts = {}) {
 
       const text = await _callNvidiaEndpoint(providerId, messages, maxTokens);
       if (text) {
-        return { text, usedProvider: providerId };
+        const selectedModel = providerId === 'geminipro'
+          ? (localStorage.getItem('aimss-selected-geminipro-model') || NVIDIA_MODEL)
+          : (localStorage.getItem('aimss-selected-nvidia-model') || NVIDIA_MODEL);
+        return { text, usedProvider: providerId, usedModel: selectedModel };
       }
     }
 

@@ -591,7 +591,7 @@ Requirements:
 - Use CAPS for section headings within the chapter (e.g. INTRODUCTION, KEY CONCEPTS)
 - Write in clear flowing paragraphs, no bullet symbols
 - Include key definitions, examples, and important points
-- Plain text only, no markdown symbols (no **, *, # or backticks)`;
+- Plain text only, do not use markdown formatting`;
 
       try {
         const r = await callAIWithFallback([{role:'user',content:chPrompt}], 2500);
@@ -686,7 +686,7 @@ Requirements:
         const modeBadge = ACTIVE_CHAT_MODE !== 'general'
           ? `<span class="ai-mode-badge" style="--mode-color:${mode.color}">${mode.icon} ${mode.label}</span>`
           : '';
-        bubble.innerHTML = `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${prov.label}</span>`;
+        bubble.innerHTML = `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
 
         // ── MCQ mode: add "Upload to Class" button ──
         if (ACTIVE_CHAT_MODE === 'mcq') {
@@ -1230,7 +1230,7 @@ Keep it concise and exam oriented.`;
       }
       const prov = AI_PROVIDERS[result.usedProvider];
       output.value = result.text || '';
-      status.textContent = `Generated via ${prov.icon} ${prov.label}. Click Print/Save as PDF.`;
+      status.textContent = `Generated via ${prov.icon} ${result.usedModel || prov.label}. Click Print/Save as PDF.`;
       awardPoints(20);
       initStudentRewards();
     } catch (_e) {

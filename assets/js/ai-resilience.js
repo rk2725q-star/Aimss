@@ -323,7 +323,7 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
       const url = proxyFn(NVIDIA_URL);
       try {
         const ctrl = new AbortController();
-        const tid  = setTimeout(() => ctrl.abort(), 60_000);
+        const tid  = setTimeout(() => ctrl.abort(), 120_000);
 
         let res = await fetch(url, {
           method:  'POST',

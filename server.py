@@ -68,7 +68,7 @@ class AIMSSRequestHandler(http.server.SimpleHTTPRequestHandler):
                     method='POST'
                 )
                 
-                with urllib.request.urlopen(req, timeout=15) as response:
+                with urllib.request.urlopen(req, timeout=120) as response:
                     res_data = response.read()
                     self.send_response(response.status)
                     self.send_header('Content-Type', 'application/json')

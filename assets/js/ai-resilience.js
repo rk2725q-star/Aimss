@@ -16,7 +16,7 @@
    SECTION 1 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const NVIDIA_URL   = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const NVIDIA_MODEL = 'moonshotai/kimi-k2.6';
+const NVIDIA_MODEL = 'z-ai/glm-5.1';
 
 // Primary key → branded as NVIDIA
 const NVIDIA_KEY_PRIMARY  = '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';

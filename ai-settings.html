@@ -435,7 +435,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="nvidiaModelSelect">Preferred Model</label>
             <select id="nvidiaModelSelect">
-              <option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6 (Default)</option>
+              <option value="z-ai/glm-5.1">z-ai/glm-5.1 (Default)</option>
             </select>
           </div>
           <button id="refreshNvidiaBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -453,7 +453,7 @@
           <div class="input-section" style="margin-bottom: 12px;">
             <label for="geminiModelSelect">Preferred Model</label>
             <select id="geminiModelSelect">
-              <option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6 (Default)</option>
+              <option value="z-ai/glm-5.1">z-ai/glm-5.1 (Default)</option>
             </select>
           </div>
           <button id="refreshGeminiBtn" class="btn-action btn-secondary" style="width: 100%;">
@@ -606,7 +606,7 @@
       };
 
       const populateDropdown = (selectEl, models, activeModel) => {
-        const defaultModel = 'moonshotai/kimi-k2.6';
+        const defaultModel = 'z-ai/glm-5.1';
         selectEl.innerHTML = `<option value="${defaultModel}">${defaultModel} (Default)</option>`;
         if (models && models.length > 0) {
           const filtered = models.filter(m => {
@@ -709,7 +709,7 @@
         if (val) {
           localStorage.setItem('aimss-selected-nvidia-model', val);
         } else {
-          localStorage.setItem('aimss-selected-nvidia-model', 'moonshotai/kimi-k2.6');
+          localStorage.setItem('aimss-selected-nvidia-model', 'z-ai/glm-5.1');
         }
         
         nvidiaStatus.textContent = '✅ NVIDIA model updated!';
@@ -726,7 +726,7 @@
         if (val) {
           localStorage.setItem('aimss-selected-geminipro-model', val);
         } else {
-          localStorage.setItem('aimss-selected-geminipro-model', 'moonshotai/kimi-k2.6');
+          localStorage.setItem('aimss-selected-geminipro-model', 'z-ai/glm-5.1');
         }
         
         geminiStatus.textContent = '✅ Gemini Pro model updated!';

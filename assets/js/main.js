@@ -77,7 +77,151 @@ function setActiveProvider(prov) {
   localStorage.setItem('aimss-ai-provider', prov);
 }
 
-/* ── Strip Markdown formatting for clean plain-text output ── */
+/* ── Full Markdown → HTML renderer for clean, rich AI responses ── */
+function renderMarkdown(text) {
+  if (!text) return '';
+
+  // Escape HTML special chars first (but preserve intent)
+  const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // 1. Normalize line endings
+  let t = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+
+  // 2. Fenced code blocks (```lang\n...\n```)
+  t = t.replace(/```([\w]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const cls = lang ? ` class="lang-${lang}"` : '';
+    return `<div class="md-code-block"><pre${cls}><code>${esc(code.trim())}</code></pre></div>`;
+  });
+
+  // 3. Process line by line for tables, headings, lists, blockquotes
+  const lines = t.split('\n');
+  const out = [];
+  let inList = null;  // 'ul' | 'ol' | null
+  let inTable = false;
+  let tableRows = [];
+  let ulBuf = [], olBuf = [];
+
+  const closeList = () => {
+    if (inList === 'ul' && ulBuf.length) {
+      out.push(`<ul class="md-ul">${ulBuf.map(l=>`<li>${inlineFormat(l)}</li>`).join('')}</ul>`);
+      ulBuf = [];
+    } else if (inList === 'ol' && olBuf.length) {
+      out.push(`<ol class="md-ol">${olBuf.map(l=>`<li>${inlineFormat(l)}</li>`).join('')}</ol>`);
+      olBuf = [];
+    }
+    inList = null;
+  };
+
+  const closeTable = () => {
+    if (!tableRows.length) return;
+    const hdrs = tableRows[0];
+    const body = tableRows.slice(2); // skip separator row
+    let html = '<div class="md-table-wrap"><table class="md-table"><thead><tr>';
+    hdrs.forEach(h => { html += `<th>${inlineFormat(h.trim())}</th>`; });
+    html += '</tr></thead><tbody>';
+    body.forEach(row => {
+      html += '<tr>';
+      row.forEach(cell => { html += `<td>${inlineFormat(cell.trim())}</td>`; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    out.push(html);
+    tableRows = [];
+    inTable = false;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Detect table rows
+    const isTableRow = /^\|(.+\|)+\s*$/.test(line.trim());
+    const isSepRow   = /^\|[\s|:\-]+\|\s*$/.test(line.trim());
+
+    if (isTableRow) {
+      if (!inTable) { closeList(); inTable = true; }
+      const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
+      if (isSepRow) { tableRows.push(null); } // separator
+      else tableRows.push(cells);
+      continue;
+    } else if (inTable) {
+      closeTable();
+    }
+
+    // Headings
+    const hMatch = line.match(/^(#{1,6})\s+(.+)/);
+    if (hMatch) {
+      closeList();
+      const lvl = Math.min(hMatch[1].length, 6);
+      out.push(`<h${lvl} class="md-h${lvl}">${inlineFormat(hMatch[2])}</h${lvl}>`);
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^(---+|===+|\*\*\*+)\s*$/.test(line)) {
+      closeList();
+      out.push('<hr class="md-hr">');
+      continue;
+    }
+
+    // Blockquote
+    const bqMatch = line.match(/^>\s?(.*)/);
+    if (bqMatch) {
+      closeList();
+      out.push(`<blockquote class="md-bq">${inlineFormat(bqMatch[1])}</blockquote>`);
+      continue;
+    }
+
+    // Unordered list item
+    const ulMatch = line.match(/^\s*[-*+]\s+(.+)/);
+    if (ulMatch) {
+      if (inList !== 'ul') { closeList(); inList = 'ul'; }
+      ulBuf.push(ulMatch[1]);
+      continue;
+    }
+
+    // Ordered list item
+    const olMatch = line.match(/^\s*\d+\.\s+(.+)/);
+    if (olMatch) {
+      if (inList !== 'ol') { closeList(); inList = 'ol'; }
+      olBuf.push(olMatch[1]);
+      continue;
+    }
+
+    // Regular content
+    closeList();
+
+    // Blank line → paragraph break
+    if (line.trim() === '') {
+      out.push('<div class="md-spacer"></div>');
+    } else {
+      out.push(`<p class="md-p">${inlineFormat(line)}</p>`);
+    }
+  }
+
+  // Flush remaining
+  closeList();
+  if (inTable) closeTable();
+
+  return out.join('');
+}
+
+/* Inline markdown: bold, italic, code, strikethrough, links */
+function inlineFormat(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')  // html escape
+    .replace(/\*\*\*(.+?)\*\*\*/gs, '<strong><em>$1</em></strong>')
+    .replace(/___(.+?)___/gs, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>')
+    .replace(/__(.+?)__/gs, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/gs, '<em>$1</em>')
+    .replace(/_(.+?)_/gs, '<em>$1</em>')
+    .replace(/~~(.+?)~~/gs, '<del>$1</del>')
+    .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+/* ── Legacy plain-text cleaner (still used for PDF eBook content) ── */
 function cleanAIText(text) {
   if (!text) return text;
   return text
@@ -93,7 +237,7 @@ function cleanAIText(text) {
     .replace(/^\s*\d+\.\s+/gm, (m) => m.trim())
     .replace(/\[(.+?)\]\(.+?\)/g, '$1')
     .replace(/!\[.*?\]\(.+?\)/g, '')
-    .replace(/>{1,}\s*/gm, '')
+    .replace(/>\s*/gm, '')
     .replace(/---+/g, '')
     .replace(/~~(.+?)~~/gs, '$1')
     .replace(/\n{3,}/g, '\n\n')
@@ -105,58 +249,109 @@ const CHAT_MODES = {
   general: {
     key: 'general', label: 'General', icon: '🎓', color: '#a78bfa',
     placeholder: 'Ask anything about NEET, CBSE, Matric…',
-    maxTokens: 400,
+    maxTokens: 4096,
     welcome: 'Hi! I’m Dr.AIMSS AI. Click a mode chip below or ask me anything! 🎓',
-    systemPrompt: 'You are Dr.AIMSS Educational Academy AI assistant. Answer clearly and concisely for NEET, Stateboard, and CBSE students Class 6-12. Be accurate and motivating. Use plain text only.'
+    systemPrompt: `You are Dr.AIMSS Educational Academy AI assistant. Answer clearly and in detail for NEET, Stateboard, and CBSE students Class 6–12. Be accurate, thorough, and motivating.
+
+Formatting Rules:
+- Use Markdown formatting: **bold** for key terms, ## for section headings, bullet lists with -, numbered lists where steps are ordered.
+- For comparison questions, always use a Markdown table with clear columns.
+- For definitions, give a clear 1-2 sentence definition then expand with details.
+- For processes or steps, use a numbered list.
+- For differences/similarities, use a comparison table.
+- End with a short "Key Takeaway" or "Exam Tip" if relevant.
+- Do NOT write vague one-liners. Give complete, detailed answers.`
   },
   ebook: {
     key: 'ebook', label: 'eBook', icon: '📖', color: '#f59e0b',
     placeholder: 'Describe the eBook you want to generate…',
     maxTokens: 4096,
-    welcome: '📖 eBook Mode active! Tell me what eBook to generate (e.g. “NEET Biology Chapter: Cell Division” or “Rich Dad Poor Dad style book on study habits”). I’ll write a full 25–45 page PDF for you!',
+    welcome: '📖 eBook Mode active! Tell me what eBook to generate (e.g. "NEET Biology Chapter: Cell Division" or "Rich Dad Poor Dad style book on study habits"). I\'ll write a full 25–45 page PDF for you!',
     systemPrompt: 'You are an expert educational eBook author writing for NEET, CBSE, and Stateboard students. Write detailed, accurate, well-structured educational content. Use plain text only. Use CAPS for headings. Write in flowing paragraphs.'
   },
   biology: {
     key: 'biology', label: 'Biology', icon: '🧬', color: '#10b981',
     placeholder: 'Ask any Biology question (NEET, CBSE, Class 11-12)…',
-    maxTokens: 500,
+    maxTokens: 4096,
     welcome: '🧬 Biology Mode! Ask me anything about Cell Biology, Genetics, Ecology, Human Physiology, Plant Biology and more!',
-    systemPrompt: 'You are Dr.AIMSS Biology expert teacher specializing in NEET, CBSE Class 11-12. Give clear, accurate, exam-focused answers. Include key points and important terms. Use plain text only.'
+    systemPrompt: `You are Dr.AIMSS Biology expert teacher specializing in NEET, CBSE Class 11–12. Give clear, accurate, exam-focused answers.
+
+Formatting Rules:
+- Use **bold** for all biological terms, names, and key facts.
+- Use ## headings to divide multi-part answers.
+- Use bullet lists (-) for key points.
+- Use comparison tables (Markdown table) when comparing structures, processes, or organisms.
+- For processes (e.g. mitosis steps), use a numbered list.
+- Include mnemonics or memory tricks where helpful.
+- End every answer with a "🧠 NEET Tip" line.`
   },
   chemistry: {
     key: 'chemistry', label: 'Chemistry', icon: '⚗️', color: '#06b6d4',
     placeholder: 'Ask any Chemistry question (NEET, CBSE)…',
-    maxTokens: 500,
+    maxTokens: 4096,
     welcome: '⚗️ Chemistry Mode! Ask about Organic, Inorganic, Physical Chemistry, reactions, equations and more!',
-    systemPrompt: 'You are Dr.AIMSS Chemistry expert for NEET, CBSE students. Explain reactions, mechanisms, and concepts clearly. Always include formulae written in plain text. Use plain text only.'
+    systemPrompt: `You are Dr.AIMSS Chemistry expert for NEET, CBSE students. Explain reactions, mechanisms, and concepts clearly.
+
+Formatting Rules:
+- Use **bold** for compound names, reagents, and key terms.
+- Write chemical formulae/equations in plain text (e.g. H2O, CO2, H2SO4).
+- Use ## headings for multi-part answers.
+- Use bullet lists for properties, uses, or rules.
+- Use numbered steps for reaction mechanisms or synthesis routes.
+- Use tables to compare elements, compounds, or reactions side by side.
+- End with a "⚗️ Exam Tip" if relevant.`
   },
   physics: {
     key: 'physics', label: 'Physics', icon: '⚡', color: '#f97316',
     placeholder: 'Ask any Physics question (NEET, CBSE, Class 12)…',
-    maxTokens: 500,
+    maxTokens: 4096,
     welcome: '⚡ Physics Mode! Ask about Mechanics, Electricity, Optics, Modern Physics, Thermodynamics and more!',
-    systemPrompt: 'You are Dr.AIMSS Physics expert for NEET, CBSE Class 11-12. Explain concepts with clarity, include relevant formulae in plain text. Be exam-focused and accurate. Use plain text only.'
+    systemPrompt: `You are Dr.AIMSS Physics expert for NEET, CBSE Class 11–12. Explain concepts with clarity and depth.
+
+Formatting Rules:
+- Use **bold** for formulae, laws, and key terms.
+- State the formula first, then explain each variable.
+- Use ## headings for concept sections.
+- Use numbered steps for derivations and problem solutions.
+- Use tables to compare laws, quantities, or units.
+- Include worked examples where possible.
+- End with a "⚡ Formula Sheet" summary bullet list.`
   },
   maths: {
     key: 'maths', label: 'Maths', icon: '📐', color: '#8b5cf6',
     placeholder: 'Ask any Maths problem or concept…',
-    maxTokens: 500,
+    maxTokens: 4096,
     welcome: '📐 Maths Mode! Ask me to solve problems, explain concepts or derive formulae for Class 6-12, CBSE, Stateboard!',
-    systemPrompt: 'You are Dr.AIMSS Mathematics expert for CBSE, Stateboard Class 6-12. Solve problems step by step clearly. Write equations and formulae in plain text notation. Be precise and show working. Use plain text only.'
+    systemPrompt: `You are Dr.AIMSS Mathematics expert for CBSE, Stateboard Class 6–12. Solve problems step by step.
+
+Formatting Rules:
+- Show ALL working steps clearly using numbered lists.
+- Use **bold** for the final answer.
+- Write equations in plain text (e.g. x^2 + 5x + 6 = 0).
+- Use ## headings to label sections (e.g. ## Method, ## Solution, ## Verification).
+- Explain the reasoning behind each step.
+- For theory questions, use bullet points for key properties/theorems.`
   },
   studyplan: {
     key: 'studyplan', label: 'Study Plan', icon: '🗓️', color: '#ec4899',
     placeholder: 'Tell me your exam, goal and days available…',
-    maxTokens: 600,
-    welcome: '🗓️ Study Plan Mode! Tell me your exam (NEET, CBSE, Stateboard), available days, and weak subjects. I’ll create a personalised revision schedule!',
-    systemPrompt: 'You are Dr.AIMSS study planning expert. Create detailed, practical, day-by-day or week-by-week study schedules for NEET, CBSE, Stateboard students. Be specific with topics and time allocation. Use plain text only.'
+    maxTokens: 4096,
+    welcome: '🗓️ Study Plan Mode! Tell me your exam (NEET, CBSE, Stateboard), available days, and weak subjects. I\'ll create a personalised revision schedule!',
+    systemPrompt: `You are Dr.AIMSS study planning expert. Create detailed, practical study schedules.
+
+Formatting Rules:
+- Use a Markdown table (Day | Subject | Topics | Duration | Tips) for the schedule.
+- Use ## headings for each week or phase.
+- Use bullet lists for study tips and resources.
+- Be specific with exact topics and time slots.
+- Include revision days and mock test days.`
   },
   mcq: {
     key: 'mcq', label: 'MCQ', icon: '📊', color: '#ef4444',
     placeholder: 'Which subject/topic MCQs should I generate? (e.g. NEET Biology – Cell Division, 50 questions)…',
-    maxTokens: 4000,
+    maxTokens: 4096,
     welcome: '📊 MCQ Mode! Tell me the subject, topic and how many questions (40–75 recommended). I\'ll generate a full question bank with options A, B, C, D and the correct answer for each!',
-    systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE, and Stateboard students. The user will specify a subject, topic and number of questions (typically 40–75). Generate ALL the requested questions — do NOT stop early. Format each question exactly as:\nQ1. [Question]\nA) option B) option C) option D) option\nAnswer: [Letter]\n\nContinue numbering Q2, Q3 … up to the full requested count. Make every question exam-standard quality and cover the topic broadly. Use plain text only.'
+    systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE, and Stateboard students. The user will specify a subject, topic and number of questions (typically 40–75). Generate ALL the requested questions — do NOT stop early. Format each question exactly as:\nQ1. [Question]\nA) option B) option C) option D) option\nAnswer: [Letter]\n\nContinue numbering Q2, Q3 … up to the full requested count. Make every question exam-standard quality and cover the topic broadly. Do not use markdown tables or formatting for MCQ output.'
   }
 };
 
@@ -686,7 +881,11 @@ Requirements:
         const modeBadge = ACTIVE_CHAT_MODE !== 'general'
           ? `<span class="ai-mode-badge" style="--mode-color:${mode.color}">${mode.icon} ${mode.label}</span>`
           : '';
-        bubble.innerHTML = `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
+        // Use full markdown renderer for rich, clean output
+        const renderedHTML = ACTIVE_CHAT_MODE === 'mcq'
+          ? `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>`
+          : `<div class="ai-msg-md">${renderMarkdown(result.text)}</div>`;
+        bubble.innerHTML = `${renderedHTML}${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
 
         // ── MCQ mode: add "Upload to Class" button ──
         if (ACTIVE_CHAT_MODE === 'mcq') {

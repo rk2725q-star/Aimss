@@ -333,10 +333,23 @@ async function _callNvidiaEndpoint(providerId, messages, maxTokens) {
         
         // 400 Bad Request: Model might reject specific parameters or 'system' roles
         if (res.status === 400) {
-          const fallbackMessages = messages.map(m => m.role === 'system' ? { ...m, role: 'user' } : m);
+          // Merge system + user messages into a single user message so models
+          // like Kimi k2.6 that don't support the 'system' role don't get confused
+          // by two consecutive 'user' messages and answer the instructions instead.
+          const systemMsg = messages.find(m => m.role === 'system');
+          const userMsg   = messages.find(m => m.role === 'user');
+          let mergedMessages;
+          if (systemMsg && userMsg) {
+            mergedMessages = [{
+              role: 'user',
+              content: `[Instructions]\n${systemMsg.content}\n\n[Question]\n${userMsg.content}`
+            }];
+          } else {
+            mergedMessages = messages.map(m => m.role === 'system' ? { ...m, role: 'user' } : m);
+          }
           const fallbackPayload = JSON.stringify({
             model: selectedModel,
-            messages: fallbackMessages,
+            messages: mergedMessages,
             stream: false
           });
           res = await fetch(url, {

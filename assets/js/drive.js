@@ -56,6 +56,7 @@
     { id: 'nda',    label: 'NDA',    icon: '🎖️' },
     { id: 'upsc',   label: 'UPSC',   icon: '🏛️' },
     { id: 'tnpsc',  label: 'TNPSC',  icon: '📋' },
+    { id: 'cute',   label: 'CUTE',   icon: '🎓' },
   ];
 
   /* ── Get Supabase client (reuse existing or create) ── */

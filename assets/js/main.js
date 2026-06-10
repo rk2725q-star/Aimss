@@ -853,7 +853,7 @@ Requirements:
               <option value="12">Class 12</option>
               <option value="neet">NEET</option><option value="jee">JEE</option>
               <option value="ncert">NCERT</option><option value="nda">NDA</option>
-              <option value="upsc">UPSC</option><option value="tnpsc">TNPSC</option>
+              <option value="upsc">UPSC</option><option value="tnpsc">TNPSC</option><option value="cute">CUTE</option>
             </select>
             <select id="mcqChatBoardPicker" style="background:var(--surface-2);border:1px solid var(--line-hard);border-radius:8px;padding:6px 12px;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;outline:none;cursor:pointer;">
               <option value="">Select board (optional)…</option>
@@ -1846,7 +1846,8 @@ function renderMcqBankManager() {
   const classColors = {
     '6': '#06b6d4', '7': '#8b5cf6', '8': '#f59e0b', '9': '#10b981', '10': '#ef4444',
     '11': '#00e5cc', '12': '#ffd700', 'neet': '#f97316', 'jee': '#a78bfa',
-    'ncert': '#ec4899', 'nda': '#34d399', 'upsc': '#3b82f6', 'tnpsc': '#fb7185', 'tnspc': '#fb7185'
+    'ncert': '#ec4899', 'nda': '#34d399', 'upsc': '#3b82f6', 'tnpsc': '#fb7185', 'tnspc': '#fb7185',
+    'cute': '#6366f1'
   };
   wrap.innerHTML = `
     <table class="file-table" style="margin-top:4px">
@@ -2138,7 +2139,7 @@ function initTeacherVideo() {
   let currentPath = localStorage.getItem('aimss-drive-path') || '/';
 
   // Classes & Boards for root levels
-  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC'];
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'];
   const BOARDS = ['Stateboard', 'CBSE', 'General'];
 
   // Robust YouTube Extractor
@@ -2216,7 +2217,7 @@ function initTeacherVideo() {
 
     if (depth === 1) {
       // Render Boards for the selected Class
-      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC'].includes(segments[0]);
+      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'].includes(segments[0]);
       const boardsToShow = isPrep ? ['General'] : BOARDS;
       boardsToShow.forEach(brd => {
         const card = document.createElement('div');
@@ -2568,7 +2569,7 @@ function initStudentVideo() {
   let currentPath = localStorage.getItem('aimss-student-drive-path') || '/';
 
   // Classes & Boards for root levels
-  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC'];
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'];
   const BOARDS = ['Stateboard', 'CBSE', 'General'];
 
   const getPathSegments = (path) => path.split('/').filter(Boolean);
@@ -2616,7 +2617,7 @@ function initStudentVideo() {
     }
 
     if (depth === 1) {
-      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC'].includes(segments[0]);
+      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'].includes(segments[0]);
       const boardsToShow = isPrep ? ['General'] : BOARDS;
       boardsToShow.forEach(brd => {
         const card = document.createElement('div');

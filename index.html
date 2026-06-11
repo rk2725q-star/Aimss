@@ -151,7 +151,7 @@
     .fv-close { background: rgba(0,0,0,0.05); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: grid; place-items: center; transition: background 0.2s; }
     .fv-close:hover { background: rgba(0,0,0,0.1); }
     .fv-content { padding: 40px 5%; max-width: 1400px; margin: 0 auto; }
-    .fv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-bottom: 48px; }
+    .fv-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 32px; margin-bottom: 48px; }
     @media(max-width: 1100px) { .fv-grid { grid-template-columns: repeat(2, 1fr); } }
     @media(max-width: 600px) { .fv-grid { grid-template-columns: 1fr; } }
     .fv-section-title { grid-column: 1 / -1; font-size: 1.2rem; font-weight: 800; color: var(--accent); padding-bottom: 12px; border-bottom: 2px solid var(--accent-glow); margin-bottom: 24px; }
@@ -196,7 +196,7 @@
               <button class="fv-close" onclick="closeMenu('freeResMenu', 'freeResBtn', 'freeResChevron')">✕</button>
             </div>
             <div class="fv-content">
-              <div class="fv-grid" style="grid-template-columns: repeat(4, 1fr); gap: 32px;">
+              <div class="fv-grid" style="grid-template-columns: repeat(5, 1fr); gap: 32px;">
                 <div class="fv-col">
                   <div class="fv-section-title" style="color:#00e5cc; border-color:rgba(0,229,204,0.2);">🔬 NEET / JEE / NDA</div>
                   <a class="fv-link" href="study-materials.html">Physics Notes & PYQs</a>
@@ -232,6 +232,14 @@
                   <a class="fv-link" href="matric.html">Stateboard Class 10</a>
                   <a class="fv-link" href="matric.html">Samacheer Kalvi Notes</a>
                   <a class="fv-link" href="mcq-test.html">Free MCQ Practice Tests</a>
+                </div>
+                <div class="fv-col">
+                  <div class="fv-section-title" style="color:#10b981; border-color:rgba(16,185,129,0.2);">💻 Programming Languages</div>
+                  <a class="fv-link" href="study-materials.html?exam=programming&folder=Python">Python</a>
+                  <a class="fv-link" href="study-materials.html?exam=programming&folder=C">C</a>
+                  <a class="fv-link" href="study-materials.html?exam=programming&folder=C%2B%2B">C++</a>
+                  <a class="fv-link" href="study-materials.html?exam=programming&folder=Java">Java</a>
+                  <a class="fv-link" href="study-materials.html?exam=programming&folder=JavaScript">JavaScript</a>
                 </div>
               </div>
             </div>

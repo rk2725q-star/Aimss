@@ -57,6 +57,7 @@
     { id: 'upsc',   label: 'UPSC',   icon: '🏛️' },
     { id: 'tnpsc',  label: 'TNPSC',  icon: '📋' },
     { id: 'cute',   label: 'CUTE',   icon: '🎓' },
+    { id: 'programming', label: 'Programming', icon: '💻' },
   ];
 
   /* ── Get Supabase client (reuse existing or create) ── */

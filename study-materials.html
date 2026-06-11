@@ -863,6 +863,62 @@
       document.getElementById('previewFrame').src = '';
     }
 
+    // Auto-select category and path if specified in query params on load
+    (function handleQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      const examParam = params.get('exam');
+      const classParam = params.get('class');
+      const folderParam = params.get('folder');
+
+      if (examParam) {
+        switchMode('exam');
+        mode       = 'exam';
+        selectedId = examParam;
+        currentPath = `exam-${examParam}`;
+        activeFilter = 'all';
+        if (typeof boardPickerWrap !== 'undefined') boardPickerWrap.style.display = 'none';
+
+        document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`examBtn-${examParam}`)?.classList.add('active');
+        const noExamMsg = document.getElementById('noExamMsg');
+        if (noExamMsg) noExamMsg.style.display = 'none';
+        document.getElementById('browserSection').style.display = 'block';
+
+        if (folderParam) {
+          currentPath = `exam-${examParam}/${folderParam}`;
+        }
+        loadCurrentPath();
+      } else if (classParam) {
+        switchMode('class');
+        selectedClass = classParam;
+        selectedBoard = null;
+
+        document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`clsBtn-${classParam}`)?.classList.add('active');
+        document.getElementById('noClassMsg').style.display = 'none';
+        if (typeof boardPickerWrap !== 'undefined') boardPickerWrap.style.display = 'block';
+        document.getElementById('browserSection').style.display = 'none';
+
+        const boardParam = params.get('board') || localStorage.getItem('student-board');
+        if (boardParam) {
+          selectedBoard = boardParam;
+          mode          = 'class';
+          selectedId    = classParam;
+          currentPath   = `class-${classParam}/${boardParam}`;
+          activeFilter  = 'all';
+
+          document.querySelectorAll('#boardGrid .sel-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById(`boardBtn-${boardParam}`)?.classList.add('active');
+          document.getElementById('browserSection').style.display = 'block';
+
+          if (folderParam) {
+            currentPath = `class-${classParam}/${boardParam}/${folderParam}`;
+          }
+          loadCurrentPath();
+        }
+      }
+    })();
+
     /* ═══════════════════════════════════════
        HELPERS
     ═══════════════════════════════════════ */

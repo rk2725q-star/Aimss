@@ -853,7 +853,7 @@ Requirements:
               <option value="12">Class 12</option>
               <option value="neet">NEET</option><option value="jee">JEE</option>
               <option value="ncert">NCERT</option><option value="nda">NDA</option>
-              <option value="upsc">UPSC</option><option value="tnpsc">TNPSC</option><option value="cute">CUTE</option>
+              <option value="upsc">UPSC</option><option value="tnpsc">TNPSC</option><option value="cute">CUTE</option><option value="programming">Programming</option>
             </select>
             <select id="mcqChatBoardPicker" style="background:var(--surface-2);border:1px solid var(--line-hard);border-radius:8px;padding:6px 12px;color:var(--ink);font:inherit;font-size:.8rem;font-weight:700;outline:none;cursor:pointer;">
               <option value="">Select board (optional)…</option>
@@ -1847,7 +1847,7 @@ function renderMcqBankManager() {
     '6': '#06b6d4', '7': '#8b5cf6', '8': '#f59e0b', '9': '#10b981', '10': '#ef4444',
     '11': '#00e5cc', '12': '#ffd700', 'neet': '#f97316', 'jee': '#a78bfa',
     'ncert': '#ec4899', 'nda': '#34d399', 'upsc': '#3b82f6', 'tnpsc': '#fb7185', 'tnspc': '#fb7185',
-    'cute': '#6366f1'
+    'cute': '#6366f1', 'programming': '#10b981'
   };
   wrap.innerHTML = `
     <table class="file-table" style="margin-top:4px">

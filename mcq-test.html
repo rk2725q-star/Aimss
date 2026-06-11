@@ -419,10 +419,79 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js?v=10"></script>
   <script src="assets/js/main.js?v=6"></script>
   <script>
+    DrAuth.guardPage('student').then(() => {
+      // Lock MCQ class selector to student's registered class + board
+      const cls   = DrAuth.getClassName();
+      const board = DrAuth.getBoard();
+      lockMcqToStudentClass(cls, board);
+    });
+
+    function lockMcqToStudentClass(cls, board) {
+      const sel = document.getElementById('mcqClassSelect');
+      if (!sel) return;
+
+      const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming'];
+      const isExam = EXAM_MODES.includes((board||'').toLowerCase()) ||
+                     EXAM_MODES.includes((cls||'').toLowerCase());
+
+      let targetValue = '';
+      if (isExam) {
+        // For exam-prep students match the exam option
+        const examId = EXAM_MODES.includes((board||'').toLowerCase()) ? board.toLowerCase() : cls.toLowerCase();
+        targetValue = examId;
+      } else if (cls) {
+        // Class students: value format is "6-stateboard" or "6-cbse" or just "6"
+        const boardPart = board ? board.toLowerCase() : '';
+        if (boardPart) {
+          targetValue = `${cls}-${boardPart}`;
+        } else {
+          // Try to match any option that starts with the class
+          for (const opt of sel.options) {
+            if (opt.value.startsWith(cls + '-') || opt.value === cls) {
+              targetValue = opt.value; break;
+            }
+          }
+        }
+      }
+
+      if (!targetValue) return;
+
+      // Set the dropdown value
+      sel.value = targetValue;
+
+      // If exact match not found, try partial
+      if (!sel.value) {
+        for (const opt of sel.options) {
+          if (opt.value.startsWith(String(cls) + '-') || opt.value === String(cls)) {
+            sel.value = opt.value; break;
+          }
+        }
+      }
+
+      // Lock the dropdown so student can't change it
+      sel.disabled = true;
+      sel.style.opacity = '0.75';
+      sel.title = 'Locked to your registered class';
+
+      // Add visual indicator
+      const row = sel.closest('.mcq-class-row');
+      if (row) {
+        const lockBadge = document.createElement('span');
+        lockBadge.style.cssText = 'font-size:.75rem;font-weight:700;color:rgba(0,229,204,0.85);display:flex;align-items:center;gap:4px;white-space:nowrap;';
+        lockBadge.innerHTML = '🔒 Your Class';
+        row.appendChild(lockBadge);
+      }
+
+      // Trigger bank list load
+      sel.dispatchEvent(new Event('change'));
+    }
+
     // Sync store points badge in sidebar
     (function() {
       const pts = parseInt(localStorage.getItem('student-points') || '0');

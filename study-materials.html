@@ -35,6 +35,32 @@
     .selector-grid.classes { grid-template-columns: repeat(7, 1fr); }
     .selector-grid.exams   { grid-template-columns: repeat(3, 1fr); }
 
+    /* ═══════════════ PROFILE LOCK BANNER ═══════════════ */
+    .profile-lock-banner {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 14px 18px; margin-bottom: 18px;
+      background: linear-gradient(135deg, rgba(0,229,204,0.08), rgba(0,100,90,0.06));
+      border: 1.5px solid rgba(0,229,204,0.3); border-radius: 14px;
+      font-size: .86rem; color: var(--muted);
+    }
+    .profile-lock-banner .plb-icon { font-size: 1.5rem; flex-shrink:0; }
+    .profile-lock-banner .plb-info { flex: 1; }
+    .profile-lock-banner .plb-title {
+      font-weight: 800; color: var(--ink); font-size: .94rem; margin-bottom: 2px;
+    }
+    .profile-lock-banner .plb-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0,229,204,0.12); border: 1px solid rgba(0,229,204,0.25);
+      border-radius: 999px; padding: 3px 10px;
+      font-size: .75rem; font-weight: 700; color: #00e5cc; margin-right: 6px; margin-top: 4px;
+    }
+    .locked-msg {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .78rem; font-weight: 700; color: rgba(248,113,113,0.85);
+      margin-top: 4px;
+    }
+    .sel-btn.locked-out { opacity: 0.22; pointer-events: none; border-style: dashed; }
+
     .sel-btn {
       background: var(--surface); border: 1.5px solid var(--line);
       border-radius: 12px; padding: 14px 8px; text-align: center;
@@ -277,6 +303,9 @@
           </p>
         </div>
 
+        <!-- Profile Lock Banner (filled by JS) -->
+        <div id="profileLockBanner" class="profile-lock-banner" style="display:none;"></div>
+
         <!-- Mode Tabs -->
         <div class="mode-tabs" id="modeTabs">
           <button class="mode-tab active" id="tabClass" onclick="switchMode('class')">
@@ -380,11 +409,83 @@
   <script src="assets/js/drive.js"></script>
   <script src="assets/js/main.js?v=5"></script>
   <script>
-    DrAuth.guardPage('student');
+    DrAuth.guardPage('student').then(() => {
+      const studentBoard = DrAuth.getBoard();
+      const studentClass = DrAuth.getClassName();
+      if (studentBoard || studentClass) {
+        lockToStudentProfile(studentBoard, studentClass);
+      }
+    });
 
     /* ═══════════════════════════════════════
-       STATE
+       PROFILE LOCK — restrict to registered board + class
     ═══════════════════════════════════════ */
+    function lockToStudentProfile(board, className) {
+      const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming'];
+      const isExamMode = EXAM_MODES.includes((board||'').toLowerCase()) ||
+                         EXAM_MODES.includes((className||'').toLowerCase());
+      const BOARD_LABELS = { stateboard: 'Stateboard (TN)', cbse: 'CBSE' };
+      const boardLabel = BOARD_LABELS[board] || (board ? board.toUpperCase() : null);
+      const classLabel = className
+        ? (isNaN(className) ? className.toUpperCase() : `Class ${className}`)
+        : null;
+
+      const banner = document.getElementById('profileLockBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.innerHTML = `
+          <span class="plb-icon">${isExamMode ? '📝' : '🎓'}</span>
+          <div class="plb-info">
+            <div class="plb-title">Your Personalized Content</div>
+            <div>
+              ${classLabel ? `<span class="plb-badge">📚 ${classLabel}</span>` : ''}
+              ${boardLabel && !isExamMode ? `<span class="plb-badge">🏛️ ${boardLabel}</span>` : ''}
+            </div>
+            <div class="locked-msg">🔒 Access is restricted to your registered board &amp; class only.</div>
+          </div>
+        `;
+      }
+
+      if (isExamMode) {
+        const examId = (board && EXAM_MODES.includes(board.toLowerCase())) ? board.toLowerCase()
+                     : (className && EXAM_MODES.includes(className.toLowerCase())) ? className.toLowerCase()
+                     : null;
+        if (examId) {
+          const tabClass = document.getElementById('tabClass');
+          if (tabClass) tabClass.style.display = 'none';
+          setTimeout(() => {
+            switchMode('exam');
+            DrDrive.EXAMS.forEach(ex => {
+              const btn = document.getElementById(`examBtn-${ex.id}`);
+              if (btn && ex.id !== examId) btn.classList.add('locked-out');
+            });
+            selectItem('exam', examId);
+          }, 100);
+        }
+      } else {
+        if (className) {
+          DrDrive.CLASSES.forEach(cls => {
+            const btn = document.getElementById(`clsBtn-${cls}`);
+            if (btn && String(cls) !== String(className)) btn.classList.add('locked-out');
+          });
+        }
+        if (board) {
+          setTimeout(() => {
+            const knownBoardIds = (typeof BOARDS !== 'undefined' ? BOARDS : []).map(b => b.id);
+            if (knownBoardIds.includes(board)) {
+              document.querySelectorAll('#boardGrid .sel-btn').forEach(btn => {
+                const btnId = btn.id.replace('boardBtn-', '');
+                if (btnId !== board) btn.classList.add('locked-out');
+              });
+            }
+          }, 200);
+        }
+        if (className) {
+          setTimeout(() => { selectItem('class', String(className)); }, 150);
+        }
+      }
+    }
+
     let mode          = 'class';  // 'class' | 'exam'
     let selectedId    = null;     // '6' or 'neet'
     let currentPath   = '';       // e.g. 'class-6/Math'

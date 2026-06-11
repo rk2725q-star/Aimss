@@ -53,17 +53,19 @@
   let _cachedUser        = null;
   let _cachedRole        = null;
   let _cachedInstitution = null;
+  let _cachedBoard       = null;
+  let _cachedClassName   = null;
   let _loginMeta         = null;
 
   /* ── Fetch profile from DB ──────────────────────────────────── */
   async function fetchProfile(supabase, userId) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role, institution_id')
+      .select('role, institution_id, board, class_name')
       .eq('id', userId)
       .single();
     if (error || !data) return null;
-    return data; // { role, institution_id }
+    return data; // { role, institution_id, board, class_name }
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -258,6 +260,14 @@
     _cachedUser        = user;
     _cachedRole        = profile.role;
     _cachedInstitution = profile.institution_id || null;
+    _cachedBoard       = profile.board       || localStorage.getItem('student-board') || null;
+    _cachedClassName   = profile.class_name  || localStorage.getItem('student-class') || null;
+
+    // Persist to sessionStorage so other pages can read quickly
+    try {
+      if (_cachedBoard)     sessionStorage.setItem('draimss_student_board', _cachedBoard);
+      if (_cachedClassName) sessionStorage.setItem('draimss_student_class', _cachedClassName);
+    } catch(_) {}
 
     // Restore login meta from session storage
     try {
@@ -279,7 +289,7 @@
       el.textContent = _cachedInstitution || '—';
     });
 
-    return { user, role: profile.role, institutionId: _cachedInstitution };
+    return { user, role: profile.role, institutionId: _cachedInstitution, board: _cachedBoard, className: _cachedClassName };
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -291,10 +301,14 @@
     _cachedUser        = null;
     _cachedRole        = null;
     _cachedInstitution = null;
+    _cachedBoard       = null;
+    _cachedClassName   = null;
     _loginMeta         = null;
     try {
       sessionStorage.removeItem('draimss_login_meta');
       sessionStorage.removeItem('draimss_institution_id');
+      sessionStorage.removeItem('draimss_student_board');
+      sessionStorage.removeItem('draimss_student_class');
     } catch(_) {}
     window.location.href = 'login.html';
   }
@@ -309,7 +323,10 @@
     getRole:          () => _cachedRole,
     getInstitutionId: () => _cachedInstitution,
     getLoginMeta:     () => _loginMeta,
-    getClient
+    getClient,
+    // Student profile fields
+    getBoard:     () => _cachedBoard     || sessionStorage.getItem('draimss_student_board') || localStorage.getItem('student-board') || null,
+    getClassName: () => _cachedClassName || sessionStorage.getItem('draimss_student_class') || localStorage.getItem('student-class') || null,
   };
 
   /* ── Auto-wire logout buttons ───────────────────────────────── */

@@ -2566,7 +2566,38 @@ function initStudentVideo() {
   const readVideos = () => JSON.parse(localStorage.getItem(VID_KEY) || '[]');
   const readFolders = () => JSON.parse(localStorage.getItem(FLD_KEY) || '[]');
 
-  let currentPath = localStorage.getItem('aimss-student-drive-path') || '/';
+  // Determine student's registered class+board for access restriction
+  const _studentBoard = (window.DrAuth?.getBoard?.() || sessionStorage.getItem('draimss_student_board') || localStorage.getItem('student-board') || '').toLowerCase();
+  const _studentClass = (window.DrAuth?.getClassName?.() || sessionStorage.getItem('draimss_student_class') || localStorage.getItem('student-class') || '').toLowerCase();
+  const EXAM_MODES_VID = ['neet','jee','ncert','nda','upsc','tnpsc','cute'];
+  const _isExamStudent = EXAM_MODES_VID.includes(_studentBoard) || EXAM_MODES_VID.includes(_studentClass);
+
+  // Build the student's locked class folder name (matches CLASSES array format)
+  let _lockedClass = null;
+  if (_isExamStudent) {
+    const examId = EXAM_MODES_VID.includes(_studentBoard) ? _studentBoard : _studentClass;
+    _lockedClass = examId.toUpperCase(); // e.g. 'NEET'
+  } else if (_studentClass) {
+    _lockedClass = 'Class ' + _studentClass; // e.g. 'Class 10'
+  }
+
+  // Build the student's locked board folder name (matches BOARDS array format)
+  const BOARD_MAP = { stateboard: 'Stateboard', cbse: 'CBSE' };
+  const _lockedBoard = _studentBoard ? (BOARD_MAP[_studentBoard] || null) : null;
+
+  // Auto-navigate to student's class+board if not already there
+  let currentPath = '/';
+  if (_lockedClass) {
+    if (_isExamStudent) {
+      currentPath = `/${_lockedClass}/General/`;
+    } else if (_lockedBoard) {
+      currentPath = `/${_lockedClass}/${_lockedBoard}/`;
+    } else {
+      currentPath = `/${_lockedClass}/`;
+    }
+  } else {
+    currentPath = localStorage.getItem('aimss-student-drive-path') || '/';
+  }
 
   // Classes & Boards for root levels
   const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'];
@@ -2606,7 +2637,8 @@ function initStudentVideo() {
     const depth = segments.length;
 
     if (depth === 0) {
-      CLASSES.forEach(cls => {
+      const classesToShow = _lockedClass ? CLASSES.filter(c => c === _lockedClass) : CLASSES;
+      classesToShow.forEach(cls => {
         const card = document.createElement('div');
         card.className = 'drive-card';
         card.innerHTML = `<div class="drive-icon">📚</div><div class="drive-name">${cls}</div>`;
@@ -2618,7 +2650,11 @@ function initStudentVideo() {
 
     if (depth === 1) {
       const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'].includes(segments[0]);
-      const boardsToShow = isPrep ? ['General'] : BOARDS;
+      let boardsToShow = isPrep ? ['General'] : BOARDS;
+      // Restrict to student's board if set
+      if (!isPrep && _lockedBoard) {
+        boardsToShow = boardsToShow.filter(b => b === _lockedBoard);
+      }
       boardsToShow.forEach(brd => {
         const card = document.createElement('div');
         card.className = 'drive-card';

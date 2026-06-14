@@ -4,46 +4,57 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Video Lectures | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Watch high-quality video lectures uploaded by your teachers at Dr.AIMSS Academy." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
     /* ══ VIDEO PLAYER MODAL ══ */
-    .vid-player-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 16px; }
+    .vid-player-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.25s; padding: 16px; }
     .vid-player-overlay.open { opacity: 1; pointer-events: all; }
-    .vid-player-modal { background: #0a1120; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; width: 100%; max-width: 860px; box-shadow: 0 30px 80px rgba(0,0,0,0.7); transform: scale(0.94) translateY(16px); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
+    .vid-player-modal { background: #0a1120; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; width: 100%; max-width: 900px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); transform: scale(0.93) translateY(20px); transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
     .vid-player-overlay.open .vid-player-modal { transform: scale(1) translateY(0); }
-    .vid-player-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .vid-player-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; flex: 1; margin-right: 12px; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-    .vid-player-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; flex-shrink: 0; }
-    .vid-player-close:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .vid-player-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .vid-player-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; flex: 1; margin-right: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .vid-player-close { width: 34px; height: 34px; border-radius: 9px; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.25); color: #f87171; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; flex-shrink: 0; }
+    .vid-player-close:hover { background: rgba(248,113,113,0.25); }
     .vid-iframe-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
     .vid-iframe-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-    .vid-player-footer { padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .vid-player-footer { padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; }
     .vid-player-meta { font-size: 0.8rem; color: var(--muted); flex: 1; }
 
-    /* Drive explorer specific */
-    .drive-breadcrumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface-2); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); margin-bottom: 24px; font-size: 0.9rem; }
-    .breadcrumb-item { font-weight: 700; color: var(--muted); cursor: pointer; transition: color 0.2s; }
-    .breadcrumb-item:hover { color: var(--accent); }
-    .breadcrumb-item.active { color: #fff; cursor: default; }
-    .breadcrumb-separator { color: var(--muted-2); font-size: 0.8rem; }
-    .drive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
-    .drive-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; min-height: 120px; }
-    .drive-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
-    .drive-icon { font-size: 2.5rem; margin-bottom: 8px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-    .drive-name { font-size: 0.86rem; font-weight: 700; color: #fff; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .drive-card.video-card { padding: 0; overflow: hidden; align-items: stretch; justify-content: flex-start; min-height: auto; }
-    .drive-thumb { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; }
-    .drive-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.2s, transform 0.3s; }
-    .drive-card.video-card:hover .drive-thumb img { opacity: 1; transform: scale(1.03); }
-    .drive-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.5); pointer-events: none; transition: transform 0.2s; }
-    .drive-card.video-card:hover .drive-play { transform: translate(-50%, -50%) scale(1.1); background: var(--accent); }
-    .drive-play svg { width: 14px; height: 14px; fill: #064e3b; margin-left: 2px; }
-    .drive-video-info { padding: 12px; text-align: left; }
-    .drive-video-title { font-size: 0.85rem; font-weight: 700; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; margin-bottom: 6px; }
-    .drive-video-meta { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+    /* ══ VIDEO CARD GRID ══ */
+    .yt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+    .yt-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s; }
+    .yt-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); border-color: var(--accent); }
+    .yt-thumb { position: relative; width: 100%; aspect-ratio: 16/9; background: #111; overflow: hidden; }
+    .yt-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.88; transition: opacity 0.2s, transform 0.3s; }
+    .yt-card:hover .yt-thumb img { opacity: 1; transform: scale(1.04); }
+    .yt-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); pointer-events: none; transition: transform 0.2s, background 0.2s; }
+    .yt-card:hover .yt-play { transform: translate(-50%, -50%) scale(1.12); background: var(--accent); }
+    .yt-play svg { width: 18px; height: 18px; fill: #064e3b; margin-left: 3px; }
+    .yt-card:hover .yt-play svg { fill: #000; }
+    .yt-cat-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); border-radius: 6px; padding: 3px 9px; font-size: .7rem; font-weight: 800; color: var(--accent); border: 1px solid rgba(0,229,204,0.25); }
+    .yt-info { padding: 14px 16px; }
+    .yt-title { font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+    .yt-desc { font-size: .78rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* ══ FILTER CHIPS ══ */
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .filter-chip { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .18s; white-space: nowrap; font-family: inherit; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { border-color: var(--accent); background: rgba(0,229,204,0.1); color: var(--accent); }
+
+    /* ══ SEARCH ══ */
+    .yt-search { width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 11px 18px; color: var(--ink); font: inherit; font-size: .9rem; outline: none; transition: border-color .2s, box-shadow .2s; margin-bottom: 18px; box-sizing: border-box; }
+    .yt-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.1); }
+
+    /* ══ EMPTY / LOADING ══ */
+    .yt-empty { text-align: center; padding: 56px 20px; color: var(--muted); }
+    .yt-empty .e-icon { font-size: 3rem; margin-bottom: 14px; opacity: .4; }
+    .yt-spinner { display: inline-block; width: 32px; height: 32px; border-radius: 50%; border: 3px solid rgba(0,229,204,0.15); border-top-color: var(--accent); animation: spin .75s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -60,13 +71,6 @@
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-      <div style="margin-bottom: 24px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span style="font-size: 0.9rem; font-weight:600;">Personal Workspace</span>
-        </div>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
       <div class="portal-title">MAIN</div>
       <a class="portal-link" href="student-dashboard.html">
         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -79,13 +83,30 @@
         Study Materials
       </a>
       <a class="portal-link" href="ai-pdf-generator.html">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
         ePDF Generator
       </a>
-
       <a class="portal-link active" href="student-videos.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
         Video Lectures
+      </a>
+
+      <!-- Programming sub-links (student view-only) -->
+      <div class="portal-title">PROGRAMMING</div>
+      <a class="portal-link" href="#" onclick="filterByCategory('Python');return false;">
+        <span style="font-size:1rem;">🐍</span> Python
+      </a>
+      <a class="portal-link" href="#" onclick="filterByCategory('C');return false;">
+        <span style="font-size:1rem;">⚙️</span> C
+      </a>
+      <a class="portal-link" href="#" onclick="filterByCategory('C++');return false;">
+        <span style="font-size:1rem;">🔧</span> C++
+      </a>
+      <a class="portal-link" href="#" onclick="filterByCategory('Java');return false;">
+        <span style="font-size:1rem;">☕</span> Java
+      </a>
+      <a class="portal-link" href="#" onclick="filterByCategory('JavaScript');return false;">
+        <span style="font-size:1rem;">🌐</span> JavaScript
       </a>
 
       <div class="portal-title">ASSESSMENT</div>
@@ -112,38 +133,63 @@
         <div style="font-size:0.8rem; color:var(--muted); margin-top:6px;">Free Plan</div>
       </div>
     </aside>
-        <section class="portal-main">
-      <div class="glass card">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-          <div>
-            <h1 style="font-size:1.5rem;font-weight:800;margin:0 0 4px;color:#fff;">🎬 Video Lectures</h1>
-            <p style="color:var(--muted);margin:0;font-size:0.88rem;">Watch high-quality lecture videos uploaded by your teachers.</p>
-          </div>
+
+    <section class="portal-main">
+      <div class="glass card" style="padding:28px;">
+        <!-- Header -->
+        <div style="margin-bottom:24px;">
+          <h1 style="font-size:1.6rem;font-weight:800;margin:0 0 6px;color:#fff;">🎬 Video Lectures</h1>
+          <p style="color:var(--muted);margin:0;font-size:.9rem;">Watch high-quality video lectures shared by your teachers. <span style="color:var(--accent);font-weight:700;">View Only</span> — teacher-curated content.</p>
         </div>
 
-        <div id="studentDriveBreadcrumbs" class="drive-breadcrumbs"></div>
-        <div id="studentDriveGrid" class="drive-grid"></div>
+        <!-- Search -->
+        <input id="ytSearch" class="yt-search" type="text" placeholder="🔍 Search videos by title or category…" oninput="renderVideos()" autocomplete="off" />
 
+        <!-- Filter Chips -->
+        <div class="filter-chips" id="filterChips">
+          <button class="filter-chip active" data-cat="all" onclick="filterByCategory('all')">🎬 All</button>
+          <button class="filter-chip" data-cat="Python" onclick="filterByCategory('Python')">🐍 Python</button>
+          <button class="filter-chip" data-cat="C" onclick="filterByCategory('C')">⚙️ C</button>
+          <button class="filter-chip" data-cat="C++" onclick="filterByCategory('C++')">🔧 C++</button>
+          <button class="filter-chip" data-cat="Java" onclick="filterByCategory('Java')">☕ Java</button>
+          <button class="filter-chip" data-cat="JavaScript" onclick="filterByCategory('JavaScript')">🌐 JavaScript</button>
+          <button class="filter-chip" data-cat="NEET" onclick="filterByCategory('NEET')">🔬 NEET</button>
+          <button class="filter-chip" data-cat="JEE" onclick="filterByCategory('JEE')">⚙️ JEE</button>
+          <button class="filter-chip" data-cat="Physics" onclick="filterByCategory('Physics')">⚡ Physics</button>
+          <button class="filter-chip" data-cat="Chemistry" onclick="filterByCategory('Chemistry')">🧪 Chemistry</button>
+          <button class="filter-chip" data-cat="Biology" onclick="filterByCategory('Biology')">🧬 Biology</button>
+          <button class="filter-chip" data-cat="Maths" onclick="filterByCategory('Maths')">📐 Maths</button>
+          <button class="filter-chip" data-cat="General" onclick="filterByCategory('General')">📚 General</button>
+        </div>
+
+        <!-- Video Grid -->
+        <div id="ytGrid" class="yt-grid">
+          <div class="yt-empty" style="grid-column:1/-1;">
+            <div class="yt-spinner"></div>
+            <div>Loading videos…</div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
-    <!-- ══ VIDEO PLAYER MODAL ══ -->
-  <div id="vidPlayerOverlay" class="vid-player-overlay" role="dialog" aria-modal="true" aria-label="Video Player">
+  <!-- ══ VIDEO PLAYER MODAL ══ -->
+  <div id="vidPlayerOverlay" class="vid-player-overlay" role="dialog" aria-modal="true" aria-label="Video Player" onclick="if(event.target===this)closePlayer()">
     <div class="vid-player-modal">
       <div class="vid-player-header">
         <h2 class="vid-player-title" id="vidPlayerTitle">Video</h2>
-        <button class="vid-player-close" id="vidPlayerClose" aria-label="Close player">✕</button>
+        <button class="vid-player-close" id="vidPlayerClose" onclick="closePlayer()" aria-label="Close player">✕</button>
       </div>
       <div class="vid-iframe-wrap">
         <iframe id="vidPlayerFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" loading="lazy"></iframe>
       </div>
       <div class="vid-player-footer">
         <div class="vid-player-meta" id="vidPlayerMeta"></div>
-        <button class="btn btn-soft" style="margin:0;font-size:0.8rem;" id="vidPlayerYTBtn">Open on YouTube ↗</button>
+        <a id="vidPlayerYTBtn" href="#" target="_blank" rel="noopener" class="btn btn-soft" style="margin:0;font-size:0.8rem;">Open on YouTube ↗</a>
       </div>
     </div>
   </div>
+
   <!-- AI Search Modal -->
   <div id="aiSearchModal" class="ai-search-modal">
     <div class="ai-search-box">
@@ -153,11 +199,10 @@
       </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
-  <script>
-    DrAuth.guardPage('student');
-  </script>
+  <script>DrAuth.guardPage('student');</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js?v=10"></script>
   <script src="assets/js/main.js?v=6"></script>
@@ -172,7 +217,129 @@
       const bar = document.getElementById('sidePointsBar');
       if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
     })();
+
+    /* ══════════════════════════════════════
+       VIDEO VIEWER  —  Students: read-only
+       Reads from yt_videos Supabase table
+    ══════════════════════════════════════ */
+    let allVideos = [];
+    let activeCategory = 'all';
+
+    async function loadVideos() {
+      try {
+        const client = DrAuth.getClient();
+        // Wait for session
+        let session = null;
+        for (let i = 0; i < 12; i++) {
+          const res = await client.auth.getSession();
+          if (res.data?.session) { session = res.data.session; break; }
+          await new Promise(r => setTimeout(r, 300));
+        }
+        const instId = DrAuth.getInstitutionId() || '';
+        const { data, error } = await client
+          .from('yt_videos')
+          .select('id, title, video_id, category, description, created_at')
+          .eq('institution_id', instId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allVideos = data || [];
+
+        // Check URL param ?cat=
+        const urlCat = new URLSearchParams(window.location.search).get('cat');
+        if (urlCat) filterByCategory(urlCat);
+        else renderVideos();
+      } catch(e) {
+        document.getElementById('ytGrid').innerHTML = `
+          <div class="yt-empty" style="grid-column:1/-1;">
+            <div class="e-icon">⚠️</div>
+            <div style="color:#f87171;font-size:.9rem;">Could not load videos.<br><small>${e.message}</small></div>
+          </div>`;
+      }
+    }
+
+    function filterByCategory(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.filter-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.cat === cat);
+      });
+      // Also update programming sidebar links
+      document.querySelectorAll('.portal-link').forEach(a => {
+        const txt = a.textContent.trim();
+        const progLangs = ['Python','C','C++','Java','JavaScript'];
+        if (progLangs.includes(txt)) {
+          a.classList.toggle('active', txt === cat);
+        }
+      });
+      renderVideos();
+    }
+
+    function renderVideos() {
+      const q = (document.getElementById('ytSearch')?.value || '').toLowerCase().trim();
+      const filtered = allVideos.filter(v => {
+        const matchCat = activeCategory === 'all' || v.category === activeCategory;
+        const matchQ   = !q || v.title.toLowerCase().includes(q)
+                           || (v.description || '').toLowerCase().includes(q)
+                           || v.category.toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+
+      const grid = document.getElementById('ytGrid');
+      if (filtered.length === 0) {
+        const label = activeCategory !== 'all' ? ` for <strong>${activeCategory}</strong>` : '';
+        grid.innerHTML = `<div class="yt-empty" style="grid-column:1/-1;"><div class="e-icon">📭</div><div>No videos found${label}. Ask your teacher to add some!</div></div>`;
+        return;
+      }
+
+      grid.innerHTML = '';
+      filtered.forEach(v => {
+        const thumb = `https://img.youtube.com/vi/${v.video_id}/mqdefault.jpg`;
+        const card = document.createElement('div');
+        card.className = 'yt-card';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', 'Play: ' + v.title);
+        card.innerHTML = `
+          <div class="yt-thumb">
+            <img src="${thumb}" alt="${v.title}" loading="lazy" onerror="this.parentElement.style.background='#1a1a2e'">
+            <div class="yt-cat-badge">${v.category}</div>
+            <div class="yt-play">
+              <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            </div>
+          </div>
+          <div class="yt-info">
+            <div class="yt-title">${v.title}</div>
+            ${v.description ? `<div class="yt-desc">${v.description}</div>` : ''}
+          </div>`;
+        card.onclick = () => openPlayer(v);
+        card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') openPlayer(v); };
+        grid.appendChild(card);
+      });
+    }
+
+    function openPlayer(v) {
+      document.getElementById('vidPlayerTitle').textContent = v.title;
+      document.getElementById('vidPlayerMeta').textContent =
+        v.category + (v.description ? ' · ' + v.description : '');
+      document.getElementById('vidPlayerFrame').src =
+        `https://www.youtube.com/embed/${v.video_id}?autoplay=1&rel=0`;
+      document.getElementById('vidPlayerYTBtn').href =
+        `https://www.youtube.com/watch?v=${v.video_id}`;
+      document.getElementById('vidPlayerOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePlayer() {
+      document.getElementById('vidPlayerOverlay').classList.remove('open');
+      document.getElementById('vidPlayerFrame').src = '';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlayer(); });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(loadVideos, 400);
+    });
   </script>
 </body>
 </html>
-

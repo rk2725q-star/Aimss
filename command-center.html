@@ -470,28 +470,36 @@
         AI PDF Generator
       </a>
 
-      <!-- ── PROGRAMMING LANGUAGES ── -->
-      <div class="portal-title">PROGRAMMING</div>
-      <a class="portal-link" href="#" onclick="event.preventDefault();switchMode('exam');selectItem('exam','programming');" id="sideProgMain">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        Programming Hub
+      <!-- ── EXTRA ACTIVITY ── -->
+      <div class="portal-title">EXTRA ACTIVITY</div>
+
+      <!-- Programming accordion trigger -->
+      <a class="portal-link" href="#" id="sideProgToggle"
+         onclick="event.preventDefault();toggleProgLangs()"
+         style="justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Programming
+        </span>
+        <svg id="progChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" style="transition:transform .25s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
       </a>
-      <!-- Sub-links for each language -->
-      <div id="progLangLinks" style="padding-left:10px;margin-top:2px;">
-        <a class="portal-link" href="#" onclick="event.preventDefault();navigateToProgrammingLang('Python')" style="font-size:.8rem;padding:7px 11px;">
-          <span style="font-size:1rem;">🐍</span> Python
+
+      <!-- Language sub-links (hidden by default) -->
+      <div id="progLangLinks" style="overflow:hidden;max-height:0;transition:max-height .3s ease;padding-left:10px;">
+        <a class="portal-link" href="#" onclick="event.preventDefault();selectProgrammingLang('Python')" style="font-size:.82rem;padding:7px 12px;gap:8px;">
+          <span>🐍</span> Python
         </a>
-        <a class="portal-link" href="#" onclick="event.preventDefault();navigateToProgrammingLang('C')" style="font-size:.8rem;padding:7px 11px;">
-          <span style="font-size:1rem;">⚙️</span> C
+        <a class="portal-link" href="#" onclick="event.preventDefault();selectProgrammingLang('C')" style="font-size:.82rem;padding:7px 12px;gap:8px;">
+          <span>⚙️</span> C
         </a>
-        <a class="portal-link" href="#" onclick="event.preventDefault();navigateToProgrammingLang('C++')" style="font-size:.8rem;padding:7px 11px;">
-          <span style="font-size:1rem;">🔧</span> C++
+        <a class="portal-link" href="#" onclick="event.preventDefault();selectProgrammingLang('C++')" style="font-size:.82rem;padding:7px 12px;gap:8px;">
+          <span>🔧</span> C++
         </a>
-        <a class="portal-link" href="#" onclick="event.preventDefault();navigateToProgrammingLang('Java')" style="font-size:.8rem;padding:7px 11px;">
-          <span style="font-size:1rem;">☕</span> Java
+        <a class="portal-link" href="#" onclick="event.preventDefault();selectProgrammingLang('Java')" style="font-size:.82rem;padding:7px 12px;gap:8px;">
+          <span>☕</span> Java
         </a>
-        <a class="portal-link" href="#" onclick="event.preventDefault();navigateToProgrammingLang('JavaScript')" style="font-size:.8rem;padding:7px 11px;">
-          <span style="font-size:1rem;">🌐</span> JavaScript
+        <a class="portal-link" href="#" onclick="event.preventDefault();selectProgrammingLang('JavaScript')" style="font-size:.82rem;padding:7px 12px;gap:8px;">
+          <span>🌐</span> JavaScript
         </a>
       </div>
 
@@ -784,60 +792,6 @@
         <div id="mcqBankList"></div>
       </div>
 
-      <!-- ══════════════ YOUTUBE VIDEO MANAGER ══════════════ -->
-      <div class="glass card" id="youtubeManagerCard" style="padding:24px;margin-bottom:18px;">
-        <h2 style="margin:0 0 6px;">🎬 YouTube Video Manager</h2>
-        <p style="color:var(--muted);margin:0 0 20px;font-size:.86rem;">Add YouTube video links for students to watch. Students can only view — not add or delete.</p>
-
-        <!-- Add Video Form -->
-        <div style="background:rgba(0,229,204,0.04);border:1px solid rgba(0,229,204,0.15);border-radius:14px;padding:20px;margin-bottom:20px;">
-          <div style="font-size:.8rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;">➕ Add New Video</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <div>
-              <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Video Title</label>
-              <input id="ytTitle" class="modal-input" type="text" placeholder="e.g. Python Basics – Part 1" style="width:100%;" />
-            </div>
-            <div>
-              <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Category / Subject</label>
-              <select id="ytCategory" class="modal-input" style="width:100%;">
-                <option value="General">General</option>
-                <option value="Python">🐍 Python</option>
-                <option value="C">⚙️ C</option>
-                <option value="C++">🔧 C++</option>
-                <option value="Java">☕ Java</option>
-                <option value="JavaScript">🌐 JavaScript</option>
-                <option value="NEET">🔬 NEET</option>
-                <option value="JEE">⚙️ JEE</option>
-                <option value="Physics">⚡ Physics</option>
-                <option value="Chemistry">🧪 Chemistry</option>
-                <option value="Biology">🧬 Biology</option>
-                <option value="Maths">📐 Maths</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-bottom:10px;">
-            <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">YouTube URL or Video ID</label>
-            <input id="ytUrl" class="modal-input" type="text" placeholder="https://www.youtube.com/watch?v=... or just the video ID" style="width:100%;" />
-          </div>
-          <div style="margin-bottom:14px;">
-            <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Description (optional)</label>
-            <input id="ytDesc" class="modal-input" type="text" placeholder="Short description of the video" style="width:100%;" />
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <button id="ytAddBtn" class="btn" style="padding:10px 24px;" onclick="addYoutubeVideo()">▶️ Add Video</button>
-            <span id="ytAddStatus" style="font-size:.84rem;"></span>
-          </div>
-        </div>
-
-        <!-- Video List -->
-        <div class="section-divider" style="margin-bottom:14px;">Published Videos</div>
-        <div id="ytVideoList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-          <div style="color:var(--muted);font-size:.84rem;grid-column:1/-1;text-align:center;padding:24px;">
-            <span class="file-spinner" style="display:inline-block;width:22px;height:22px;border-width:2px;margin-bottom:6px;"></span><br>Loading videos…
-          </div>
-        </div>
-      </div>
-
     </section>
   </main>
 
@@ -1099,164 +1053,35 @@
     }
 
     /* ═══════════════════════════════════════
-       NAVIGATE TO PROGRAMMING LANGUAGE
-       Switches to Exam › Programming, then
-       drills into the language subfolder.
+       EXTRA ACTIVITY — Programming accordion
     ═══════════════════════════════════════ */
-    function navigateToProgrammingLang(lang) {
-      // 1. Switch to Exam mode and select Programming
+    let progLangsOpen = false;
+
+    function toggleProgLangs() {
+      progLangsOpen = !progLangsOpen;
+      const panel   = document.getElementById('progLangLinks');
+      const chevron = document.getElementById('progChevron');
+      const trigger = document.getElementById('sideProgToggle');
+      panel.style.maxHeight   = progLangsOpen ? panel.scrollHeight + 'px' : '0';
+      chevron.style.transform = progLangsOpen ? 'rotate(180deg)' : '';
+      trigger.classList.toggle('active', progLangsOpen);
+    }
+
+    function selectProgrammingLang(lang) {
+      // Highlight the chosen language link
+      document.querySelectorAll('#progLangLinks .portal-link').forEach(a => a.classList.remove('active'));
+      event.currentTarget && event.currentTarget.classList.add('active');
+
+      // Switch to Exam › Programming and drill into the language subfolder
       switchMode('exam');
       selectItem('exam', 'programming');
-
-      // 2. After the file browser is shown, navigate into the lang subfolder
-      // Give a tiny tick for the browser card to render first
       setTimeout(() => {
-        const langPath = `exam-programming/${lang}`;
-        currentPath = langPath;
+        currentPath = `exam-programming/${lang}`;
         loadCurrentPath();
-        // Highlight the sidebar link
-        document.querySelectorAll('#progLangLinks .portal-link').forEach(a => a.classList.remove('active'));
-        const langMap = { Python: 0, C: 1, 'C++': 2, Java: 3, JavaScript: 4 };
-        const idx = langMap[lang];
-        if (idx !== undefined) {
-          const links = document.querySelectorAll('#progLangLinks .portal-link');
-          if (links[idx]) links[idx].classList.add('active');
-        }
-        // Scroll main panel to top
         document.querySelector('.portal-main')?.scrollTo({ top: 0, behavior: 'smooth' });
       }, 80);
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       YOUTUBE VIDEO MANAGER
-       Stores video metadata in Supabase table: yt_videos
-       Teachers: full CRUD
-       Students: SELECT only (via RLS)
-    ═══════════════════════════════════════════════════════════ */
-
-    function extractYouTubeId(urlOrId) {
-      if (!urlOrId) return null;
-      const u = urlOrId.trim();
-      // Already just an ID (11 chars alphanumeric/dash/underscore)?
-      if (/^[a-zA-Z0-9_\-]{11}$/.test(u)) return u;
-      // Standard watch URL
-      let m = u.match(/[?&]v=([a-zA-Z0-9_\-]{11})/);
-      if (m) return m[1];
-      // youtu.be short URL
-      m = u.match(/youtu\.be\/([a-zA-Z0-9_\-]{11})/);
-      if (m) return m[1];
-      // embed URL
-      m = u.match(/embed\/([a-zA-Z0-9_\-]{11})/);
-      if (m) return m[1];
-      return null;
-    }
-
-    async function addYoutubeVideo() {
-      const title    = document.getElementById('ytTitle').value.trim();
-      const ytUrl    = document.getElementById('ytUrl').value.trim();
-      const category = document.getElementById('ytCategory').value;
-      const desc     = document.getElementById('ytDesc').value.trim();
-      const statusEl = document.getElementById('ytAddStatus');
-      const btn      = document.getElementById('ytAddBtn');
-
-      if (!title) { statusEl.textContent = '⚠️ Please enter a title.'; statusEl.style.color = '#f87171'; return; }
-      const videoId = extractYouTubeId(ytUrl);
-      if (!videoId) { statusEl.textContent = '⚠️ Invalid YouTube URL or video ID.'; statusEl.style.color = '#f87171'; return; }
-
-      btn.disabled = true;
-      btn.textContent = '⏳ Saving…';
-      statusEl.textContent = '';
-
-      try {
-        const client = DrAuth.getClient();
-        const { data: { session } } = await client.auth.getSession();
-        const { error } = await client.from('yt_videos').insert({
-          title,
-          video_id: videoId,
-          category,
-          description: desc || null,
-          uploaded_by: session?.user?.email || 'teacher',
-          institution_id: DrAuth.getInstitutionId() || ''
-        });
-        if (error) throw error;
-        statusEl.textContent = '✅ Video added!';
-        statusEl.style.color = '#4ade80';
-        document.getElementById('ytTitle').value = '';
-        document.getElementById('ytUrl').value   = '';
-        document.getElementById('ytDesc').value  = '';
-        loadYoutubeVideos();
-      } catch(e) {
-        statusEl.textContent = '❌ ' + (e.message || 'Save failed');
-        statusEl.style.color = '#f87171';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '▶️ Add Video';
-        setTimeout(() => { statusEl.textContent = ''; }, 4000);
-      }
-    }
-
-    async function loadYoutubeVideos() {
-      const listEl = document.getElementById('ytVideoList');
-      if (!listEl) return;
-      listEl.innerHTML = `<div style="color:var(--muted);font-size:.84rem;grid-column:1/-1;text-align:center;padding:24px;"><span class="file-spinner" style="display:inline-block;width:22px;height:22px;border-width:2px;margin-bottom:6px;"></span><br>Loading videos…</div>`;
-      try {
-        const client = DrAuth.getClient();
-        const instId = DrAuth.getInstitutionId() || '';
-        const { data, error } = await client.from('yt_videos')
-          .select('*')
-          .eq('institution_id', instId)
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-          listEl.innerHTML = `<div style="color:var(--muted);font-size:.84rem;grid-column:1/-1;text-align:center;padding:32px;"><div style="font-size:2rem;margin-bottom:8px;">📭</div>No videos yet. Add your first YouTube video above.</div>`;
-          return;
-        }
-
-        listEl.innerHTML = '';
-        data.forEach(v => {
-          const thumb = `https://img.youtube.com/vi/${v.video_id}/mqdefault.jpg`;
-          const card = document.createElement('div');
-          card.style.cssText = 'background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:transform .2s,box-shadow .2s;';
-          card.innerHTML = `
-            <div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;">
-              <img src="${thumb}" alt="${v.title}" style="width:100%;height:100%;object-fit:cover;opacity:.85;" onerror="this.style.display='none'">
-              <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:800;color:var(--accent);">${v.category}</div>
-            </div>
-            <div style="padding:12px 14px;">
-              <div style="font-weight:700;font-size:.9rem;color:#fff;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${v.title}</div>
-              ${v.description ? `<div style="font-size:.77rem;color:var(--muted);margin-bottom:8px;">${v.description}</div>` : ''}
-              <div style="font-size:.7rem;color:var(--muted-2);margin-bottom:10px;">🆔 ${v.video_id}</div>
-              <div style="display:flex;gap:6px;">
-                <a href="https://www.youtube.com/watch?v=${v.video_id}" target="_blank" class="btn btn-soft" style="flex:1;text-align:center;font-size:.77rem;padding:6px 0;">▶ Preview</a>
-                <button onclick="deleteYoutubeVideo('${v.id}')" class="action-btn btn-del" style="flex-shrink:0;">🗑</button>
-              </div>
-            </div>`;
-          card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-3px)'; card.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; });
-          card.addEventListener('mouseleave', () => { card.style.transform = ''; card.style.boxShadow = ''; });
-          listEl.appendChild(card);
-        });
-      } catch(e) {
-        listEl.innerHTML = `<div style="color:#f87171;font-size:.84rem;grid-column:1/-1;text-align:center;padding:24px;">❌ Failed to load videos: ${e.message}</div>`;
-      }
-    }
-
-    async function deleteYoutubeVideo(id) {
-      if (!confirm('Delete this video?')) return;
-      try {
-        const client = DrAuth.getClient();
-        const { error } = await client.from('yt_videos').delete().eq('id', id);
-        if (error) throw error;
-        loadYoutubeVideos();
-      } catch(e) {
-        alert('Delete failed: ' + e.message);
-      }
-    }
-
-    // Load YouTube videos when page loads
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(loadYoutubeVideos, 600);
-    });
 
     /* ═══════════════════════════════════════
        BREADCRUMB

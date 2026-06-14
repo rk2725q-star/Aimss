@@ -198,6 +198,52 @@
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     }
 
+    /* ── ATTENDANCE MODE TOGGLE ── */
+    .att-mode-tabs {
+      display: flex; gap: 6px; margin-bottom: 20px;
+      background: rgba(255,255,255,.02); padding: 5px;
+      border-radius: 10px; border: 1px solid var(--tp-card-border);
+    }
+    .att-mode-tab {
+      flex: 1; padding: 9px 14px; border-radius: 7px; border: none;
+      background: transparent; color: var(--muted);
+      font-family: 'Outfit', sans-serif; font-size: .84rem; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .att-mode-tab:hover { background: rgba(255,255,255,.04); color: #fff; }
+    .att-mode-tab.active {
+      background: rgba(255,215,0,.1); color: #ffd700;
+      border: 1px solid rgba(255,215,0,.25);
+    }
+
+    /* ── FILTER BAR (Report Mode) ── */
+    .att-filter-wrap {
+      background: rgba(255,215,0,.03); border: 1px solid rgba(255,215,0,.12);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;
+    }
+    .att-filter-title {
+      font-size: .72rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .07em; color: #ffd700; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .att-filter-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; align-items: end;
+    }
+    .att-filter-field { display: flex; flex-direction: column; gap: 5px; }
+    .att-filter-label {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--muted);
+    }
+
+    /* ── REPORT TABLE ── */
+    .att-report-table th { background: rgba(255,215,0,.05); }
+    .att-report-row-present td { border-left: 3px solid #4ade80; }
+    .att-report-row-absent  td { border-left: 3px solid #f87171; }
+    .att-pct-bar-wrap { width: 80px; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; display: inline-block; vertical-align: middle; margin-left: 6px; }
+    .att-pct-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4ade80, #00e5cc); transition: width .4s; }
+
     /* ── VIDEO DRIVE ── */
     .drive-container {
       background: var(--tp-card-bg); border: 1px solid var(--tp-card-border);
@@ -499,34 +545,141 @@
                 <button class="btn" style="margin:0;padding:8px 18px;font-size:.84rem;" onclick="openAddStudentModal()">➕ Add Student</button>
               </div>
 
-              <!-- Date bar -->
-              <div class="att-date-bar">
-                <span class="att-date-label">📅 Attendance for:</span>
-                <input type="date" id="attDate" class="field" style="margin:0;width:auto;min-width:160px;" />
-                <button class="btn btn-soft" style="margin:0;padding:7px 16px;font-size:.84rem;" onclick="loadAttendanceForDate()">Load</button>
+              <!-- Mode toggle: Mark vs Report -->
+              <div class="att-mode-tabs">
+                <button class="att-mode-tab active" id="modeMarkBtn" onclick="switchAttMode('mark')">✏️ Mark Attendance</button>
+                <button class="att-mode-tab" id="modeReportBtn" onclick="switchAttMode('report')">📊 View Reports &amp; Filter</button>
               </div>
 
-              <!-- Summary chips -->
-              <div class="att-summary-chips" id="attSummaryChips"></div>
+              <!-- ══ MARK MODE ══ -->
+              <div id="attMarkMode">
+                <!-- Date bar -->
+                <div class="att-date-bar">
+                  <span class="att-date-label">📅 Attendance for:</span>
+                  <input type="date" id="attDate" class="field" style="margin:0;width:auto;min-width:160px;" />
+                  <button class="btn btn-soft" style="margin:0;padding:7px 16px;font-size:.84rem;" onclick="loadAttendanceForDate()">Load</button>
+                </div>
 
-              <!-- Attendance Table -->
-              <div class="tp-table-wrap" style="margin-bottom:16px;">
-                <table class="tp-table">
-                  <thead><tr>
-                    <th>#</th><th>Student Name</th><th>Initial / Roll</th><th>Board</th><th style="text-align:center;">Present</th><th style="text-align:center;">Absent</th><th>Note</th>
-                  </tr></thead>
-                  <tbody id="attTableBody">
-                    <tr><td colspan="7"><div class="tp-empty"><div class="tp-empty-icon">📅</div><p class="tp-empty-text">No students added yet</p><p class="tp-empty-sub">Click "Add Student" to add students to this class.</p></div></td></tr>
-                  </tbody>
-                </table>
-              </div>
+                <!-- Summary chips -->
+                <div class="att-summary-chips" id="attSummaryChips"></div>
 
-              <!-- Save + Export -->
-              <div class="att-save-bar">
-                <button class="btn" id="attSaveBtn" onclick="saveAttendance()" style="margin:0;background:linear-gradient(135deg,#ffd700,#f59e0b);color:#000;border:none;padding:10px 28px;font-size:.9rem;">💾 Save Attendance</button>
-                <button class="btn btn-soft" onclick="exportAttendanceCSV()" style="margin:0;padding:10px 20px;font-size:.84rem;">⬇ Export CSV</button>
-                <span id="attSaveStatus" style="font-size:.82rem;color:var(--muted);"></span>
-              </div>
+                <!-- Attendance Table -->
+                <div class="tp-table-wrap" style="margin-bottom:16px;">
+                  <table class="tp-table">
+                    <thead><tr>
+                      <th>#</th><th>Student Name</th><th>Initial / Roll</th><th>Board</th><th style="text-align:center;">Present</th><th style="text-align:center;">Absent</th><th>Note</th>
+                    </tr></thead>
+                    <tbody id="attTableBody">
+                      <tr><td colspan="7"><div class="tp-empty"><div class="tp-empty-icon">📅</div><p class="tp-empty-text">No students added yet</p><p class="tp-empty-sub">Click "Add Student" to add students to this class.</p></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Save + Export -->
+                <div class="att-save-bar">
+                  <button class="btn" id="attSaveBtn" onclick="saveAttendance()" style="margin:0;background:linear-gradient(135deg,#ffd700,#f59e0b);color:#000;border:none;padding:10px 28px;font-size:.9rem;">💾 Save Attendance</button>
+                  <button class="btn btn-soft" onclick="exportAttendanceCSV()" style="margin:0;padding:10px 20px;font-size:.84rem;">⬇ Export CSV</button>
+                  <span id="attSaveStatus" style="font-size:.82rem;color:var(--muted);"></span>
+                </div>
+              </div><!-- /#attMarkMode -->
+
+              <!-- ══ REPORT MODE ══ -->
+              <div id="attReportMode" style="display:none;">
+
+                <!-- Filter Panel -->
+                <div class="att-filter-wrap">
+                  <div class="att-filter-title">🔍 Filter Attendance Records</div>
+                  <div class="att-filter-grid">
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Class</label>
+                      <select class="field" id="rptClass" style="margin:0;">
+                        <option value="all">All Classes</option>
+                        <option value="6">Class 6</option><option value="7">Class 7</option>
+                        <option value="8">Class 8</option><option value="9">Class 9</option>
+                        <option value="10">Class 10</option><option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                        <option value="neet">NEET</option><option value="jee">JEE</option>
+                        <option value="cute">CUTE</option>
+                      </select>
+                    </div>
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Board</label>
+                      <select class="field" id="rptBoard" style="margin:0;">
+                        <option value="all">All Boards</option>
+                        <option value="stateboard">Stateboard</option>
+                        <option value="cbse">CBSE</option>
+                        <option value="general">General / Prep</option>
+                      </select>
+                    </div>
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Status</label>
+                      <select class="field" id="rptStatus" style="margin:0;">
+                        <option value="all">All</option>
+                        <option value="present">Present Only</option>
+                        <option value="absent">Absent Only</option>
+                      </select>
+                    </div>
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Year</label>
+                      <select class="field" id="rptYear" style="margin:0;" onchange="syncDateRangeFromYear()">
+                        <option value="all">All Years</option>
+                      </select>
+                    </div>
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Date From</label>
+                      <input type="date" class="field" id="rptDateFrom" style="margin:0;" />
+                    </div>
+                    <div class="att-filter-field">
+                      <label class="att-filter-label">Date To</label>
+                      <input type="date" class="field" id="rptDateTo" style="margin:0;" />
+                    </div>
+                    <div class="att-filter-field" style="justify-content:flex-end;">
+                      <button class="btn" onclick="runReport()" style="margin:0;padding:10px 20px;">🔍 Apply Filter</button>
+                    </div>
+                    <div class="att-filter-field" style="justify-content:flex-end;">
+                      <button class="btn btn-soft" onclick="clearReportFilters()" style="margin:0;padding:10px 14px;font-size:.8rem;">✕ Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Report Summary chips -->
+                <div class="att-summary-chips" id="rptSummaryChips"></div>
+
+                <!-- Report Table -->
+                <div class="tp-table-wrap" style="margin-bottom:16px;">
+                  <table class="tp-table att-report-table">
+                    <thead><tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Student</th>
+                      <th>Initial</th>
+                      <th>Class</th>
+                      <th>Board</th>
+                      <th>Status</th>
+                      <th>Note</th>
+                    </tr></thead>
+                    <tbody id="rptTableBody">
+                      <tr><td colspan="8"><div class="tp-empty"><div class="tp-empty-icon">📊</div><p class="tp-empty-text">Apply filters to view records</p><p class="tp-empty-sub">Use the filter panel above to load attendance data.</p></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Student Summary Table -->
+                <div id="rptStudentSummaryWrap" style="display:none;margin-top:24px;">
+                  <div style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#ffd700;margin-bottom:12px;">👥 Student-wise Summary</div>
+                  <div class="tp-table-wrap">
+                    <table class="tp-table">
+                      <thead><tr><th>#</th><th>Student</th><th>Class</th><th>Board</th><th>Present</th><th>Absent</th><th>Total Days</th><th>% Attendance</th></tr></thead>
+                      <tbody id="rptStudentSummaryBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Export Row -->
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                  <button class="btn btn-soft" onclick="exportReportCSV()" style="margin:0;padding:10px 20px;font-size:.84rem;">⬇ Export Report CSV</button>
+                </div>
+              </div><!-- /#attReportMode -->
             </div>
           </div>
 
@@ -978,6 +1131,240 @@
   /* ── Escape HTML helper ── */
   function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ATTENDANCE MODE SWITCH (Mark ↔ Report)
+  ══════════════════════════════════════════════════════ */
+  function switchAttMode(mode) {
+    const markDiv   = document.getElementById('attMarkMode');
+    const reportDiv = document.getElementById('attReportMode');
+    const markBtn   = document.getElementById('modeMarkBtn');
+    const repBtn    = document.getElementById('modeReportBtn');
+    if (mode === 'mark') {
+      markDiv.style.display   = 'block';
+      reportDiv.style.display = 'none';
+      markBtn.classList.add('active');
+      repBtn.classList.remove('active');
+    } else {
+      markDiv.style.display   = 'none';
+      reportDiv.style.display = 'block';
+      markBtn.classList.remove('active');
+      repBtn.classList.add('active');
+      initReportFilters();
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     REPORT / FILTER MODULE
+  ══════════════════════════════════════════════════════ */
+  let _rptData    = [];  // raw fetched records for current report
+  let _rptStudMap = {};  // student_id → student object (from _attStudents + cross-class)
+
+  function initReportFilters() {
+    // Populate year dropdown dynamically (current year ± 2)
+    const yr = document.getElementById('rptYear');
+    if (yr.options.length <= 1) {
+      const now = new Date().getFullYear();
+      for (let y = now; y >= now - 4; y--) {
+        const o = document.createElement('option');
+        o.value = y; o.textContent = y;
+        yr.appendChild(o);
+      }
+    }
+    // Pre-select current class in filter
+    const cls = document.getElementById('rptClass');
+    if (_attClass && _attClass !== 'all') cls.value = _attClass;
+    // Default date range: current month
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    document.getElementById('rptDateFrom').value = from.toISOString().slice(0, 10);
+    document.getElementById('rptDateTo').value   = to.toISOString().slice(0, 10);
+    document.getElementById('rptYear').value = 'all';
+  }
+
+  function syncDateRangeFromYear() {
+    const yr = document.getElementById('rptYear').value;
+    if (yr === 'all') return;
+    document.getElementById('rptDateFrom').value = `${yr}-01-01`;
+    document.getElementById('rptDateTo').value   = `${yr}-12-31`;
+  }
+
+  function clearReportFilters() {
+    document.getElementById('rptClass').value  = _attClass || 'all';
+    document.getElementById('rptBoard').value  = 'all';
+    document.getElementById('rptStatus').value = 'all';
+    document.getElementById('rptYear').value   = 'all';
+    const now = new Date();
+    document.getElementById('rptDateFrom').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    document.getElementById('rptDateTo').value   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+    document.getElementById('rptTableBody').innerHTML = '<tr><td colspan="8"><div class="tp-empty"><div class="tp-empty-icon">📊</div><p class="tp-empty-text">Apply filters to view records</p></div></td></tr>';
+    document.getElementById('rptSummaryChips').innerHTML = '';
+    document.getElementById('rptStudentSummaryWrap').style.display = 'none';
+    _rptData = [];
+  }
+
+  async function runReport() {
+    const db        = getDB();
+    const classVal  = document.getElementById('rptClass').value;
+    const boardVal  = document.getElementById('rptBoard').value;
+    const statusVal = document.getElementById('rptStatus').value;
+    const dateFrom  = document.getElementById('rptDateFrom').value;
+    const dateTo    = document.getElementById('rptDateTo').value;
+
+    // Validate dates
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      showToast('Date From must be before Date To', false); return;
+    }
+
+    const tbody = document.getElementById('rptTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">⏳ Loading…</td></tr>';
+    document.getElementById('rptSummaryChips').innerHTML = '';
+    document.getElementById('rptStudentSummaryWrap').style.display = 'none';
+
+    // Step 1: Get students matching class + board filters
+    let stuQuery = db.from('attendance_students')
+      .select('*')
+      .eq('institution_id', _attInstitution);
+    if (classVal !== 'all') stuQuery = stuQuery.eq('class_id', classVal);
+    if (boardVal !== 'all') stuQuery = stuQuery.eq('board', boardVal);
+    const { data: stuData, error: stuErr } = await stuQuery;
+    if (stuErr) { showToast('Error loading students: ' + stuErr.message, false); return; }
+    const students = stuData || [];
+    if (students.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="tp-empty"><div class="tp-empty-icon">👥</div><p class="tp-empty-text">No students match the selected filters</p></div></td></tr>';
+      return;
+    }
+    _rptStudMap = {};
+    students.forEach(s => { _rptStudMap[s.id] = s; });
+    const ids = students.map(s => s.id);
+
+    // Step 2: Get attendance records for those students + date range + status
+    let recQuery = db.from('attendance_records')
+      .select('*')
+      .in('student_id', ids)
+      .eq('institution_id', _attInstitution)
+      .order('date', { ascending: false })
+      .order('student_id');
+    if (dateFrom) recQuery = recQuery.gte('date', dateFrom);
+    if (dateTo)   recQuery = recQuery.lte('date', dateTo);
+    if (statusVal !== 'all') recQuery = recQuery.eq('status', statusVal);
+
+    const { data: recData, error: recErr } = await recQuery;
+    if (recErr) { showToast('Error loading records: ' + recErr.message, false); return; }
+    _rptData = recData || [];
+
+    renderReportTable();
+    renderStudentSummary();
+  }
+
+  function renderReportTable() {
+    const tbody = document.getElementById('rptTableBody');
+    if (_rptData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="tp-empty"><div class="tp-empty-icon">📭</div><p class="tp-empty-text">No records found</p><p class="tp-empty-sub">Try adjusting the filters.</p></div></td></tr>';
+      updateRptSummary();
+      return;
+    }
+    tbody.innerHTML = _rptData.map((r, i) => {
+      const s    = _rptStudMap[r.student_id] || {};
+      const isP  = r.status === 'present';
+      const rowCls = isP ? 'att-report-row-present' : 'att-report-row-absent';
+      const badge  = isP
+        ? '<span class="tp-badge" style="background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);">✅ Present</span>'
+        : '<span class="tp-badge" style="background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.25);">❌ Absent</span>';
+      const cls  = s.class_id ? `Class ${s.class_id.toUpperCase()}` : '—';
+      return `<tr class="${rowCls}">
+        <td style="color:var(--muted);font-size:.8rem;">${i+1}</td>
+        <td style="font-weight:700;color:#ffd700;white-space:nowrap;">${escHtml(formatDisplayDate(r.date))}</td>
+        <td style="font-weight:700;color:#fff;">${escHtml(s.name || '—')}</td>
+        <td style="color:var(--muted);">${escHtml(s.initial || '—')}</td>
+        <td><span class="tp-badge tp-badge-class">${escHtml(cls)}</span></td>
+        <td><span class="tp-badge tp-badge-board" style="font-size:.7rem;">${escHtml(s.board || '—')}</span></td>
+        <td>${badge}</td>
+        <td style="color:var(--muted);font-size:.82rem;">${escHtml(r.note || '—')}</td>
+      </tr>`;
+    }).join('');
+    updateRptSummary();
+  }
+
+  function renderStudentSummary() {
+    const wrap  = document.getElementById('rptStudentSummaryWrap');
+    const tbody = document.getElementById('rptStudentSummaryBody');
+    if (_rptData.length === 0) { wrap.style.display = 'none'; return; }
+
+    // Aggregate per student
+    const agg = {};
+    _rptData.forEach(r => {
+      if (!agg[r.student_id]) agg[r.student_id] = { present: 0, absent: 0 };
+      agg[r.student_id][r.status]++;
+    });
+
+    const rows = Object.entries(agg).sort((a, b) => {
+      const na = (_rptStudMap[a[0]]?.name || '').toLowerCase();
+      const nb = (_rptStudMap[b[0]]?.name || '').toLowerCase();
+      return na.localeCompare(nb);
+    });
+
+    tbody.innerHTML = rows.map(([sid, counts], i) => {
+      const s     = _rptStudMap[sid] || {};
+      const total = counts.present + counts.absent;
+      const pct   = total > 0 ? Math.round((counts.present / total) * 100) : 0;
+      const pctColor = pct >= 75 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171';
+      const cls   = s.class_id ? `Class ${s.class_id.toUpperCase()}` : '—';
+      return `<tr>
+        <td style="color:var(--muted);font-size:.8rem;">${i+1}</td>
+        <td style="font-weight:700;color:#fff;">${escHtml(s.name || '—')}</td>
+        <td><span class="tp-badge tp-badge-class">${escHtml(cls)}</span></td>
+        <td><span class="tp-badge tp-badge-board" style="font-size:.7rem;">${escHtml(s.board || '—')}</span></td>
+        <td style="color:#4ade80;font-weight:800;">${counts.present}</td>
+        <td style="color:#f87171;font-weight:800;">${counts.absent}</td>
+        <td style="color:var(--muted);">${total}</td>
+        <td>
+          <span style="font-weight:800;color:${pctColor};">${pct}%</span>
+          <span class="att-pct-bar-wrap"><span class="att-pct-bar" style="width:${pct}%;background:${pct >= 75 ? 'linear-gradient(90deg,#4ade80,#00e5cc)' : pct >= 50 ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' : 'linear-gradient(90deg,#f87171,#ef4444)'}"></span></span>
+        </td>
+      </tr>`;
+    }).join('');
+    wrap.style.display = 'block';
+  }
+
+  function updateRptSummary() {
+    const chips   = document.getElementById('rptSummaryChips');
+    const total   = _rptData.length;
+    const present = _rptData.filter(r => r.status === 'present').length;
+    const absent  = _rptData.filter(r => r.status === 'absent').length;
+    const days    = new Set(_rptData.map(r => r.date)).size;
+    const studs   = new Set(_rptData.map(r => r.student_id)).size;
+    chips.innerHTML = [
+      `<div class="att-chip total">📋 ${total} Records</div>`,
+      `<div class="att-chip present">✅ ${present} Present</div>`,
+      `<div class="att-chip absent">❌ ${absent} Absent</div>`,
+      `<div class="att-chip" style="border-color:rgba(167,139,250,.3);color:#a78bfa;">👥 ${studs} Students</div>`,
+      `<div class="att-chip" style="border-color:rgba(251,191,36,.3);color:#fbbf24;">📅 ${days} Days</div>`,
+      total > 0 ? `<div class="att-chip" style="border-color:rgba(0,229,204,.25);color:var(--tp-accent);">📊 ${Math.round((present/total)*100)}% Rate</div>` : ''
+    ].join('');
+  }
+
+  function formatDisplayDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function exportReportCSV() {
+    if (_rptData.length === 0) { showToast('No data to export!', false); return; }
+    const rows = [['#','Date','Student','Initial','Class','Board','Status','Note']];
+    _rptData.forEach((r, i) => {
+      const s = _rptStudMap[r.student_id] || {};
+      rows.push([i+1, r.date, s.name||'', s.initial||'', s.class_id||'', s.board||'', r.status, r.note||'']);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = `attendance_report_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    showToast('📥 Report exported!');
   }
 
   /* Close modal backdrop click */

@@ -382,44 +382,8 @@
    * Returns raw (unscored) chunks.
    */
   async function runFTSQuery(supabase, ftsQuery, rawQuery, filters, limit) {
-    try {
-      let q = supabase
-        .from('rag_documents')
-        .select('id, title, class_level, subject, exam_category, chapter, content_text, source_name, chunk_index, total_chunks, uploaded_by');
-
-      // Metadata filters — applied in the DB for O(1) lookup via index
-      if (filters.class_level)    q = q.eq('class_level',    filters.class_level);
-      if (filters.subject)        q = q.eq('subject',        filters.subject);
-      if (filters.exam_category)  q = q.eq('exam_category',  filters.exam_category);
-      if (filters.institution_id) q = q.eq('institution_id', filters.institution_id);
-
-      // Server-side full-text search — use 'plain' type so :* prefix matching works
-      if (ftsQuery) {
-        q = q.textSearch('content_text', ftsQuery, {
-          type: 'plain',        // 'plain' supports :* prefix; 'websearch' does NOT
-          config: 'english'
-        });
-      }
-
-      q = q.limit(limit);
-
-      const { data, error } = await q;
-      if (error) {
-        // FTS failed (e.g. 'plain' not supported) — retry with websearch
-        console.warn('[RAG] FTS plain error, retrying with websearch:', error.message);
-        return runFTSWebsearch(supabase, rawQuery, filters, limit);
-      }
-      return data || [];
-    } catch (err) {
-      console.error('[RAG] runFTSQuery error:', err);
-      return [];
-    }
-  }
-
-  /**
-   * Fallback FTS using 'websearch' type (natural language, no :* prefix).
-   */
-  async function runFTSWebsearch(supabase, rawQuery, filters, limit) {
+    // ── Strategy 1: websearch (best recall — PostgreSQL handles stemming automatically) ──
+    // "string slicing example" → websearch_to_tsquery finds 'string' & 'slice' & 'exampl'
     try {
       let q = supabase
         .from('rag_documents')
@@ -431,12 +395,45 @@
       q = q.textSearch('content_text', rawQuery, { type: 'websearch', config: 'english' });
       q = q.limit(limit);
       const { data, error } = await q;
-      if (error) {
-        console.warn('[RAG] Websearch also failed, metadata-only fallback:', error.message);
-        return runMetadataOnlyQuery(supabase, filters, limit);
+      if (!error && data?.length > 0) return data;
+      if (error) console.warn('[RAG] websearch FTS error:', error.message);
+    } catch (err) {
+      console.warn('[RAG] websearch exception:', err.message);
+    }
+
+    // ── Strategy 2: raw to_tsquery with :* prefix (prefix matching, no stemming) ──
+    // Useful when websearch stemming misses exact terms like "slicing" → "slic"
+    if (ftsQuery) {
+      try {
+        let q = supabase
+          .from('rag_documents')
+          .select('id, title, class_level, subject, exam_category, chapter, content_text, source_name, chunk_index, total_chunks, uploaded_by');
+        if (filters.class_level)    q = q.eq('class_level',    filters.class_level);
+        if (filters.subject)        q = q.eq('subject',        filters.subject);
+        if (filters.exam_category)  q = q.eq('exam_category',  filters.exam_category);
+        if (filters.institution_id) q = q.eq('institution_id', filters.institution_id);
+        // No 'type' → PostgREST uses to_tsquery directly → :* prefix works
+        q = q.textSearch('content_text', ftsQuery, { config: 'english' });
+        q = q.limit(limit);
+        const { data, error } = await q;
+        if (!error && data?.length > 0) return data;
+        if (error) console.warn('[RAG] prefix tsquery error:', error.message);
+      } catch (err) {
+        console.warn('[RAG] prefix tsquery exception:', err.message);
       }
-      return data || [];
-    } catch { return []; }
+    }
+
+    // ── Strategy 3: metadata-only (no FTS) ──
+    console.info('[RAG] Both FTS strategies failed — metadata-only fallback');
+    return runMetadataOnlyQuery(supabase, filters, limit);
+  }
+
+  /**
+   * Fallback FTS using websearch type — kept for use by cascade fallback calls.
+   * @deprecated — now integrated into runFTSQuery Strategy 1
+   */
+  async function runFTSWebsearch(supabase, rawQuery, filters, limit) {
+    return runFTSQuery(supabase, null, rawQuery, filters, limit);
   }
 
   /**

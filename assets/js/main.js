@@ -244,6 +244,39 @@ function cleanAIText(text) {
     .trim();
 }
 
+/* ── Sanitize AI response before showing to student ──────────────────────
+   Strips model "thinking leak" patterns: self-corrections, mid-output
+   retractions, raw reasoning that should never reach the student UI.
+   Called BEFORE renderMarkdown on every response.                      */
+function sanitizeAIResponse(text) {
+  if (!text) return text;
+
+  // 1. Remove parenthetical self-corrections:
+  //    "(Wait, actually "AIMS")"  "(wait, let's re-verify: ...)"
+  //    "(let me re-check: ...)"   "(Correction: ...)"
+  text = text.replace(/\s*\([^)]*\b(?:wait|let me|actually|re-verify|re-check|correction|oops|my mistake|hmm)\b[^)]*\)/gi, '');
+
+  // 2. Remove inline "wait" phrases mid-sentence:
+  //    "Output: AIMSS (Wait, actually "AIMS")"  → just keep up to the (
+  //    But only strip the bracketed correction, not preceding text
+  text = text.replace(/\s*\(Wait,?[^)]*\)/g, '');
+
+  // 3. Remove lines that are PURE self-talk (entire line is retraction):
+  //    "Wait, that's wrong — let me redo..."
+  //    "Actually, I made an error above."
+  //    "Let me re-verify..."
+  text = text.replace(/^[ \t]*(?:Wait,?|Hmm,?|Oops,?|Actually,?|Let me re-?(?:verify|check|calculate|redo)|I made an? (?:error|mistake)|Correction:|Note: I (?:made|got))[^\n]*/gim, '');
+
+  // 4. Remove self-referential index walk-throughs mid-output:
+  //    "... wait, 0->'A', 2->'M' ... -> "AMS_t")"
+  text = text.replace(/\(?\d+->'[^']*'(?:,\s*\d+->'[^']*')+[^)]*\)?/g, '');
+
+  // 5. Clean up consecutive blank lines created by removal
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+  return text;
+}
+
 /* ══ CHAT MODE SYSTEM ══ */
 const CHAT_MODES = {
 
@@ -253,7 +286,18 @@ const CHAT_MODES = {
     placeholder: 'Ask anything about NEET, CBSE, Matric…',
     maxTokens: 4096,
     welcome: "Hi! I'm Dr.AIMSS AI. Click a mode chip below or ask me anything! 🎓",
-    systemPrompt: 'You are Dr.AIMSS Educational Academy AI assistant for NEET, Stateboard, and CBSE students Class 6–12. Always respond in clean Markdown: use **bold** for key terms, ## headings for sections, bullet lists for key points, numbered lists for steps, and Markdown tables for any comparison question. Give complete detailed answers — never vague one-liners. End with a "💡 Key Takeaway" line.'
+    systemPrompt: `You are Dr.AIMSS Educational Academy AI assistant for NEET, Stateboard, and CBSE students Class 6–12.
+
+OUTPUT QUALITY RULES (mandatory):
+- Your response must be a clean, final, verified answer. NEVER include internal reasoning, self-corrections, or scratchpad thoughts.
+- Do NOT write "Wait,", "Actually,", "Hmm,", "Let me re-verify", "Oops,", "I made an error" — these must NEVER appear in your output. Verify calculations silently before writing.
+- If you make a calculation (e.g. string indexing), verify it mentally first, then write the correct answer directly.
+- Do NOT use parenthetical self-corrections like "(Wait, actually 'AIMS')".
+
+FORMAT RULES:
+- Use **bold** for key terms, ## headings for sections, bullet lists for key points, numbered lists for steps, and Markdown tables for any comparison question.
+- Give complete detailed answers — never vague one-liners.
+- End with a "💡 Key Takeaway" line.`
   },
   ebook: {
     key: 'ebook', label: 'eBook', icon: '📖', color: '#f59e0b',
@@ -1007,10 +1051,13 @@ Requirements:
         const modeBadge = ACTIVE_CHAT_MODE !== 'general'
           ? `<span class="ai-mode-badge" style="--mode-color:${mode.color}">${mode.icon} ${mode.label}</span>`
           : '';
+        // Sanitize FIRST — strip model scratchpad/self-correction leaks before rendering
+        const cleanText = sanitizeAIResponse(result.text);
+
         // Use full markdown renderer for rich, clean output
         const renderedHTML = ACTIVE_CHAT_MODE === 'mcq'
-          ? `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>`
-          : `<div class="ai-msg-md">${renderMarkdown(result.text)}</div>`;
+          ? `<span class="ai-msg-text">${cleanAIText(cleanText).replace(/\n/g,'<br>')}</span>`
+          : `<div class="ai-msg-md">${renderMarkdown(cleanText)}</div>`;
 
         // Warning badges (no notes / low confidence) go BEFORE the answer — disclosure first
         // Success badges (notes found) go after the answer as usual

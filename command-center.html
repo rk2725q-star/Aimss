@@ -691,9 +691,16 @@
               <div style="font-size:.73rem;color:var(--muted);">PDF &amp; Image files will be OCR-scanned and added to the AI Knowledge Base</div>
             </div>
           </label>
+          <!-- Auto-detected subject chip -->
           <div id="autoIndexSubjectWrap" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Subject:</label>
-            <select id="autoIndexSubject" class="modal-input" style="font-size:.82rem;padding:6px 10px;min-width:140px;">
+            <div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(0,229,204,0.1);border:1px solid rgba(0,229,204,0.3);">
+              <span style="font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">🎯 Subject:</span>
+              <span id="autoSubjectLabel" style="font-size:.82rem;font-weight:700;color:var(--accent);">General</span>
+              <span style="color:var(--muted);font-size:.7rem;">·</span>
+              <button id="autoSubjectChangeBtn" onclick="toggleSubjectOverride()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.72rem;font-weight:600;padding:0;text-decoration:underline;">change</button>
+            </div>
+            <!-- Hidden override dropdown -->
+            <select id="autoIndexSubject" class="modal-input" style="display:none;font-size:.82rem;padding:6px 10px;min-width:140px;" onchange="applySubjectOverride()">
               <option value="General">General</option>
               <option value="Physics">Physics</option>
               <option value="Chemistry">Chemistry</option>
@@ -705,6 +712,8 @@
               <option value="Social">Social Science</option>
               <option value="English">English</option>
               <option value="Computer">Computer Science</option>
+              <option value="Tamil">Tamil</option>
+              <option value="Hindi">Hindi</option>
             </select>
           </div>
         </div>
@@ -1491,6 +1500,8 @@
       loadCurrentPath();
       // Update RAG context label and load indexed docs
       if (typeof updateRagContext === 'function') updateRagContext();
+      // Auto-detect subject from board + path
+      if (typeof refreshAutoSubject === 'function') refreshAutoSubject('');
     }
 
     /* ═══════════════════════════════════════
@@ -1555,7 +1566,12 @@
       });
     }
 
-    function navigateTo(path) { currentPath = path; loadCurrentPath(); }
+    function navigateTo(path) {
+      currentPath = path;
+      loadCurrentPath();
+      // Auto-detect subject from the new folder name
+      if (typeof refreshAutoSubject === 'function') refreshAutoSubject('');
+    }
 
     /* ═══════════════════════════════════════
        LOAD CURRENT PATH
@@ -1669,12 +1685,14 @@
     const CHUNK_SIZE_MB = 45;
     const CHUNK_BYTES   = CHUNK_SIZE_MB * 1024 * 1024;
 
-    fileInput.addEventListener('change', () => { if (fileInput.files[0]) startUpload(fileInput.files[0]); });
     uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
     uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
     uploadZone.addEventListener('drop', e => {
       e.preventDefault(); uploadZone.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) startUpload(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files[0]) {
+        refreshAutoSubject(e.dataTransfer.files[0].name);
+        startUpload(e.dataTransfer.files[0]);
+      }
     });
 
     function setStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status-msg ' + type; }
@@ -1695,6 +1713,93 @@
       toggle.addEventListener('change', syncToggle);
       syncToggle();
     })();
+
+    /* ════════════════════════════════════════════════════════
+       SMART SUBJECT AUTO-DETECTION
+       Scores the current path + filename against keyword map.
+       Folder name = highest weight (3×), filename = 2×,
+       any path segment = 1×.
+    ════════════════════════════════════════════════════════ */
+    const SUBJECT_KEYWORDS = {
+      Physics:   ['physics','phy','phys','mechanics','optics','thermodynamics','electro','magnetism','motion','kinematics','wave','light','sound','force','energy','quantum','nuclear'],
+      Chemistry: ['chemistry','chem','organic','inorganic','periodic','mole','reaction','atom','molecule','acid','base','polymer','bond','titration','electrochemistry'],
+      Biology:   ['biology','bio','cell','genetics','evolution','ecology','photosynthesis','respiration','digestion','nervous','immune','taxonomy'],
+      Botany:    ['botany','plant','flower','leaf','root','stem','chlorophyll','pollination','seed','algae','fungi','bryophyte'],
+      Zoology:   ['zoology','animal','mammal','reptile','amphibian','insect','vertebrate','invertebrate','zoo','fauna'],
+      Maths:     ['maths','math','mathematics','algebra','geometry','trigonometry','calculus','statistics','probability','number','matrix','integration','differentiation','logarithm'],
+      Science:   ['science','sci','general science','environmental','earth','space','universe','experiment'],
+      Social:    ['social','history','geography','civics','economics','political','government','trade','culture','civilization','democracy','constitution'],
+      English:   ['english','grammar','literature','poem','prose','essay','comprehension','vocabulary','writing','language','novel'],
+      Computer:  ['computer','cs','python','programming','code','coding','algorithm','database','software','hardware','network','internet','java','html','css','javascript','c++','binary'],
+      Tamil:     ['tamil','ilakkiyam','kavithai','varalaru','இலக்கியம்','தமிழ்'],
+      Hindi:     ['hindi','vyakaran','kavita','kahani','भाषा','हिंदी'],
+      General:   []
+    };
+
+    function detectSubject(filePath, fileName) {
+      // Normalize: all text to lowercase, split on common separators
+      const pathParts  = (filePath || '').toLowerCase().split(/[\/\-_\. ]/);
+      const fileParts  = (fileName  || '').toLowerCase().replace(/\.[^.]+$/, '').split(/[\/\-_\. ]/);
+      const folderName = pathParts[pathParts.length - 1] || ''; // immediate folder
+
+      const scores = {};
+
+      for (const [subject, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
+        if (subject === 'General') continue;
+        let score = 0;
+        for (const kw of keywords) {
+          // Folder name match → highest weight (3×)
+          if (folderName.includes(kw)) score += 3;
+          // File name match → medium weight (2×)
+          if (fileParts.some(p => p.includes(kw))) score += 2;
+          // Any path part match → low weight (1×)
+          if (pathParts.some(p => p.includes(kw))) score += 1;
+        }
+        scores[subject] = score;
+      }
+
+      // Pick subject with highest score (min score 1 to avoid false positives)
+      const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+      return (best && best[1] >= 1) ? best[0] : 'General';
+    }
+
+    function setAutoSubject(subject) {
+      const label  = document.getElementById('autoSubjectLabel');
+      const select = document.getElementById('autoIndexSubject');
+      if (label)  label.textContent = subject;
+      if (select) select.value = subject;
+    }
+
+    function refreshAutoSubject(fileName) {
+      const detected = detectSubject(currentPath, fileName || '');
+      setAutoSubject(detected);
+    }
+
+    function toggleSubjectOverride() {
+      const select = document.getElementById('autoIndexSubject');
+      const btn    = document.getElementById('autoSubjectChangeBtn');
+      const isHidden = select.style.display === 'none';
+      select.style.display = isHidden ? 'block' : 'none';
+      btn.textContent = isHidden ? '✓ done' : 'change';
+      if (isHidden) select.focus();
+    }
+
+    function applySubjectOverride() {
+      const select = document.getElementById('autoIndexSubject');
+      const label  = document.getElementById('autoSubjectLabel');
+      const btn    = document.getElementById('autoSubjectChangeBtn');
+      if (label)  label.textContent = select.value;
+      select.style.display = 'none';
+      btn.textContent = 'change';
+    }
+
+    // Run detection when file is picked before upload starts
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        refreshAutoSubject(fileInput.files[0].name);
+        startUpload(fileInput.files[0]);
+      }
+    });
 
     async function startUpload(file) {
       if (!selectedId) { setStatus('❌ Please select a class or exam first.', 'error'); return; }

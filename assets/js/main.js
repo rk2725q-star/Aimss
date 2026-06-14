@@ -949,7 +949,7 @@ Requirements:
         ragChunks = await window.RAGEngine.retrieveContext(msg, filters);
 
         // ── E. Build source-aware badge with relevance confidence ──
-        const RELEVANCE_THRESHOLD = 0.05;
+        const RELEVANCE_THRESHOLD = 0.02;  // lowered: short terms (string, slicing) score below 0.05
         const relevantChunks = ragChunks.filter(c => (c.score || 0) >= RELEVANCE_THRESHOLD);
         const hasRelevant    = relevantChunks.length > 0;
 

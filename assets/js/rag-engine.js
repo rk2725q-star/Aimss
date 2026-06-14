@@ -29,10 +29,10 @@
      CONFIG
   ───────────────────────────────────────────────────────────── */
   const CHUNK_SIZE       = 400;   // words per chunk
-  const CHUNK_OVERLAP    = 60;    // overlap between chunks
-  const TOP_K_PER_SOURCE = 1;     // best chunk per unique source file
-  const MAX_SOURCES      = 6;     // max number of source files to pull from
-  const MAX_CTX_WORDS    = 1500;  // max total words in injected context
+  const CHUNK_OVERLAP    = 80;    // overlap between chunks (larger = better context continuity)
+  const TOP_K_PER_SOURCE = 3;     // best N chunks per unique source file (was 1 — too aggressive)
+  const MAX_SOURCES      = 5;     // max number of source files to pull from
+  const MAX_CTX_WORDS    = 2000;  // max total words in injected context
   const CACHE_TTL_MS     = 5 * 60 * 1000;  // 5-minute cache
 
   /* ─────────────────────────────────────────────────────────────
@@ -252,6 +252,7 @@
     const qTokens = tokenize(query);
     if (!qTokens.length) return 0;
     const tTokens = tokenize(text);
+    const tText   = text.toLowerCase();
     const tFreq = {};
     tTokens.forEach(t => { tFreq[t] = (tFreq[t] || 0) + 1; });
     let hits = 0, weighted = 0;
@@ -263,7 +264,22 @@
         weighted += tf * idf;
       }
     });
-    return weighted * (hits / qTokens.length);
+    let score = weighted * (hits / qTokens.length);
+
+    // ── Phrase bonus: if 2+ consecutive query terms appear together in text, 2× boost ──
+    if (qTokens.length >= 2) {
+      for (let i = 0; i < qTokens.length - 1; i++) {
+        const phrase = qTokens[i] + ' ' + qTokens[i + 1];
+        if (tText.includes(phrase)) { score *= 2.0; break; }
+      }
+    }
+
+    // ── Single-term exact match bonus: rare but important keywords get a boost ──
+    if (qTokens.length === 1 && tFreq[qTokens[0]]) {
+      score *= 1.5;
+    }
+
+    return score;
   }
 
 
@@ -349,12 +365,15 @@
 
   /**
    * Convert a natural-language query to a PostgreSQL tsquery string.
-   * Keeps meaningful terms, joins with OR so partial matches work.
+   * Uses 'plain' config so prefix :* matching actually works in Supabase.
+   * Keeps meaningful terms, joins with OR so partial matches give recall.
    */
   function buildFTSQuery(query) {
     const terms = tokenize(query);
     if (!terms.length) return null;
-    // Use prefix matching for better recall (term:* = prefix)
+    // Use OR between all terms with prefix matching for maximum recall.
+    // Note: :* prefix only works with type:'plain' or type:'websearch' in Supabase.
+    // We build an OR query: each term can match as prefix.
     return terms.map(t => `${t}:*`).join(' | ');
   }
 
@@ -374,10 +393,10 @@
       if (filters.exam_category)  q = q.eq('exam_category',  filters.exam_category);
       if (filters.institution_id) q = q.eq('institution_id', filters.institution_id);
 
-      // Server-side full-text search (GIN index on to_tsvector)
+      // Server-side full-text search — use 'plain' type so :* prefix matching works
       if (ftsQuery) {
         q = q.textSearch('content_text', ftsQuery, {
-          type: 'websearch',     // parses natural language queries
+          type: 'plain',        // 'plain' supports :* prefix; 'websearch' does NOT
           config: 'english'
         });
       }
@@ -386,15 +405,38 @@
 
       const { data, error } = await q;
       if (error) {
-        // FTS might fail if query is malformed — fall back to simple limit
-        console.warn('[RAG] FTS error, falling back to metadata-only:', error.message);
-        return runMetadataOnlyQuery(supabase, filters, limit);
+        // FTS failed (e.g. 'plain' not supported) — retry with websearch
+        console.warn('[RAG] FTS plain error, retrying with websearch:', error.message);
+        return runFTSWebsearch(supabase, rawQuery, filters, limit);
       }
       return data || [];
     } catch (err) {
       console.error('[RAG] runFTSQuery error:', err);
       return [];
     }
+  }
+
+  /**
+   * Fallback FTS using 'websearch' type (natural language, no :* prefix).
+   */
+  async function runFTSWebsearch(supabase, rawQuery, filters, limit) {
+    try {
+      let q = supabase
+        .from('rag_documents')
+        .select('id, title, class_level, subject, exam_category, chapter, content_text, source_name, chunk_index, total_chunks, uploaded_by');
+      if (filters.class_level)    q = q.eq('class_level',    filters.class_level);
+      if (filters.subject)        q = q.eq('subject',        filters.subject);
+      if (filters.exam_category)  q = q.eq('exam_category',  filters.exam_category);
+      if (filters.institution_id) q = q.eq('institution_id', filters.institution_id);
+      q = q.textSearch('content_text', rawQuery, { type: 'websearch', config: 'english' });
+      q = q.limit(limit);
+      const { data, error } = await q;
+      if (error) {
+        console.warn('[RAG] Websearch also failed, metadata-only fallback:', error.message);
+        return runMetadataOnlyQuery(supabase, filters, limit);
+      }
+      return data || [];
+    } catch { return []; }
   }
 
   /**
@@ -506,7 +548,7 @@
     ].filter(Boolean).join(' • ');
 
     // ── Relevance threshold — only trust chunks with meaningful TF-IDF score ──
-    const RELEVANCE_THRESHOLD = 0.05;
+    const RELEVANCE_THRESHOLD = 0.02;  // lowered: short terms naturally score below 0.05
     const relevantChunks = chunks.filter(c => (c.score || 0) >= RELEVANCE_THRESHOLD);
     const hasRelevant    = relevantChunks.length > 0;
 

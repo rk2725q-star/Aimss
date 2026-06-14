@@ -527,6 +527,12 @@
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Progress Tracker
       </a>
+
+      <div class="portal-title">AI TOOLS</div>
+      <a class="portal-link" href="rag-upload.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        AI Knowledge Base
+      </a>
     </aside>
 
     <section class="portal-main">
@@ -671,6 +677,155 @@
           <div class="upload-chunk-info" id="chunkInfo"></div>
         </div>
         <div class="status-msg" id="uploadStatus"></div>
+
+        <!-- ── Auto-index for AI toggle ── -->
+        <div id="autoIndexBar" style="margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(0,229,204,0.04);border:1px solid rgba(0,229,204,0.15);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:9px;cursor:pointer;flex:1;min-width:200px;">
+            <div style="position:relative;width:40px;height:22px;flex-shrink:0;">
+              <input type="checkbox" id="autoIndexToggle" checked style="opacity:0;position:absolute;width:100%;height:100%;cursor:pointer;margin:0;z-index:2;" />
+              <div id="autoIndexTrack" style="position:absolute;inset:0;border-radius:999px;background:var(--accent);transition:background .2s;"></div>
+              <div id="autoIndexThumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#000;transition:transform .2s;transform:translateX(18px);"></div>
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:.86rem;">🧠 Auto-index for AI Assistant</div>
+              <div style="font-size:.73rem;color:var(--muted);">PDF &amp; Image files will be OCR-scanned and added to the AI Knowledge Base</div>
+            </div>
+          </label>
+          <div id="autoIndexSubjectWrap" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <label style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Subject:</label>
+            <select id="autoIndexSubject" class="modal-input" style="font-size:.82rem;padding:6px 10px;min-width:140px;">
+              <option value="General">General</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="Botany">Botany</option>
+              <option value="Zoology">Zoology</option>
+              <option value="Maths">Mathematics</option>
+              <option value="Science">Science</option>
+              <option value="Social">Social Science</option>
+              <option value="English">English</option>
+              <option value="Computer">Computer Science</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- AI indexing progress (separate from drive upload) -->
+        <div id="aiIndexProgress" style="display:none;margin-top:10px;padding:10px 14px;border-radius:9px;background:rgba(0,229,204,0.05);border:1px solid rgba(0,229,204,0.15);">
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--accent);font-weight:600;margin-bottom:6px;">
+            <span id="aiIndexStatus">🧠 Indexing for AI…</span>
+            <span id="aiIndexPct">0%</span>
+          </div>
+          <div class="upload-progress-bar"><div class="upload-progress-fill" id="aiIndexFill" style="width:0%;background:linear-gradient(90deg,#00e5cc,#7b61ff);"></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════ AI KNOWLEDGE BASE (RAG) ══════════════ -->
+      <div class="glass card" id="ragCard" style="padding:24px;margin-top:18px;margin-bottom:18px;display:none;">
+        <!-- Gradient top border -->
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#00e5cc,#7b61ff);pointer-events:none;"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00e5cc22,#7b61ff22);border:1px solid rgba(0,229,204,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🧠</div>
+            <div>
+              <h2 style="margin:0;font-size:1.05rem;">AI Knowledge Base</h2>
+              <p style="margin:0;color:var(--muted);font-size:.76rem;">Index this material so the AI assistant can answer student questions from it</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="ragIndexedBadge" style="padding:4px 12px;border-radius:999px;background:rgba(0,229,204,0.1);border:1px solid rgba(0,229,204,0.25);color:var(--accent);font-size:.74rem;font-weight:700;">— docs indexed</span>
+            <a href="rag-upload.html" target="_blank" class="tool-btn" style="white-space:nowrap;">↗ Full RAG Manager</a>
+          </div>
+        </div>
+
+        <!-- Context Banner -->
+        <div style="background:rgba(0,229,204,0.04);border:1px solid rgba(0,229,204,0.12);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span>🎯 Indexing for:</span>
+          <span id="ragContextLabel" style="color:var(--accent);font-weight:700;">—</span>
+          <span style="margin-left:auto;font-size:.74rem;">Files indexed here power the <strong style="color:var(--accent)">📚 My Notes</strong> mode in the AI chatbot</span>
+        </div>
+
+        <!-- Two column layout -->
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;" class="rag-inner-grid">
+
+          <!-- LEFT: Upload zone -->
+          <div>
+            <div class="upload-zone" id="ragUploadZone" style="padding:20px;margin-bottom:14px;">
+              <input type="file" id="ragFileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tiff,.txt" />
+              <div class="upload-icon" style="font-size:1.6rem;">📂</div>
+              <h3 style="font-size:.9rem;">Drop PDF / Image / TXT for AI indexing</h3>
+              <p style="font-size:.76rem;">Separate from Google Drive upload — this teaches the AI your notes</p>
+            </div>
+
+            <!-- File preview row -->
+            <div id="ragFilePreview" style="display:none;padding:10px 14px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:12px;align-items:center;gap:10px;">
+              <span id="ragFpIcon" style="font-size:1.5rem;">📄</span>
+              <div style="flex:1;min-width:0;">
+                <div id="ragFpName" style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                <div id="ragFpSize" style="font-size:.74rem;color:var(--muted);"></div>
+              </div>
+              <button id="ragFpRemove" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:2px 6px;" title="Remove">✕</button>
+            </div>
+
+            <!-- Metadata fields (compact) -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+              <div>
+                <label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Subject *</label>
+                <select id="ragSubject" class="modal-input" style="width:100%;font-size:.84rem;padding:8px 10px;">
+                  <option value="">Select subject…</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Biology">Biology</option>
+                  <option value="Botany">Botany</option>
+                  <option value="Zoology">Zoology</option>
+                  <option value="Maths">Mathematics</option>
+                  <option value="Science">Science</option>
+                  <option value="Social">Social Science</option>
+                  <option value="English">English</option>
+                  <option value="Computer">Computer Science</option>
+                  <option value="General">General Studies</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Chapter / Topic</label>
+                <input type="text" id="ragChapter" class="modal-input" placeholder="e.g. Chapter 5: Newton's Laws" style="width:100%;font-size:.84rem;padding:8px 10px;" />
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div id="ragProgressWrap" style="display:none;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--accent);font-weight:600;margin-bottom:6px;">
+                <span id="ragProgressStatus">Processing…</span>
+                <span id="ragProgressPct">0%</span>
+              </div>
+              <div class="upload-progress-bar"><div class="upload-progress-fill" id="ragProgressFill" style="width:0%;"></div></div>
+            </div>
+
+            <!-- Action button -->
+            <button id="ragIndexBtn" disabled style="width:100%;padding:11px 18px;border:none;border-radius:10px;background:linear-gradient(135deg,#00e5cc,#7b61ff);color:#000;font:700 .88rem 'Outfit',sans-serif;cursor:pointer;opacity:.45;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Index for AI Assistant
+            </button>
+            <div id="ragIndexStatus" class="status-msg" style="margin-top:10px;"></div>
+          </div>
+
+          <!-- RIGHT: Indexed docs list -->
+          <div>
+            <div style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+              <span>📚 Indexed Documents</span>
+              <button onclick="loadRagDocs()" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:.78rem;font-weight:700;">⟳ Refresh</button>
+            </div>
+            <div id="ragDocList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+              <div style="text-align:center;padding:28px 10px;color:var(--muted);font-size:.84rem;">Select a class &amp; board above to see indexed docs</div>
+            </div>
+          </div>
+        </div>
+
+        <style>
+          @media(max-width:760px){ .rag-inner-grid { grid-template-columns:1fr !important; } }
+          #ragIndexBtn:not(:disabled) { opacity:1; }
+          #ragIndexBtn:not(:disabled):hover { transform:translateY(-2px); box-shadow:0 0 20px rgba(0,229,204,0.4); }
+        </style>
       </div>
 
       <!-- ══════════════ MCQ TESTS MANAGER ══════════════ -->
@@ -948,6 +1103,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
   <script src="assets/js/drive.js"></script>
+  <script src="assets/js/rag-engine.js"></script>
   <script src="assets/js/main.js?v=5"></script>
   <script>
     DrAuth.guardPage('teacher');
@@ -957,6 +1113,252 @@
       const disp = document.getElementById('mcqFileNameDisplay');
       if (disp) disp.textContent = this.files[0] ? `📎 ${this.files[0].name}` : '';
     });
+
+    /* ═══════════════════════════════════════════════════════════
+       🧠 RAG AI KNOWLEDGE BASE — Embedded in Command Center
+       Teachers can now index files for the AI assistant directly
+       from the same page they manage study materials.
+    ═══════════════════════════════════════════════════════════ */
+    (function initRAGPanel() {
+      let ragSelectedFile = null;
+
+      const ragZone       = document.getElementById('ragUploadZone');
+      const ragFileInput  = document.getElementById('ragFileInput');
+      const ragPreview    = document.getElementById('ragFilePreview');
+      const ragFpIcon     = document.getElementById('ragFpIcon');
+      const ragFpName     = document.getElementById('ragFpName');
+      const ragFpSize     = document.getElementById('ragFpSize');
+      const ragFpRemove   = document.getElementById('ragFpRemove');
+      const ragProgWrap   = document.getElementById('ragProgressWrap');
+      const ragProgFill   = document.getElementById('ragProgressFill');
+      const ragProgStatus = document.getElementById('ragProgressStatus');
+      const ragProgPct    = document.getElementById('ragProgressPct');
+      const ragIndexBtn   = document.getElementById('ragIndexBtn');
+      const ragStatus     = document.getElementById('ragIndexStatus');
+      const ragDocList    = document.getElementById('ragDocList');
+      const ragBadge      = document.getElementById('ragIndexedBadge');
+      const ragCtxLabel   = document.getElementById('ragContextLabel');
+
+      if (!ragZone) return; // card not in DOM yet — skip
+
+      /* ── File icon helper ── */
+      function ragIcon(file) {
+        if (!file) return '📄';
+        if (file.type === 'application/pdf') return '📕';
+        if (file.type.startsWith('image/')) return '🖼️';
+        return '📝';
+      }
+      function ragFmtSize(b) {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+        return (b/1048576).toFixed(2) + ' MB';
+      }
+
+      /* ── File selection ── */
+      function handleRagFile(file) {
+        if (!file) return;
+        ragSelectedFile = file;
+        ragFpIcon.textContent = ragIcon(file);
+        ragFpName.textContent = file.name;
+        ragFpSize.textContent = ragFmtSize(file.size) + ' · ' + (file.type || 'unknown');
+        ragPreview.style.display = 'flex';
+        ragIndexBtn.disabled = false;
+        ragStatus.className = 'status-msg';
+      }
+
+      ragFileInput.addEventListener('change', () => {
+        if (ragFileInput.files[0]) handleRagFile(ragFileInput.files[0]);
+      });
+      ragZone.addEventListener('dragover', e => { e.preventDefault(); ragZone.classList.add('dragover'); });
+      ragZone.addEventListener('dragleave', () => ragZone.classList.remove('dragover'));
+      ragZone.addEventListener('drop', e => {
+        e.preventDefault(); ragZone.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) handleRagFile(e.dataTransfer.files[0]);
+      });
+
+      /* ── Remove file ── */
+      ragFpRemove.addEventListener('click', () => {
+        ragSelectedFile = null;
+        ragFileInput.value = '';
+        ragPreview.style.display = 'none';
+        ragIndexBtn.disabled = true;
+        ragProgWrap.style.display = 'none';
+        ragStatus.className = 'status-msg';
+      });
+
+      /* ── Progress helper ── */
+      function ragSetProgress(pct, status) {
+        ragProgWrap.style.display = 'block';
+        ragProgFill.style.width = pct + '%';
+        ragProgStatus.textContent = status;
+        ragProgPct.textContent = Math.round(pct) + '%';
+      }
+
+      /* ── Index button ── */
+      ragIndexBtn.addEventListener('click', async () => {
+        if (!ragSelectedFile) return;
+        if (!window.RAGEngine) {
+          ragStatus.className = 'status-msg error';
+          ragStatus.textContent = '❌ RAG engine not loaded. Refresh the page.';
+          return;
+        }
+
+        // Build context from current selection
+        const classLevel   = (mode === 'class') ? String(selectedId || '') : '';
+        const examCategory = (mode === 'exam')  ? (String(selectedId || '')).toUpperCase()
+                           : (selectedBoard === 'cbse') ? 'CBSE'
+                           : (selectedBoard === 'stateboard') ? 'Stateboard'
+                           : '';
+        const subject   = document.getElementById('ragSubject')?.value || '';
+        const chapter   = document.getElementById('ragChapter')?.value.trim() || '';
+        const titleBase = ragSelectedFile.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+
+        if (!subject) {
+          ragStatus.className = 'status-msg error';
+          ragStatus.textContent = '⚠️ Please select a subject before indexing.';
+          return;
+        }
+
+        ragIndexBtn.disabled = true;
+        ragStatus.className = 'status-msg';
+        ragProgWrap.style.display = 'block';
+
+        const teacherEmail  = window.DrAuth?.getUser()?.email || 'unknown';
+        const institutionId = window.DrAuth?.getInstitutionId() || '';
+
+        const meta = {
+          title:          titleBase,
+          class_level:    classLevel,
+          subject:        subject,
+          exam_category:  examCategory || 'General',
+          chapter:        chapter,
+          uploaded_by:    teacherEmail,
+          institution_id: institutionId
+        };
+
+        try {
+          const result = await window.RAGEngine.processAndSaveFile(
+            ragSelectedFile,
+            meta,
+            (pct, status) => ragSetProgress(pct, status)
+          );
+          ragProgWrap.style.display = 'none';
+          if (result.success) {
+            ragStatus.className = 'status-msg success';
+            ragStatus.innerHTML = `✅ <strong>${result.chunks} chunks</strong> indexed! (~${(result.words||0).toLocaleString()} words). The AI assistant can now answer questions from this material.`;
+            ragFpRemove.click();
+            document.getElementById('ragSubject').value = '';
+            document.getElementById('ragChapter').value = '';
+            await loadRagDocs();
+          } else {
+            ragStatus.className = 'status-msg error';
+            ragStatus.textContent = '❌ ' + (result.error || 'Indexing failed.');
+          }
+        } catch(err) {
+          ragProgWrap.style.display = 'none';
+          ragStatus.className = 'status-msg error';
+          ragStatus.textContent = '❌ ' + err.message;
+        } finally {
+          ragIndexBtn.disabled = false;
+        }
+      });
+
+      /* ── Expose loadRagDocs globally so the Refresh button works ── */
+      window.loadRagDocs = async function() {
+        if (!window.RAGEngine) return;
+        const classLevel   = (mode === 'class') ? String(selectedId || '') : '';
+        const examCategory = (mode === 'exam')  ? (String(selectedId || '')).toUpperCase()
+                           : (selectedBoard === 'cbse') ? 'CBSE'
+                           : (selectedBoard === 'stateboard') ? 'Stateboard'
+                           : '';
+        const institutionId = window.DrAuth?.getInstitutionId() || '';
+        const teacherEmail  = window.DrAuth?.getUser()?.email   || '';
+
+        const filters = { institution_id: institutionId };
+        if (classLevel)   filters.class_level   = classLevel;
+        if (examCategory) filters.exam_category = examCategory;
+
+        ragDocList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem;">Loading…</div>';
+
+        try {
+          const docs = await window.RAGEngine.getDocumentList(filters);
+          ragBadge.textContent = docs.length + ' doc' + (docs.length !== 1 ? 's' : '') + ' indexed';
+
+          if (!docs.length) {
+            ragDocList.innerHTML = '<div style="text-align:center;padding:28px 10px;color:var(--muted);font-size:.82rem;">📂 No files indexed yet for this selection.<br>Upload a file above to get started.</div>';
+            return;
+          }
+
+          ragDocList.innerHTML = docs.map(doc => {
+            const icon   = doc.file_type === 'pdf' ? '📕' : doc.file_type === 'image' ? '🖼️' : '📝';
+            const chunks = doc.total_chunks || 1;
+            const date   = doc.created_at ? new Date(doc.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '';
+            const deleteJson = JSON.stringify({
+              source_name: doc.source_name,
+              uploaded_by: doc.uploaded_by,
+              class_level: doc.class_level,
+              subject:     doc.subject,
+              title:       doc.title
+            }).replace(/'/g, '&#39;');
+            return `
+              <div style="padding:10px 12px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;">
+                <span style="font-size:1.3rem;flex-shrink:0;">${icon}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:700;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.title}">${doc.title}</div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
+                    ${doc.subject ? `<span style="padding:1px 7px;border-radius:999px;font-size:.66rem;font-weight:700;background:rgba(123,97,255,.12);color:#a78bfa;border:1px solid rgba(123,97,255,.25);">${doc.subject}</span>` : ''}
+                    <span style="padding:1px 7px;border-radius:999px;font-size:.66rem;font-weight:700;background:rgba(0,229,204,.08);color:var(--accent);border:1px solid rgba(0,229,204,.2);">${chunks} chunk${chunks!==1?'s':''}</span>
+                    ${date ? `<span style="font-size:.65rem;color:var(--muted);align-self:center;">${date}</span>` : ''}
+                  </div>
+                </div>
+                <button onclick="deleteRagDoc(${deleteJson.replace(/"/g,'&quot;')})" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#f87171;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.68rem;font-weight:700;white-space:nowrap;flex-shrink:0;">Delete</button>
+              </div>`;
+          }).join('');
+        } catch(e) {
+          ragDocList.innerHTML = '<div style="color:#f87171;font-size:.82rem;padding:10px;">⚠️ ' + e.message + '</div>';
+        }
+      };
+
+      /* ── Delete a RAG doc ── */
+      window.deleteRagDoc = async function(docMetaStr) {
+        let doc;
+        try { doc = (typeof docMetaStr === 'string') ? JSON.parse(docMetaStr) : docMetaStr; } catch(e) { return; }
+        if (!confirm(`Delete "${doc.title}" from the AI knowledge base?`)) return;
+        if (!window.RAGEngine) return;
+        const result = await window.RAGEngine.deleteDocument(doc);
+        if (result.success) {
+          await window.loadRagDocs();
+        } else {
+          alert('Delete failed: ' + result.error);
+        }
+      };
+
+      /* ── Update RAG context label and card visibility ── */
+      window.updateRagContext = function() {
+        const ragCard = document.getElementById('ragCard');
+        if (!ragCard) return;
+
+        if (!selectedId) {
+          ragCard.style.display = 'none';
+          return;
+        }
+        ragCard.style.display = 'block';
+
+        // Build human-readable label
+        let label = '';
+        if (mode === 'class') {
+          label = `Class ${selectedId}`;
+          if (selectedBoard === 'stateboard') label += ' · State Board';
+          else if (selectedBoard === 'cbse')  label += ' · CBSE';
+        } else {
+          const ex = (typeof DrDrive !== 'undefined') ? DrDrive.EXAMS.find(e => e.id === selectedId) : null;
+          label = ex ? `${ex.icon} ${ex.label}` : selectedId.toUpperCase();
+        }
+        ragCtxLabel.textContent = label;
+        window.loadRagDocs();
+      };
+
+    })(); // end initRAGPanel
 
     /* ═══════════════════════════════════════
        STATE
@@ -1026,9 +1428,10 @@
       selectedId    = null;
       selectedBoard = null;
       currentPath   = '';
-      document.getElementById('boardSelector').style.display  = 'none';
+      document.getElementById('boardSelector').style.display   = 'none';
       document.getElementById('fileBrowserCard').style.display = 'none';
       document.getElementById('uploadCard').style.display      = 'none';
+      document.getElementById('ragCard').style.display         = 'none';
       document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
     }
 
@@ -1056,6 +1459,7 @@
         document.querySelectorAll('.board-pill').forEach(p => p.classList.remove('active','cbse-active'));
         document.getElementById('fileBrowserCard').style.display = 'none';
         document.getElementById('uploadCard').style.display      = 'none';
+        document.getElementById('ragCard').style.display         = 'none';
       } else {
         // Exam mode: go straight to file browser
         selectedBoard = null;
@@ -1064,6 +1468,8 @@
         document.getElementById('fileBrowserCard').style.display = 'block';
         document.getElementById('uploadCard').style.display      = 'block';
         loadCurrentPath();
+        // Show RAG card for exam mode
+        if (typeof updateRagContext === 'function') updateRagContext();
       }
     }
 
@@ -1079,10 +1485,12 @@
       const pill = document.getElementById(board === 'stateboard' ? 'boardStatepill' : 'boardCbsepill');
       pill?.classList.add(board === 'stateboard' ? 'active' : 'cbse-active');
 
-      // Show file browser
+      // Show file browser + RAG card
       document.getElementById('fileBrowserCard').style.display = 'block';
       document.getElementById('uploadCard').style.display      = 'block';
       loadCurrentPath();
+      // Update RAG context label and load indexed docs
+      if (typeof updateRagContext === 'function') updateRagContext();
     }
 
     /* ═══════════════════════════════════════
@@ -1271,6 +1679,23 @@
 
     function setStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status-msg ' + type; }
 
+    /* ── Toggle switch visual ── */
+    (function() {
+      const toggle = document.getElementById('autoIndexToggle');
+      const track  = document.getElementById('autoIndexTrack');
+      const thumb  = document.getElementById('autoIndexThumb');
+      if (!toggle) return;
+      function syncToggle() {
+        const on = toggle.checked;
+        track.style.background = on ? 'var(--accent)' : 'rgba(255,255,255,0.15)';
+        thumb.style.transform  = on ? 'translateX(18px)' : 'translateX(0)';
+        document.getElementById('autoIndexSubjectWrap').style.opacity = on ? '1' : '0.4';
+        document.getElementById('autoIndexSubjectWrap').style.pointerEvents = on ? '' : 'none';
+      }
+      toggle.addEventListener('change', syncToggle);
+      syncToggle();
+    })();
+
     async function startUpload(file) {
       if (!selectedId) { setStatus('❌ Please select a class or exam first.', 'error'); return; }
 
@@ -1317,6 +1742,66 @@
         progressFill.style.width = '100%'; progressPct.textContent = '100%';
         if (isChunked) chunkInfo.textContent = `✅ All ${totalChunks} chunks uploaded successfully!`;
         setStatus(`✅ "${file.name}" uploaded successfully!`, 'success');
+
+        // ── Auto-index for AI Assistant ──
+        const aiToggle = document.getElementById('autoIndexToggle');
+        const canIndex = aiToggle && aiToggle.checked && window.RAGEngine;
+        const indexable = /\.(pdf|jpg|jpeg|png|webp|bmp|tiff|txt)$/i.test(file.name)
+          || ['application/pdf','text/plain'].includes(file.type)
+          || file.type.startsWith('image/');
+
+        if (canIndex && indexable) {
+          const aiProg   = document.getElementById('aiIndexProgress');
+          const aiStatus = document.getElementById('aiIndexStatus');
+          const aiPct    = document.getElementById('aiIndexPct');
+          const aiFill   = document.getElementById('aiIndexFill');
+          aiProg.style.display = 'block';
+
+          // Build metadata from current context
+          const classLevel   = (mode === 'class') ? String(selectedId) : '';
+          const examCategory = (mode === 'exam')  ? String(selectedId).toUpperCase()
+                             : (selectedBoard === 'cbse') ? 'CBSE'
+                             : (selectedBoard === 'stateboard') ? 'Stateboard'
+                             : 'General';
+          const subject       = document.getElementById('autoIndexSubject')?.value || 'General';
+          const teacherEmail  = window.DrAuth?.getUser()?.email || 'unknown';
+          const institutionId = window.DrAuth?.getInstitutionId() || '';
+          const titleBase     = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+
+          try {
+            const result = await window.RAGEngine.processAndSaveFile(
+              file,
+              {
+                title:          titleBase,
+                class_level:    classLevel,
+                subject:        subject,
+                exam_category:  examCategory,
+                chapter:        currentPath.split('/').pop().replace(/[-_]/g,' ') || '',
+                uploaded_by:    teacherEmail,
+                institution_id: institutionId
+              },
+              (pct, status) => {
+                aiFill.style.width = pct + '%';
+                aiStatus.textContent = '🧠 ' + status;
+                aiPct.textContent = Math.round(pct) + '%';
+              }
+            );
+            if (result.success) {
+              aiStatus.textContent = `✅ AI indexed: ${result.chunks} chunks (~${(result.words||0).toLocaleString()} words)`;
+              aiStatus.style.color = '#4ade80';
+              // Refresh the RAG doc list
+              if (typeof loadRagDocs === 'function') loadRagDocs();
+            } else {
+              aiStatus.textContent = '⚠️ AI index failed: ' + (result.error || 'Unknown error');
+              aiStatus.style.color = '#f87171';
+            }
+          } catch(aiErr) {
+            aiStatus.textContent = '⚠️ AI index error: ' + aiErr.message;
+            aiStatus.style.color = '#f87171';
+          }
+          setTimeout(() => { aiProg.style.display = 'none'; aiStatus.style.color = ''; }, 5000);
+        }
+
         setTimeout(() => {
           progressWrap.style.display = 'none';
           chunkInfo.style.display    = 'none';
@@ -1404,6 +1889,10 @@
         <div class="menu-sep"></div>
         ${moveItem}
         <div class="menu-sep"></div>
+        <button class="menu-item" onclick="closeActionMenu();indexFileForAI(${idx})" style="color:var(--accent);">
+          <span class="menu-icon">🧠</span> Index for AI
+        </button>
+        <div class="menu-sep"></div>
         <button class="menu-item danger" onclick="closeActionMenu();confirmDeleteFile('${escAttr(fileId)}','${escAttr(displayName)}',${idx})">
           <span class="menu-icon">🗑️</span> Delete
         </button>
@@ -1440,6 +1929,144 @@
     function closeActionMenu() {
       if (_activeMenu) { _activeMenu.remove(); _activeMenu = null; }
       document.removeEventListener('keydown', _menuKeyClose);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       INDEX EXISTING FILE FOR AI  (from ⋯ action menu)
+       Fetches the file from Supabase Storage → OCR/extract
+       → saves to rag_documents table
+    ═══════════════════════════════════════════════════ */
+    async function indexFileForAI(fileIdx) {
+      const f = (window._currentFiles || [])[fileIdx];
+      if (!f) return;
+      if (!window.RAGEngine) { alert('RAG engine not loaded — refresh the page.'); return; }
+
+      // Only PDF, image, txt supported
+      const ext = (f.displayName || f.name || '').split('.').pop().toLowerCase();
+      const supportedExts = ['pdf','jpg','jpeg','png','webp','bmp','tiff','txt'];
+      const isSupportedMime = f.mimeType === 'application/pdf' || f.mimeType.startsWith('image/') || f.mimeType === 'text/plain';
+      if (!supportedExts.includes(ext) && !isSupportedMime) {
+        alert(`❌ Only PDF, Image (JPG/PNG/WEBP), or TXT files can be indexed for AI.\n\nThis file type (${f.mimeType || ext}) cannot be OCR-processed.`);
+        return;
+      }
+
+      // Pick subject via a minimal prompt overlay
+      const subject = await _pickSubjectDialog(f.displayName);
+      if (subject === null) return; // cancelled
+
+      // Build context metadata
+      const classLevel   = (mode === 'class') ? String(selectedId) : '';
+      const examCategory = (mode === 'exam')  ? String(selectedId).toUpperCase()
+                         : (selectedBoard === 'cbse')       ? 'CBSE'
+                         : (selectedBoard === 'stateboard') ? 'Stateboard'
+                         : 'General';
+      const teacherEmail  = window.DrAuth?.getUser()?.email || 'unknown';
+      const institutionId = window.DrAuth?.getInstitutionId() || '';
+      const titleBase     = (f.displayName || f.name || '').replace(/\.[^.]+$/, '').replace(/[-_]/g,' ');
+
+      // Show floating toast progress
+      const toast = _buildAIIndexToast(f.displayName);
+      document.body.appendChild(toast);
+      const toastStatus = toast.querySelector('.ai-toast-status');
+      const toastFill   = toast.querySelector('.ai-toast-fill');
+      const toastPct    = toast.querySelector('.ai-toast-pct');
+
+      try {
+        // Fetch file from Supabase Storage as a Blob
+        toastStatus.textContent = '⬇️ Fetching file from storage…';
+        const publicUrl = DrDrive.getPreviewUrl(f.id).replace('?download=','');
+
+        const resp = await fetch(publicUrl);
+        if (!resp.ok) throw new Error(`Could not fetch file (HTTP ${resp.status}). Check storage permissions.`);
+        const blob = await resp.blob();
+        const mimeType = blob.type || f.mimeType || 'application/octet-stream';
+        const fileObj = new File([blob], f.displayName || f.name, { type: mimeType });
+
+        toastStatus.textContent = '🧠 Extracting text / OCR…';
+
+        const result = await window.RAGEngine.processAndSaveFile(
+          fileObj,
+          {
+            title:          titleBase,
+            class_level:    classLevel,
+            subject:        subject,
+            exam_category:  examCategory,
+            chapter:        currentPath.split('/').pop().replace(/[-_]/g,' ') || '',
+            uploaded_by:    teacherEmail,
+            institution_id: institutionId
+          },
+          (pct, status) => {
+            toastFill.style.width = pct + '%';
+            toastStatus.textContent = '🧠 ' + status;
+            toastPct.textContent = Math.round(pct) + '%';
+          }
+        );
+
+        if (result.success) {
+          toastStatus.textContent = `✅ Done! ${result.chunks} chunks (~${(result.words||0).toLocaleString()} words) indexed for AI`;
+          toastStatus.style.color = '#4ade80';
+          toastFill.style.width = '100%';
+          if (typeof loadRagDocs === 'function') loadRagDocs();
+        } else {
+          toastStatus.textContent = '❌ ' + (result.error || 'Indexing failed.');
+          toastStatus.style.color = '#f87171';
+        }
+      } catch(err) {
+        toastStatus.textContent = '❌ ' + err.message;
+        toastStatus.style.color = '#f87171';
+      }
+      setTimeout(() => toast.remove(), 7000);
+    }
+
+    /* Build subject picker dialog */
+    function _pickSubjectDialog(fileName) {
+      return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+        const subjects = ['General','Physics','Chemistry','Biology','Botany','Zoology','Maths','Science','Social','English','Computer'];
+        overlay.innerHTML = `
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;max-width:420px;width:100%;box-shadow:0 30px 60px rgba(0,0,0,.5);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-size:1.6rem;">🧠</span>
+              <h3 style="margin:0;font-size:1rem;">Index for AI Assistant</h3>
+            </div>
+            <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px;">Select the subject for <strong style="color:var(--ink);">${fileName}</strong></p>
+            <select id="aiSubjectPick" class="modal-input" style="width:100%;margin-bottom:16px;font-size:.9rem;padding:10px 12px;">
+              ${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}
+            </select>
+            <div style="display:flex;gap:10px;">
+              <button id="aiPickCancel" style="flex:1;padding:10px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font:600 .88rem 'Outfit',sans-serif;">Cancel</button>
+              <button id="aiPickConfirm" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#00e5cc,#7b61ff);color:#000;cursor:pointer;font:700 .88rem 'Outfit',sans-serif;">🧠 Index Now</button>
+            </div>
+          </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#aiPickCancel').onclick  = () => { overlay.remove(); resolve(null); };
+        overlay.querySelector('#aiPickConfirm').onclick = () => {
+          const val = overlay.querySelector('#aiSubjectPick').value;
+          overlay.remove();
+          resolve(val);
+        };
+        overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(null); } };
+      });
+    }
+
+    /* Build floating AI index progress toast */
+    function _buildAIIndexToast(fileName) {
+      const div = document.createElement('div');
+      div.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9700;width:320px;padding:16px 18px;border-radius:14px;background:rgba(3,3,7,0.95);border:1px solid rgba(0,229,204,0.3);backdrop-filter:blur(20px);box-shadow:0 20px 40px rgba(0,0,0,.5);';
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:1.2rem;">🧠</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${fileName}</div>
+            <div class="ai-toast-status" style="font-size:.74rem;color:var(--muted);">Starting…</div>
+          </div>
+          <span class="ai-toast-pct" style="font-size:.74rem;font-weight:700;color:var(--accent);">0%</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">
+          <div class="ai-toast-fill" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#00e5cc,#7b61ff);transition:width .4s;"></div>
+        </div>`;
+      return div;
     }
 
     /* ═══════════════════════════════════════

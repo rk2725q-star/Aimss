@@ -311,7 +311,14 @@ const CHAT_MODES = {
     placeholder: 'Ask a doubt about your class notes (e.g. "Explain Newton\'s 3rd Law from my notes")…',
     maxTokens: 4096,
     welcome: '📚 Notes Mode! I will answer your doubts using the actual class notes your teacher uploaded. Select your Class and Subject first, then ask any question!',
-    systemPrompt: 'You are Dr.AIMSS AI tutor. Answer the student\'s doubt using the CLASS NOTES provided in the context. Be specific, accurate, and cite the relevant section. Use **bold** for key terms and ## headings for sections. End with "📖 From your notes:".'
+    systemPrompt: `You are Dr.AIMSS AI tutor. Your job is to answer student doubts.
+
+CRITICAL HONESTY RULE — follow strictly:
+- If a GROUNDING CONTEXT block is present below AND it contains relevant information: answer from it, cite the document, use **bold** for key terms and ## headings.
+- If a GROUNDING CONTEXT block is present BUT it does not cover the student's question: your VERY FIRST LINE must be exactly: "📋 This topic is not covered in your uploaded notes. Here is the answer from general knowledge:" — then give the answer.
+- If NO context block is present at all: your VERY FIRST LINE must be exactly: "📋 No class notes found for this topic. Here is the answer from general knowledge:" — then give the answer.
+- NEVER say "according to your notes", "the notes indicate", "the notes outline", "based on your notes", or "from your notes" unless you are directly quoting text that ACTUALLY APPEARS in the provided context block.
+- The disclosure line MUST be the first thing you write — never buried at the end.`
   }
 };
 
@@ -1004,7 +1011,13 @@ Requirements:
         const renderedHTML = ACTIVE_CHAT_MODE === 'mcq'
           ? `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>`
           : `<div class="ai-msg-md">${renderMarkdown(result.text)}</div>`;
-        bubble.innerHTML = `${renderedHTML}${modeBadge}${ragBadgeHTML}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
+
+        // Warning badges (no notes / low confidence) go BEFORE the answer — disclosure first
+        // Success badges (notes found) go after the answer as usual
+        const isWarningBadge = ragBadgeHTML.includes('⚠️') || ragBadgeHTML.includes('📋');
+        const topBadge    = isWarningBadge ? ragBadgeHTML : '';
+        const bottomBadge = isWarningBadge ? '' : ragBadgeHTML;
+        bubble.innerHTML = `${topBadge}${renderedHTML}${modeBadge}${bottomBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
 
         // ── MCQ mode: add "Upload to Class" button ──
         if (ACTIVE_CHAT_MODE === 'mcq') {

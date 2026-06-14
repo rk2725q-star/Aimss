@@ -351,12 +351,38 @@
       margin-top: 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .month-selector-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* View toggle: Monthly / Yearly */
+    .view-toggle {
+      display: flex;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .view-toggle button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font: 600 0.78rem 'Outfit',sans-serif;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #000;
+      border-radius: 6px;
     }
 
     .month-select {
@@ -368,6 +394,7 @@
       font-size: 0.82rem;
       outline: none;
       cursor: pointer;
+      font-family: inherit;
     }
 
     .btn-reset {
@@ -380,13 +407,101 @@
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
+      font-family: inherit;
     }
-
     .btn-reset:hover {
       background: rgba(239, 68, 68, 0.15);
       border-color: var(--error);
       box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
     }
+
+    /* Requests sub-stat */
+    .requests-stat {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+    }
+    .requests-stat strong { color: var(--accent); }
+
+    /* Supabase sync badge */
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #10b981;
+    }
+    .sync-badge.syncing { color: var(--warning); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); }
+    .sync-badge.error   { color: var(--error);   background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.25); }
+
+    /* Yearly summary row */
+    .yearly-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px,1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .yr-card {
+      background: rgba(0,229,204,0.04);
+      border: 1px solid rgba(0,229,204,0.12);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .yr-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+    .yr-lbl { font-size: 0.66rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+
+    /* Password modal */
+    .pwd-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .pwd-overlay.open { opacity: 1; pointer-events: all; }
+    .pwd-modal {
+      background: #0b0b18;
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: 18px;
+      padding: 32px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(239,68,68,0.15);
+      transform: scale(0.94); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .pwd-overlay.open .pwd-modal { transform: scale(1); }
+    .pwd-modal h3 { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .pwd-modal p  { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .pwd-input {
+      width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 10px; padding: 12px 16px; color: #fff; font: 700 1.1rem 'Outfit',sans-serif;
+      letter-spacing: 0.3em; text-align: center; outline: none; font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .pwd-input:focus { border-color: var(--error); }
+    .pwd-input.shake { animation: pwdShake 0.35s ease; }
+    @keyframes pwdShake {
+      0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} 80%{transform:translateX(-4px)}
+    }
+    .pwd-error { font-size: 0.78rem; color: var(--error); font-weight: 700; min-height: 18px; margin-top: 8px; text-align: center; }
+    .pwd-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .pwd-actions button { flex: 1; padding: 10px; border-radius: 8px; font: 700 0.85rem 'Outfit',sans-serif; cursor: pointer; transition: all 0.2s; }
+    .pwd-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--muted); }
+    .pwd-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .pwd-confirm { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: var(--error); }
+    .pwd-confirm:hover { background: var(--error); color: #fff; }
 
     .model-info-box {
       background: rgba(255, 255, 255, 0.02);
@@ -397,10 +512,7 @@
       color: var(--muted);
       line-height: 1.5;
     }
-
-    .model-info-box strong {
-      color: #fff;
-    }
+    .model-info-box strong { color: #fff; }
   </style>
 </head>
 <body>
@@ -470,10 +582,22 @@
 
       <!-- Right side: Token Tracker Dashboard -->
       <section class="card">
-        <h2>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Monthly Token Dashboard
+        <h2 style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <span style="display:flex;align-items:center;gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span id="dashTitle">Token Dashboard</span>
+          </span>
+          <span id="syncBadge" class="sync-badge" title="Supabase sync status">⬆ Synced</span>
         </h2>
+
+        <!-- View toggle -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div class="view-toggle">
+            <button id="viewMonthly" class="active" onclick="setView('monthly')">📅 Monthly</button>
+            <button id="viewYearly" onclick="setView('yearly')">📆 Yearly</button>
+          </div>
+          <div id="periodLabel" style="font-size:.82rem;color:var(--muted);font-weight:600;"></div>
+        </div>
 
         <div class="token-grid">
           <div class="token-card">
@@ -490,41 +614,148 @@
           </div>
         </div>
 
-        <!-- Meter bar showing ratio -->
+        <!-- Requests sub-stat -->
+        <div class="requests-stat">
+          Total AI Requests: <strong id="reqVal">0</strong>
+          &nbsp;|&nbsp; Avg Tokens/Request: <strong id="avgVal">0</strong>
+        </div>
+
+        <!-- Meter bar -->
         <div class="meter-container">
           <label>Token Distribution Ratio</label>
           <div class="meter-bar">
-            <div id="promptBar" class="meter-fill-prompt" style="width: 50%"></div>
-            <div id="compBar" class="meter-fill-comp" style="width: 50%"></div>
+            <div id="promptBar" class="meter-fill-prompt" style="width:50%"></div>
+            <div id="compBar" class="meter-fill-comp" style="width:50%"></div>
           </div>
           <div class="meter-legend">
-            <div class="legend-item">
-              <span class="legend-dot prompt"></span>
-              <span id="promptPct">Input: 50%</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot comp"></span>
-              <span id="compPct">Output: 50%</span>
-            </div>
+            <div class="legend-item"><span class="legend-dot prompt"></span><span id="promptPct">Input: 50%</span></div>
+            <div class="legend-item"><span class="legend-dot comp"></span><span id="compPct">Output: 50%</span></div>
           </div>
+        </div>
+
+        <!-- Yearly breakdown (shown only in yearly view) -->
+        <div id="yearlyBreakdown" style="display:none;">
+          <label style="display:block;margin-bottom:8px;">Monthly Breakdown</label>
+          <div id="yearlyGrid" class="yearly-summary"></div>
         </div>
 
         <div class="usage-footer">
           <div class="month-selector-group">
-            <label for="monthSelect">Month</label>
-            <select id="monthSelect" class="month-select">
-              <!-- Dynamically populated -->
-            </select>
+            <div class="view-toggle" id="periodToggle">
+              <!-- populated by JS -->
+            </div>
+            <select id="monthSelect" class="month-select"></select>
+            <select id="yearSelect" class="month-select" style="display:none;"></select>
           </div>
-          <button id="resetStatsBtn" class="btn-reset">Reset Statistics</button>
+          <button id="resetStatsBtn" class="btn-reset">🔒 Reset Statistics</button>
         </div>
       </section>
     </div>
   </div>
 
+  <!-- Password modal for Reset -->
+  <div class="pwd-overlay" id="pwdOverlay">
+    <div class="pwd-modal">
+      <h3>🔒 Admin Authentication</h3>
+      <p>Enter the reset password to clear token usage statistics. This action cannot be undone.</p>
+      <input type="password" class="pwd-input" id="pwdInput" placeholder="••••••" maxlength="12" autocomplete="off">
+      <div class="pwd-error" id="pwdError"></div>
+      <div class="pwd-actions">
+        <button class="pwd-cancel" id="pwdCancel">Cancel</button>
+        <button class="pwd-confirm" id="pwdConfirm">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
   <script src="assets/js/ai-resilience.js?v=10"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+  /* ═══════════════════════════════════════════════════════════════
+     TOKEN DASHBOARD v2 — Monthly + Yearly | Supabase | Pwd Reset
+  ═══════════════════════════════════════════════════════════════ */
+
+  const RESET_PASSWORD = '200520';
+  let CURRENT_VIEW = 'monthly'; // 'monthly' | 'yearly'
+
+  /* ── Supabase helpers ── */
+  async function syncTokenToSupabase(yearMonth, data) {
+    try {
+      const sb = window.DrAuth?.getClient?.();
+      if (!sb) return;
+      const user = (await sb.auth.getUser()).data?.user;
+      if (!user) return;
+      setBadge('syncing', '⟳ Syncing...');
+      const { error } = await sb.from('token_usage').upsert({
+        user_id:           user.id,
+        year_month:        yearMonth,
+        prompt_tokens:     data.prompt_tokens,
+        completion_tokens: data.completion_tokens,
+        total_tokens:      data.total_tokens,
+        requests:          data.requests,
+        updated_at:        new Date().toISOString()
+      }, { onConflict: 'user_id,year_month' });
+      setBadge(error ? 'error' : 'ok', error ? '⚠ Sync Failed' : '⬆ Synced');
+    } catch (e) { setBadge('error', '⚠ Offline'); }
+  }
+
+  async function loadAllFromSupabase() {
+    try {
+      const sb = window.DrAuth?.getClient?.();
+      if (!sb) return;
+      const user = (await sb.auth.getUser()).data?.user;
+      if (!user) return;
+      const { data, error } = await sb.from('token_usage').select('*').eq('user_id', user.id);
+      if (error || !data) return;
+      // Merge remote data into localStorage (remote wins)
+      let local = {};
+      try { local = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}'); } catch(_) {}
+      data.forEach(row => {
+        local[row.year_month] = {
+          prompt_tokens:     row.prompt_tokens,
+          completion_tokens: row.completion_tokens,
+          total_tokens:      row.total_tokens,
+          requests:          row.requests
+        };
+      });
+      localStorage.setItem('aimss-token-usage', JSON.stringify(local));
+    } catch(e) { console.warn('[Token] Supabase load failed:', e); }
+  }
+
+  async function deleteFromSupabase(yearMonth) {
+    try {
+      const sb = window.DrAuth?.getClient?.();
+      if (!sb) return;
+      const user = (await sb.auth.getUser()).data?.user;
+      if (!user) return;
+      if (yearMonth === 'all') {
+        await sb.from('token_usage').delete().eq('user_id', user.id);
+      } else {
+        await sb.from('token_usage').delete().eq('user_id', user.id).eq('year_month', yearMonth);
+      }
+    } catch(e) {}
+  }
+
+  function setBadge(state, text) {
+    const b = document.getElementById('syncBadge');
+    if (!b) return;
+    b.className = 'sync-badge' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+    b.textContent = text;
+  }
+
+  /* ── View toggle ── */
+  function setView(view) {
+    CURRENT_VIEW = view;
+    document.getElementById('viewMonthly').classList.toggle('active', view === 'monthly');
+    document.getElementById('viewYearly').classList.toggle('active', view === 'yearly');
+    document.getElementById('monthSelect').style.display = view === 'monthly' ? '' : 'none';
+    document.getElementById('yearSelect').style.display  = view === 'yearly'  ? '' : 'none';
+    document.getElementById('yearlyBreakdown').style.display = view === 'yearly' ? '' : 'none';
+    document.getElementById('dashTitle').textContent = view === 'monthly' ? 'Monthly Token Dashboard' : 'Yearly Token Dashboard';
+    updateTokenStatsUI();
+  }
+
+    document.addEventListener('DOMContentLoaded', async () => {
       const nvidiaModelSelect = document.getElementById('nvidiaModelSelect');
       const refreshNvidiaBtn = document.getElementById('refreshNvidiaBtn');
       const nvidiaStatus = document.getElementById('nvidiaStatus');
@@ -545,63 +776,97 @@
       const monthSelect = document.getElementById('monthSelect');
       const resetStatsBtn = document.getElementById('resetStatsBtn');
 
-      // Populate months list (current month and any in localStorage)
+      // Sync from Supabase first, then populate
+      await loadAllFromSupabase();
+
+      // Populate months list
       const initMonthList = () => {
         monthSelect.innerHTML = '';
         const now = new Date();
         const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        
         let months = [currentYM];
         try {
           const stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
-          Object.keys(stats).forEach(k => {
-            if (!months.includes(k)) months.push(k);
-          });
+          Object.keys(stats).forEach(k => { if (!months.includes(k)) months.push(k); });
         } catch (_) {}
-        
-        // Sort months descending
         months.sort((a, b) => b.localeCompare(a));
-        
         months.forEach(ym => {
           const opt = document.createElement('option');
           opt.value = ym;
-          // Format month name (e.g. "June 2026")
           const [year, month] = ym.split('-');
-          const date = new Date(year, parseInt(month) - 1);
-          opt.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          opt.textContent = new Date(year, parseInt(month)-1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
           monthSelect.appendChild(opt);
+        });
+
+        // Populate year select
+        const years = [...new Set(months.map(m => m.split('-')[0]))];
+        yearSelect.innerHTML = '';
+        years.sort((a,b) => b-a).forEach(y => {
+          const opt = document.createElement('option');
+          opt.value = y; opt.textContent = y;
+          yearSelect.appendChild(opt);
         });
       };
 
-      // Refresh Token Stats display based on selected month
+      // Refresh Token Stats display
       const updateTokenStatsUI = () => {
-        const ym = monthSelect.value;
-        if (!ym) return;
+        let stats = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
+        let periodText = '';
 
-        const stats = typeof getTokenUsageForMonth === 'function' 
-          ? getTokenUsageForMonth(ym) 
-          : { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+        if (CURRENT_VIEW === 'monthly') {
+          const ym = monthSelect.value;
+          if (!ym) return;
+          stats = typeof getTokenUsageForMonth === 'function'
+            ? getTokenUsageForMonth(ym)
+            : stats;
+          const [yr, mo] = ym.split('-');
+          periodText = new Date(yr, parseInt(mo)-1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          document.getElementById('yearlyBreakdown').style.display = 'none';
+        } else {
+          // Yearly aggregation
+          const year = yearSelect.value;
+          if (!year) return;
+          periodText = `Full Year ${year}`;
+          let allStats = {};
+          try { allStats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}'); } catch(_) {}
+          const months = Object.keys(allStats).filter(k => k.startsWith(year + '-'));
+          months.forEach(m => {
+            stats.prompt_tokens     += allStats[m].prompt_tokens     || 0;
+            stats.completion_tokens += allStats[m].completion_tokens || 0;
+            stats.total_tokens      += allStats[m].total_tokens      || 0;
+            stats.requests          += allStats[m].requests          || 0;
+          });
+          // Monthly breakdown cards
+          const grid = document.getElementById('yearlyGrid');
+          grid.innerHTML = '';
+          months.sort().forEach(m => {
+            const d = allStats[m];
+            const [,mo] = m.split('-');
+            const name = new Date(year, parseInt(mo)-1).toLocaleString('en-US', {month: 'short'});
+            grid.innerHTML += `<div class="yr-card"><div class="yr-val">${(d.total_tokens||0).toLocaleString()}</div><div class="yr-lbl">${name}</div></div>`;
+          });
+          if (!months.length) grid.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px;">No data for this year</div>';
+          document.getElementById('yearlyBreakdown').style.display = '';
+        }
 
+        document.getElementById('periodLabel').textContent = periodText;
         promptVal.textContent = stats.prompt_tokens.toLocaleString();
-        compVal.textContent = stats.completion_tokens.toLocaleString();
-        totalVal.textContent = stats.total_tokens.toLocaleString();
+        compVal.textContent   = stats.completion_tokens.toLocaleString();
+        totalVal.textContent  = stats.total_tokens.toLocaleString();
+        document.getElementById('reqVal').textContent  = (stats.requests || 0).toLocaleString();
+        document.getElementById('avgVal').textContent  = stats.requests
+          ? Math.round(stats.total_tokens / stats.requests).toLocaleString() : '0';
 
         const total = stats.total_tokens;
         if (total > 0) {
           const pPct = Math.round((stats.prompt_tokens / total) * 100);
-          const cPct = 100 - pPct;
-          
           promptBar.style.width = `${pPct}%`;
-          compBar.style.width = `${cPct}%`;
-          
+          compBar.style.width   = `${100-pPct}%`;
           promptPct.textContent = `Input: ${pPct}%`;
-          compPct.textContent = `Output: ${cPct}%`;
+          compPct.textContent   = `Output: ${100-pPct}%`;
         } else {
-          promptBar.style.width = `50%`;
-          compBar.style.width = `50%`;
-          
-          promptPct.textContent = `Input: 50%`;
-          compPct.textContent = `Output: 50%`;
+          promptBar.style.width = `50%`; compBar.style.width = `50%`;
+          promptPct.textContent = 'Input: 50%'; compPct.textContent = 'Output: 50%';
         }
       };
 
@@ -742,29 +1007,74 @@
       refreshGeminiBtn.addEventListener('click', () => fetchGeminiBrandModels(true));
 
       monthSelect.addEventListener('change', updateTokenStatsUI);
+      yearSelect.addEventListener('change', updateTokenStatsUI);
+
+      // ── Password-protected Reset ──
+      const pwdOverlay = document.getElementById('pwdOverlay');
+      const pwdInput   = document.getElementById('pwdInput');
+      const pwdError   = document.getElementById('pwdError');
 
       resetStatsBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset token usage statistics for this month?')) {
-          const ym = monthSelect.value;
-          try {
-            const stats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
-            delete stats[ym];
-            localStorage.setItem('aimss-token-usage', JSON.stringify(stats));
-            updateTokenStatsUI();
-          } catch (_) {}
-        }
+        pwdInput.value = ''; pwdError.textContent = '';
+        pwdOverlay.classList.add('open');
+        setTimeout(() => pwdInput.focus(), 100);
       });
 
-      // Listen to cross-tab updates to refresh usage live
-      window.addEventListener('storage', (e) => {
-        if (e.key === 'aimss-token-usage') {
-          updateTokenStatsUI();
+      document.getElementById('pwdCancel').addEventListener('click', () => {
+        pwdOverlay.classList.remove('open');
+      });
+
+      const doReset = async () => {
+        if (pwdInput.value !== RESET_PASSWORD) {
+          pwdError.textContent = '❌ Wrong password. Access denied.';
+          pwdInput.classList.add('shake');
+          setTimeout(() => pwdInput.classList.remove('shake'), 400);
+          pwdInput.value = '';
+          return;
         }
+        // ✅ Correct password
+        pwdOverlay.classList.remove('open');
+        try {
+          const allStats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}');
+          if (CURRENT_VIEW === 'monthly') {
+            const ym = monthSelect.value;
+            delete allStats[ym];
+            await deleteFromSupabase(ym);
+          } else {
+            const year = yearSelect.value;
+            Object.keys(allStats).filter(k => k.startsWith(year + '-')).forEach(k => delete allStats[k]);
+            // Delete all months of this year from Supabase
+            const sb = window.DrAuth?.getClient?.();
+            const user = sb ? (await sb.auth.getUser()).data?.user : null;
+            if (sb && user) {
+              await sb.from('token_usage').delete().eq('user_id', user.id).like('year_month', year + '-%');
+            }
+          }
+          localStorage.setItem('aimss-token-usage', JSON.stringify(allStats));
+          initMonthList();
+          updateTokenStatsUI();
+          setBadge('ok', '✅ Reset Done');
+          setTimeout(() => setBadge('ok', '⬆ Synced'), 2500);
+        } catch(e) { console.error('Reset error:', e); }
+      };
+
+      document.getElementById('pwdConfirm').addEventListener('click', doReset);
+      pwdInput.addEventListener('keydown', e => { if (e.key === 'Enter') doReset(); });
+      pwdOverlay.addEventListener('click', e => { if (e.target === pwdOverlay) pwdOverlay.classList.remove('open'); });
+
+      // Listen to cross-tab updates
+      window.addEventListener('storage', e => {
+        if (e.key === 'aimss-token-usage') { initMonthList(); updateTokenStatsUI(); }
+      });
+      window.addEventListener('aimss-token-usage-updated', async (e) => {
+        const { yearMonth, data } = e.detail || {};
+        if (yearMonth && data) await syncTokenToSupabase(yearMonth, data);
+        initMonthList(); updateTokenStatsUI();
       });
 
       // Initialize
       initMonthList();
-      updateTokenStatsUI();
+      setView('monthly');
 
       // Load cached models
       const cachedNvidiaRaw = localStorage.getItem('aimss-cached-nvidia-models');

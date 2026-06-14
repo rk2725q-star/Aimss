@@ -50,14 +50,38 @@
   const CLASSES = ['6', '7', '8', '9', '10', '11', '12'];
 
   const EXAMS = [
-    { id: 'neet',   label: 'NEET',   icon: '🔬' },
-    { id: 'jee',    label: 'JEE',    icon: '⚙️' },
-    { id: 'ncert',  label: 'NCERT',  icon: '📖' },
-    { id: 'nda',    label: 'NDA',    icon: '🎖️' },
-    { id: 'upsc',   label: 'UPSC',   icon: '🏛️' },
-    { id: 'tnpsc',  label: 'TNPSC',  icon: '📋' },
-    { id: 'cute',   label: 'CUTE',   icon: '🎓' },
-    { id: 'programming', label: 'Programming', icon: '💻' },
+    // ── Medical / Engineering ──
+    { id: 'neet',        label: 'NEET',        icon: '🔬', group: 'Medical & Engineering' },
+    { id: 'jee',         label: 'JEE',         icon: '⚙️', group: 'Medical & Engineering' },
+    { id: 'ncert',       label: 'NCERT',       icon: '📖', group: 'Medical & Engineering' },
+    // ── Defence & Civil Services ──
+    { id: 'upsc',        label: 'UPSC',        icon: '🏛️', group: 'Defence & Civil Services' },
+    { id: 'nda',         label: 'NDA',         icon: '🎖️', group: 'Defence & Civil Services' },
+    { id: 'cds',         label: 'CDS',         icon: '🪖', group: 'Defence & Civil Services' },
+    { id: 'afcat',       label: 'AFCAT',       icon: '✈️', group: 'Defence & Civil Services' },
+    // ── Banking & Government ──
+    { id: 'ssc',         label: 'SSC',         icon: '📋', group: 'Banking & Government' },
+    { id: 'banking',     label: 'Banking (IBPS/SBI)', icon: '🏦', group: 'Banking & Government' },
+    { id: 'rrb',         label: 'RRB Railway', icon: '🚆', group: 'Banking & Government' },
+    // ── State / Board Exams ──
+    { id: 'tnpsc',       label: 'TNPSC',       icon: '🏫', group: 'State & Board Exams' },
+    { id: 'tet',         label: 'TET / CTET',  icon: '👩‍🏫', group: 'State & Board Exams' },
+    { id: 'ugcnet',      label: 'UGC NET',     icon: '🎓', group: 'State & Board Exams' },
+    { id: 'polytechnic', label: 'Polytechnic', icon: '🔧', group: 'State & Board Exams' },
+    { id: 'diploma',     label: 'Diploma Entrance', icon: '📐', group: 'State & Board Exams' },
+    { id: 'stateboard',  label: 'State Board Competitive', icon: '🏆', group: 'State & Board Exams' },
+    // ── Management & Aptitude ──
+    { id: 'gate',        label: 'GATE',        icon: '⚡', group: 'Management & Aptitude' },
+    { id: 'cat',         label: 'CAT',         icon: '📊', group: 'Management & Aptitude' },
+    { id: 'clat',        label: 'CLAT',        icon: '⚖️', group: 'Management & Aptitude' },
+    { id: 'gmat',        label: 'GMAT',        icon: '🎯', group: 'Management & Aptitude' },
+    // ── Language & International ──
+    { id: 'ielts',       label: 'IELTS',       icon: '🌍', group: 'Language & International' },
+    { id: 'toefl',       label: 'TOEFL',       icon: '🗣️', group: 'Language & International' },
+    { id: 'gre',         label: 'GRE',         icon: '🌐', group: 'Language & International' },
+    // ── Special / Extra Activity ──
+    { id: 'cute',        label: 'CUTE',        icon: '🏅', group: 'Special Exams' },
+    { id: 'programming', label: 'Programming', icon: '💻', group: 'Special Exams' },
   ];
 
   /* ── Get Supabase client (reuse existing or create) ── */

@@ -33,7 +33,16 @@
     /* ═══════════════ SELECTOR GRIDS ═══════════════ */
     .selector-grid { display: grid; gap: 10px; margin-bottom: 20px; }
     .selector-grid.classes { grid-template-columns: repeat(7, 1fr); }
-    .selector-grid.exams   { grid-template-columns: repeat(3, 1fr); }
+    /* Exam section uses grouped layout */
+    .exam-groups-wrap { display: flex; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+    .exam-group-label {
+      font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--muted); padding: 5px 0 8px;
+      border-bottom: 1px solid var(--line); margin-bottom: 10px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .exam-group-label::before { content: ''; flex: none; display: inline-block; width: 3px; height: 12px; border-radius: 2px; background: var(--gold); }
+    .exam-group-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
     /* ═══════════════ PROFILE LOCK BANNER ═══════════════ */
     .profile-lock-banner {
@@ -219,10 +228,11 @@
     /* ═══════════════ RESPONSIVE ═══════════════ */
     @media (max-width: 760px) {
       .selector-grid.classes { grid-template-columns: repeat(4, 1fr); }
-      .selector-grid.exams   { grid-template-columns: repeat(2, 1fr); }
+      .exam-group-grid { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 480px) {
       .selector-grid.classes { grid-template-columns: repeat(4, 1fr); }
+      .exam-group-grid { grid-template-columns: repeat(2, 1fr); }
       .folder-grid { grid-template-columns: repeat(2, 1fr); }
       .file-grid   { grid-template-columns: 1fr; }
     }
@@ -328,7 +338,7 @@
 
         <!-- EXAM SECTION -->
         <div id="examSection" style="display:none;">
-          <div class="selector-grid exams" id="examGrid"></div>
+          <div class="exam-groups-wrap" id="examGrid"></div>
           <div id="noExamMsg" class="no-sel-msg">
             <div class="ns-icon">📝</div>
             <h3>Choose an Exam</h3>
@@ -421,7 +431,9 @@
        PROFILE LOCK — restrict to registered board + class
     ═══════════════════════════════════════ */
     function lockToStudentProfile(board, className) {
-      const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming'];
+      const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming',
+        'ssc','banking','rrb','gate','cat','clat','cds','afcat','tet','ugcnet',
+        'polytechnic','diploma','stateboard','ielts','toefl','gre','gmat'];
       const isExamMode = EXAM_MODES.includes((board||'').toLowerCase()) ||
                          EXAM_MODES.includes((className||'').toLowerCase());
       const BOARD_LABELS = { stateboard: 'Stateboard (TN)', cbse: 'CBSE' };
@@ -507,13 +519,33 @@
       });
 
       const eg = document.getElementById('examGrid');
+      // Build grouped exam sections with labeled headers
+      const groupOrder = [];
+      const groupMap = {};
       DrDrive.EXAMS.forEach(ex => {
-        const b = document.createElement('button');
-        b.className = 'sel-btn exam-btn';
-        b.id = `examBtn-${ex.id}`;
-        b.innerHTML = `<span class="sel-icon">${ex.icon}</span><span>${ex.label}</span><span class="sel-sub">Exam Prep</span>`;
-        b.onclick = () => selectItem('exam', ex.id);
-        eg.appendChild(b);
+        const g = ex.group || 'Other';
+        if (!groupMap[g]) { groupMap[g] = []; groupOrder.push(g); }
+        groupMap[g].push(ex);
+      });
+      groupOrder.forEach(gName => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'exam-group';
+        const lbl = document.createElement('div');
+        lbl.className = 'exam-group-label';
+        lbl.textContent = gName;
+        groupDiv.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.className = 'exam-group-grid';
+        groupMap[gName].forEach(ex => {
+          const b = document.createElement('button');
+          b.className = 'sel-btn exam-btn';
+          b.id = `examBtn-${ex.id}`;
+          b.innerHTML = `<span class="sel-icon">${ex.icon}</span><span>${ex.label}</span><span class="sel-sub">Exam Prep</span>`;
+          b.onclick = () => selectItem('exam', ex.id);
+          grid.appendChild(b);
+        });
+        groupDiv.appendChild(grid);
+        eg.appendChild(groupDiv);
       });
     })();
 

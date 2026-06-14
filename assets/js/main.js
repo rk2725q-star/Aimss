@@ -2298,8 +2298,16 @@ function initTeacherVideo() {
   let currentPath = localStorage.getItem('aimss-drive-path') || '/';
 
   // Classes & Boards for root levels
-  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'];
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12',
+    'NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE',
+    'SSC','Banking','RRB Railway','GATE','CAT','CLAT','CDS','AFCAT',
+    'TET CTET','UGC NET','Polytechnic','Diploma Entrance','State Board Competitive',
+    'IELTS','TOEFL','GRE','GMAT','Programming'];
   const BOARDS = ['Stateboard', 'CBSE', 'General'];
+  const PREP_EXAMS = new Set(['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE',
+    'SSC','Banking','RRB Railway','GATE','CAT','CLAT','CDS','AFCAT',
+    'TET CTET','UGC NET','Polytechnic','Diploma Entrance','State Board Competitive',
+    'IELTS','TOEFL','GRE','GMAT','Programming']);
 
   // Robust YouTube Extractor
   const extractYoutubeId = (input) => {
@@ -2376,7 +2384,7 @@ function initTeacherVideo() {
 
     if (depth === 1) {
       // Render Boards for the selected Class
-      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'].includes(segments[0]);
+      const isPrep = PREP_EXAMS.has(segments[0]);
       const boardsToShow = isPrep ? ['General'] : BOARDS;
       boardsToShow.forEach(brd => {
         const card = document.createElement('div');
@@ -2728,7 +2736,10 @@ function initStudentVideo() {
   // Determine student's registered class+board for access restriction
   const _studentBoard = (window.DrAuth?.getBoard?.() || sessionStorage.getItem('draimss_student_board') || localStorage.getItem('student-board') || '').toLowerCase();
   const _studentClass = (window.DrAuth?.getClassName?.() || sessionStorage.getItem('draimss_student_class') || localStorage.getItem('student-class') || '').toLowerCase();
-  const EXAM_MODES_VID = ['neet','jee','ncert','nda','upsc','tnpsc','cute'];
+  const EXAM_MODES_VID = ['neet','jee','ncert','nda','upsc','tnpsc','cute',
+    'ssc','banking','rrb','gate','cat','clat','cds','afcat',
+    'tet','ugcnet','polytechnic','diploma','stateboard',
+    'ielts','toefl','gre','gmat','programming'];
   const _isExamStudent = EXAM_MODES_VID.includes(_studentBoard) || EXAM_MODES_VID.includes(_studentClass);
 
   // Build the student's locked class folder name (matches CLASSES array format)
@@ -2759,8 +2770,16 @@ function initStudentVideo() {
   }
 
   // Classes & Boards for root levels
-  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'];
+  const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12',
+    'NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE',
+    'SSC','Banking','RRB Railway','GATE','CAT','CLAT','CDS','AFCAT',
+    'TET CTET','UGC NET','Polytechnic','Diploma Entrance','State Board Competitive',
+    'IELTS','TOEFL','GRE','GMAT','Programming'];
   const BOARDS = ['Stateboard', 'CBSE', 'General'];
+  const PREP_EXAMS_STU = new Set(['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE',
+    'SSC','Banking','RRB Railway','GATE','CAT','CLAT','CDS','AFCAT',
+    'TET CTET','UGC NET','Polytechnic','Diploma Entrance','State Board Competitive',
+    'IELTS','TOEFL','GRE','GMAT','Programming']);
 
   const getPathSegments = (path) => path.split('/').filter(Boolean);
 
@@ -2808,7 +2827,7 @@ function initStudentVideo() {
     }
 
     if (depth === 1) {
-      const isPrep = ['NEET','JEE','NCERT','NDA','UPSC','TNPSC','CUTE'].includes(segments[0]);
+      const isPrep = PREP_EXAMS_STU.has(segments[0]);
       let boardsToShow = isPrep ? ['General'] : BOARDS;
       // Restrict to student's board if set
       if (!isPrep && _lockedBoard) {

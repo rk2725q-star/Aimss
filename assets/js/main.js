@@ -941,16 +941,24 @@ Requirements:
         // ── D. Retrieve — v2 engine handles FTS + diversity + cascade internally ──
         ragChunks = await window.RAGEngine.retrieveContext(msg, filters);
 
-        // ── E. Build source-aware badge ──
-        if (ragChunks.length > 0) {
+        // ── E. Build source-aware badge with relevance confidence ──
+        const RELEVANCE_THRESHOLD = 0.05;
+        const relevantChunks = ragChunks.filter(c => (c.score || 0) >= RELEVANCE_THRESHOLD);
+        const hasRelevant    = relevantChunks.length > 0;
+
+        if (ragChunks.length > 0 && hasRelevant) {
+          // HIGH confidence — notes actually contain relevant content
           const uniqueSources = [...new Set(ragChunks.map(c => c.source_name || c.title).filter(Boolean))];
           const filesLabel    = uniqueSources.length > 1
             ? `${uniqueSources.length} files`
             : (uniqueSources[0] || '1 file');
           const filterLabel = [resolvedClass ? `Class ${resolvedClass}` : '', resolvedSubject, resolvedExam].filter(Boolean).join(' • ');
-          ragBadgeHTML = `<span class="ai-rag-badge" title="Sources: ${uniqueSources.join(' | ')}">📚 ${ragChunks.length} chunks · ${filesLabel}${filterLabel ? ' · ' + filterLabel : ''}</span>`;
+          ragBadgeHTML = `<span class="ai-rag-badge" title="Sources: ${uniqueSources.join(' | ')}">📚 ${relevantChunks.length} relevant chunks · ${filesLabel}${filterLabel ? ' · ' + filterLabel : ''}</span>`;
+        } else if (ragChunks.length > 0 && !hasRelevant) {
+          // LOW confidence — chunks found but not relevant to this query
+          ragBadgeHTML = `<span class="ai-rag-badge" style="border-color:rgba(245,158,11,.4);color:#fbbf24;" title="Notes found but topic not covered in uploaded material">📋 Notes exist but this topic is not in your uploaded material — answered from general AI knowledge</span>`;
         } else {
-          // No notes found — show helper badge
+          // No notes at all
           ragBadgeHTML = `<span class="ai-rag-badge" style="opacity:.7;border-color:rgba(245,158,11,.3);color:#fbbf24;" title="No matching notes found">⚠️ No notes found — answered from general AI knowledge</span>`;
         }
 

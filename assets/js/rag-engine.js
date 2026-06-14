@@ -505,9 +505,19 @@
       meta.exam_category  || ''
     ].filter(Boolean).join(' • ');
 
+    // ── Relevance threshold — only trust chunks with meaningful TF-IDF score ──
+    const RELEVANCE_THRESHOLD = 0.05;
+    const relevantChunks = chunks.filter(c => (c.score || 0) >= RELEVANCE_THRESHOLD);
+    const hasRelevant    = relevantChunks.length > 0;
+
+    // Use only relevant chunks for context; fall back to all chunks if none pass
+    // but flag as low-confidence so the AI knows
+    const useChunks = hasRelevant ? relevantChunks : chunks;
+    const confidence = hasRelevant ? 'HIGH' : 'LOW';
+
     // Group chunks by source file
     const bySource = new Map();
-    for (const c of chunks) {
+    for (const c of useChunks) {
       const src = [c.title, c.chapter, c.source_name].filter(Boolean).join(' › ') || 'Notes';
       if (!bySource.has(src)) bySource.set(src, []);
       bySource.get(src).push(c.content_text);
@@ -524,24 +534,41 @@
     const totalSources = bySource.size;
     const contextBlock = sections.join('\n\n══════════════════════════════\n\n');
 
+    // ── Confidence-aware instructions ──
+    const confidenceNotice = confidence === 'HIGH'
+      ? `CONTEXT CONFIDENCE: HIGH — The documents below directly match the student's question. Use them as primary source.`
+      : `CONTEXT CONFIDENCE: LOW — The documents below were retrieved but may NOT directly answer the student's question. They are provided only as background. The specific topic asked about likely is NOT covered in these notes.`;
+
+    const attributionRules = confidence === 'HIGH'
+      ? `ATTRIBUTION RULES (STRICT — follow exactly):
+1. Check if the context below actually answers the question.
+2. If YES → Answer from the notes. Start with: "Based on your class notes..."
+3. If PARTIALLY covered → Say: "Your notes cover [X] but not [Y]. Here's what your notes say: [quote]. Additionally, from general knowledge: [supplement]"
+4. NEVER say "according to your notes" for content you invented yourself.
+5. Cite which Document number you used.`
+      : `ATTRIBUTION RULES (STRICT — follow exactly):
+1. The retrieved documents likely do NOT cover the student's specific question.
+2. START your response with this exact disclosure (first line, bold):
+   "📋 This specific topic is not covered in your uploaded notes. Here's the answer from general knowledge:"
+3. Then give the correct general answer.
+4. Do NOT say "according to your notes", "the notes indicate", "the notes outline", "based on your notes", or any similar phrase.
+5. Do NOT pretend the context documents contain the answer if they don't.
+6. The ⚠️ disclosure MUST come BEFORE the answer, not after.`;
+
     return `${baseSystemPrompt}
 
 ╔══════════════════════════════════════════════════════════╗
   GROUNDING CONTEXT — ${totalSources} SOURCE DOCUMENT${totalSources > 1 ? 'S' : ''}${label ? ` | ${label}` : ''}
+  ${confidenceNotice}
 ╚══════════════════════════════════════════════════════════╝
 
-IMPORTANT INSTRUCTIONS:
-- Answer PRIMARILY using the class notes provided below.
-- If the notes contain the answer: quote or paraphrase them directly.
-- If the notes cover the topic partially: supplement with accurate knowledge and say "In addition to your notes…".
-- If the notes don't cover this at all: answer from knowledge but say "Your uploaded notes don't cover this yet. Here's the answer:".
-- ALWAYS cite which document (Document 1, 2, etc.) you used.
-- Be thorough and educational — this is for a student preparing for exams.
+${attributionRules}
 
 ${contextBlock}
 
 ╔══════════════════════════════════════════════════════════╗
-  END OF CLASS NOTES — Answer the student's question now.
+  END OF CONTEXT — Now answer the student's question.
+  Remember: If the notes don't contain it → disclose FIRST, then answer from knowledge.
 ╚══════════════════════════════════════════════════════════╝`;
   }
 

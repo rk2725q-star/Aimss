@@ -303,11 +303,20 @@ const CHAT_MODES = {
     maxTokens: 4096,
     welcome: '📊 MCQ Mode! Tell me the subject, topic and how many questions (40–75 recommended). I\'ll generate a full question bank with options A, B, C, D and the correct answer for each!',
     systemPrompt: 'You are Dr.AIMSS MCQ test expert for NEET, CBSE, and Stateboard students. Generate ALL the requested questions — do NOT stop early. Format each question exactly as:\nQ1. [Question]\nA) option  B) option  C) option  D) option\nAnswer: [Letter]\n\nContinue numbering Q2, Q3 … up to the full count. Use plain text only — no markdown tables.'
+  },
+
+  /* ── RAG NOTES MODE: answers grounded in uploaded class notes ── */
+  notes: {
+    key: 'notes', label: 'My Notes', icon: '📚', color: '#00e5cc',
+    placeholder: 'Ask a doubt about your class notes (e.g. "Explain Newton\'s 3rd Law from my notes")…',
+    maxTokens: 4096,
+    welcome: '📚 Notes Mode! I will answer your doubts using the actual class notes your teacher uploaded. Select your Class and Subject first, then ask any question!',
+    systemPrompt: 'You are Dr.AIMSS AI tutor. Answer the student\'s doubt using the CLASS NOTES provided in the context. Be specific, accurate, and cite the relevant section. Use **bold** for key terms and ## headings for sections. End with "📖 From your notes:".'
   }
 };
 
 
-const CHIP_MODE_KEYS = ['ebook','biology','chemistry','physics','maths','studyplan','mcq'];
+const CHIP_MODE_KEYS = ['notes','biology','chemistry','physics','maths','studyplan','mcq'];
 let ACTIVE_CHAT_MODE = 'general';
 
 
@@ -386,6 +395,40 @@ function initFloatingChat() {
 
     <div class="cp-chips">${chipHTML}</div>
 
+    <!-- ── RAG Notes Filter Bar (shown only in Notes mode) ── -->
+    <div id="ragFilterBar" class="cp-rag-filter" style="display:none">
+      <div class="cp-rag-filter-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Filter Notes By:
+      </div>
+      <div class="cp-rag-filter-row">
+        <select id="ragClassPicker" class="cp-rag-select">
+          <option value="">All Classes</option>
+          <option value="6">Class 6</option><option value="7">Class 7</option>
+          <option value="8">Class 8</option><option value="9">Class 9</option>
+          <option value="10">Class 10</option><option value="11">Class 11</option>
+          <option value="12">Class 12</option><option value="neet">NEET</option>
+        </select>
+        <select id="ragSubjectPicker" class="cp-rag-select">
+          <option value="">All Subjects</option>
+          <option value="Physics">Physics</option>
+          <option value="Chemistry">Chemistry</option>
+          <option value="Biology">Biology</option>
+          <option value="Maths">Maths</option>
+          <option value="Science">Science</option>
+          <option value="Social">Social</option>
+        </select>
+        <select id="ragExamPicker" class="cp-rag-select">
+          <option value="">Any Board</option>
+          <option value="CBSE">CBSE</option>
+          <option value="Stateboard">Stateboard</option>
+          <option value="NEET">NEET</option>
+          <option value="JEE">JEE</option>
+        </select>
+      </div>
+      <div id="ragStatusLine" class="cp-rag-status"></div>
+    </div>
+
     <div class="cp-input-row">
       <input id="chatInput" type="text" placeholder="${CHAT_MODES[ACTIVE_CHAT_MODE].placeholder}"/>
       <button id="chatSend" type="button" class="cp-send-btn" aria-label="Send">
@@ -415,6 +458,26 @@ function initFloatingChat() {
   const modelLabel  = panel.querySelector('#cpActiveModelLabel');
 
   /* ── Mode Switcher ── */
+  const ragFilterBar  = panel.querySelector('#ragFilterBar');
+  const ragStatusLine = panel.querySelector('#ragStatusLine');
+
+  const showRagStatus = async () => {
+    if (!ragStatusLine || !window.RAGEngine) return;
+    const ragClass = panel.querySelector('#ragClassPicker')?.value || '';
+    const ragSubj  = panel.querySelector('#ragSubjectPicker')?.value || '';
+    const ragExam  = panel.querySelector('#ragExamPicker')?.value || '';
+    const instId   = window.DrAuth?.getInstitutionId() || '';
+    const filters  = {};
+    if (ragClass) filters.class_level    = ragClass;
+    if (ragSubj)  filters.subject        = ragSubj;
+    if (ragExam)  filters.exam_category  = ragExam;
+    if (instId)   filters.institution_id = instId;
+    const hasCtx = await window.RAGEngine.hasRAGContext(filters).catch(() => false);
+    ragStatusLine.innerHTML = hasCtx
+      ? `<span style="color:#00e5cc">✅ Notes available — AI will use your class material</span>`
+      : `<span style="color:#f59e0b">⚠️ No notes found for these filters. <a href="rag-upload.html" target="_blank" style="color:var(--accent)">Upload notes &rarr;</a></span>`;
+  };
+
   const applyMode = (modeKey) => {
     ACTIVE_CHAT_MODE = modeKey;
     const m = CHAT_MODES[modeKey];
@@ -425,6 +488,11 @@ function initFloatingChat() {
     modeBar.classList.toggle('cp-mode-general', modeKey === 'general');
     // Update input placeholder
     input.placeholder = m.placeholder;
+    // Toggle RAG filter bar
+    if (ragFilterBar) {
+      ragFilterBar.style.display = modeKey === 'notes' ? 'block' : 'none';
+      if (modeKey === 'notes') showRagStatus();
+    }
     // Highlight active chip
     panel.querySelectorAll('.cp-mode-chip').forEach(b => {
       b.classList.toggle('active', b.dataset.mode === modeKey);
@@ -814,9 +882,100 @@ Requirements:
       }
     }, 600);
 
+    /* ═══════════════════════════════════════════════════════════════
+       RAG CONTEXT INJECTION v2 — INTELLIGENT MULTI-FILE RETRIEVAL
+       ════════════════════════════════════════════════════════════════
+       Strategy:
+         1. Try to get class/board from the student's saved profile (DrAuth).
+         2. If Notes mode: also use the manual filter pickers as override.
+         3. Run retrieval with full cascade fallback (class→subject→exam).
+         4. Surface badge showing HOW MANY FILES were used.
+       ════════════════════════════════════════════════════════════════ */
+    let ragChunks    = [];
+    let ragBadgeHTML = '';
+    const isNotesMode = ACTIVE_CHAT_MODE === 'notes';
+
+    if (window.RAGEngine && isNotesMode) {
+      try {
+        thinking.textContent = '📚 Searching class notes…';
+        setStatus('📚 Searching notes…');
+
+        // ── A. Pull from student's saved profile ──
+        const profileClass = window.DrAuth?.getClassName?.()   || '';
+        const profileBoard = window.DrAuth?.getBoard?.()       || '';
+        const institutionId = window.DrAuth?.getInstitutionId?.() || '';
+
+        // ── B. Manual pickers override profile (if user changes them) ──
+        const pickerClass   = panel.querySelector('#ragClassPicker')?.value  || '';
+        const pickerSubject = panel.querySelector('#ragSubjectPicker')?.value || '';
+        const pickerExam    = panel.querySelector('#ragExamPicker')?.value    || '';
+
+        // Resolved values: picker wins over profile
+        const resolvedClass = pickerClass   || profileClass  || '';
+        const resolvedSubject = pickerSubject || '';
+        const resolvedExam  = pickerExam    || profileBoard  || '';
+
+        // Auto-fill pickers if they're empty and profile has data
+        if (!pickerClass && profileClass) {
+          const cp = panel.querySelector('#ragClassPicker');
+          if (cp) {
+            [...cp.options].forEach(o => { if (o.value === profileClass) o.selected = true; });
+          }
+        }
+        if (!pickerExam && profileBoard) {
+          const ep = panel.querySelector('#ragExamPicker');
+          if (ep) {
+            const boardMap = { stateboard: 'Stateboard', cbse: 'CBSE', neet: 'NEET', jee: 'JEE' };
+            const mapped = boardMap[profileBoard?.toLowerCase()] || profileBoard;
+            [...ep.options].forEach(o => { if (o.value === mapped) o.selected = true; });
+          }
+        }
+
+        // ── C. Build filters object ──
+        const filters = {};
+        if (resolvedClass)    filters.class_level    = resolvedClass;
+        if (resolvedSubject)  filters.subject        = resolvedSubject;
+        if (resolvedExam)     filters.exam_category  = resolvedExam;
+        if (institutionId)    filters.institution_id = institutionId;
+
+        // ── D. Retrieve — v2 engine handles FTS + diversity + cascade internally ──
+        ragChunks = await window.RAGEngine.retrieveContext(msg, filters);
+
+        // ── E. Build source-aware badge ──
+        if (ragChunks.length > 0) {
+          const uniqueSources = [...new Set(ragChunks.map(c => c.source_name || c.title).filter(Boolean))];
+          const filesLabel    = uniqueSources.length > 1
+            ? `${uniqueSources.length} files`
+            : (uniqueSources[0] || '1 file');
+          const filterLabel = [resolvedClass ? `Class ${resolvedClass}` : '', resolvedSubject, resolvedExam].filter(Boolean).join(' • ');
+          ragBadgeHTML = `<span class="ai-rag-badge" title="Sources: ${uniqueSources.join(' | ')}">📚 ${ragChunks.length} chunks · ${filesLabel}${filterLabel ? ' · ' + filterLabel : ''}</span>`;
+        } else {
+          // No notes found — show helper badge
+          ragBadgeHTML = `<span class="ai-rag-badge" style="opacity:.7;border-color:rgba(245,158,11,.3);color:#fbbf24;" title="No matching notes found">⚠️ No notes found — answered from general AI knowledge</span>`;
+        }
+
+      } catch (ragErr) {
+        console.warn('[RAG] Context retrieval error:', ragErr);
+      }
+      thinking.textContent = 'Generating answer…';
+      setStatus('🤖 Generating…');
+    }
+
+    // ── Build final system prompt (with or without RAG grounding) ──
+    let finalSystemPrompt = mode.systemPrompt;
+    if (ragChunks.length > 0) {
+      const ragMeta = {
+        class_level:   panel.querySelector('#ragClassPicker')?.value  || '',
+        subject:       panel.querySelector('#ragSubjectPicker')?.value || '',
+        exam_category: panel.querySelector('#ragExamPicker')?.value    || ''
+      };
+      finalSystemPrompt = window.RAGEngine.buildRAGPrompt(msg, ragChunks, mode.systemPrompt, ragMeta);
+    }
+
+
     try {
       const result = await callAIWithFallback(
-        [{role:'system', content: mode.systemPrompt}, {role:'user', content: msg}],
+        [{role:'system', content: finalSystemPrompt}, {role:'user', content: msg}],
         mode.maxTokens
       );
       clearInterval(queueTimer);
@@ -837,7 +996,7 @@ Requirements:
         const renderedHTML = ACTIVE_CHAT_MODE === 'mcq'
           ? `<span class="ai-msg-text">${cleanAIText(result.text).replace(/\n/g,'<br>')}</span>`
           : `<div class="ai-msg-md">${renderMarkdown(result.text)}</div>`;
-        bubble.innerHTML = `${renderedHTML}${modeBadge}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
+        bubble.innerHTML = `${renderedHTML}${modeBadge}${ragBadgeHTML}<span class="ai-model-badge ${badgeClass}">${prov.icon} ${result.usedModel || prov.label}</span>`;
 
         // ── MCQ mode: add "Upload to Class" button ──
         if (ACTIVE_CHAT_MODE === 'mcq') {

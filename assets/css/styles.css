@@ -4162,3 +4162,119 @@ body {
     position: static;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   RAG SYSTEM — Notes Mode UI & Badges
+   ══════════════════════════════════════════════════════ */
+
+/* ── RAG Filter Bar in chat panel ── */
+.cp-rag-filter {
+  margin: 0 12px 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0,229,204,0.05);
+  border: 1px solid rgba(0,229,204,0.2);
+  animation: panelIn .3s ease;
+}
+
+.cp-rag-filter-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  opacity: .8;
+}
+
+.cp-rag-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cp-rag-select {
+  flex: 1;
+  min-width: 90px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,204,0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #fff;
+  font: 600 .75rem 'Outfit',sans-serif;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.cp-rag-select:focus {
+  border-color: var(--accent);
+}
+
+.cp-rag-select option {
+  background: #0a0a14;
+  color: #fff;
+}
+
+.cp-rag-status {
+  margin-top: 8px;
+  font-size: .75rem;
+  font-weight: 600;
+  min-height: 16px;
+  line-height: 1.4;
+}
+
+/* ── RAG badge on AI response bubbles ── */
+.ai-rag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 700;
+  background: rgba(0,229,204,0.1);
+  border: 1px solid rgba(0,229,204,0.3);
+  color: var(--accent);
+  margin: 6px 4px 0 0;
+  vertical-align: middle;
+  cursor: help;
+  text-shadow: 0 0 8px rgba(0,229,204,0.4);
+}
+
+/* ── Notes mode chip highlight ── */
+.cp-mode-chip[data-mode="notes"] {
+  background: rgba(0,229,204,0.08) !important;
+  border-color: rgba(0,229,204,0.3) !important;
+}
+.cp-mode-chip[data-mode="notes"].active {
+  background: rgba(0,229,204,0.18) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 14px rgba(0,229,204,0.2) !important;
+}
+
+/* ── Notes RAG upload quick link in chat ── */
+.rag-upload-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(0,229,204,0.08);
+  border: 1px solid rgba(0,229,204,0.25);
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .2s;
+  margin-top: 8px;
+}
+.rag-upload-link:hover {
+  background: rgba(0,229,204,0.15);
+  border-color: var(--accent);
+  transform: translateX(2px);
+}

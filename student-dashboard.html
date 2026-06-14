@@ -102,15 +102,24 @@
         <div style="margin-left: auto; padding: 4px 10px; background: var(--bg-2); border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line);">CTRL + K</div>
       </div>
 
-      <div class="glass card">
-        <h3 style="margin-bottom: 16px;">Quick Access</h3>
-        <div class="split-2">
-          <a class="card" href="study-materials.html"><h3>Study Materials</h3><p>Access notes, guides, and resources for Class 6th to 12th.</p></a>
-          <a class="card" href="mcq-test.html"><h3>Answer MCQ</h3><p>Earn +5 pts per correct MCQ answer.</p></a>
-          <a class="card" href="ai-pdf-generator.html"><h3>Generate ePDF</h3><p>Earn +20 XP per generation.</p></a>
-          <a class="card" href="mcq-store.html"><h3>🏪 Store</h3><p>View your points, badges &amp; achievements.</p></a>
+        <div class="glass card">
+          <h3 style="margin-bottom: 16px;">Quick Access</h3>
+          <div class="split-2">
+            <a class="card" href="study-materials.html"><h3>Study Materials</h3><p>Access notes, guides, and resources for Class 6th to 12th.</p></a>
+            <a class="card" href="mcq-test.html"><h3>Answer MCQ</h3><p>Earn +5 pts per correct MCQ answer.</p></a>
+            <a class="card" href="ai-pdf-generator.html"><h3>Generate ePDF</h3><p>Earn +20 XP per generation.</p></a>
+            <a class="card" href="mcq-store.html"><h3>🏪 Store</h3><p>View your points, badges &amp; achievements.</p></a>
+          </div>
+          <!-- RAG Notes Mode quick trigger -->
+          <div style="margin-top:16px; padding:16px 18px; background:rgba(0,229,204,0.06); border:1px solid rgba(0,229,204,0.25); border-radius:14px; display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="document.getElementById('chatToggle')?.click(); setTimeout(()=>{const chip=document.querySelector('.cp-mode-chip[data-mode=notes]'); chip&&chip.click();},400);">
+            <span style="font-size:1.8rem">📚</span>
+            <div>
+              <div style="font-weight:800; font-size:.95rem; color:var(--accent);">Ask AI from My Notes</div>
+              <div style="font-size:.82rem; color:var(--muted); margin-top:2px;">Get answers grounded in your actual class notes uploaded by your teacher</div>
+            </div>
+            <div style="margin-left:auto; padding:6px 14px; background:linear-gradient(135deg,#00e5cc,#007a70); border-radius:8px; color:#000; font-size:.78rem; font-weight:800;">RAG AI</div>
+          </div>
         </div>
-      </div>
     </section>
   </main>
 
@@ -130,6 +139,7 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js?v=10"></script>
+  <script src="assets/js/rag-engine.js?v=1"></script>
   <script src="assets/js/main.js?v=6"></script>
   <script>
     // Sync store points badge in sidebar

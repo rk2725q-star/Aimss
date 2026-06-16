@@ -261,11 +261,188 @@
             
             <div class="fv-content">
               <!-- Elite Programs -->
-              <div class="fv-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 56px;">
+              <div class="fv-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 40px;">
                 <div class="fv-section-title">🎯 Elite Programs</div>
                 <div class="fv-col"><a class="fv-link" style="background:var(--accent-glow); color:#000; font-weight:700;" href="#programs">Program 1: Foundation (6-8)</a></div>
                 <div class="fv-col"><a class="fv-link" style="background:var(--accent-glow); color:#000; font-weight:700;" href="#competitive-programs">Program 2: NEET / JEE / NDA</a></div>
                 <div class="fv-col"><a class="fv-link" style="background:var(--accent-glow); color:#000; font-weight:700;" href="#competitive-programs">Program 3: TNPSC / UPSC / CUTE</a></div>
+              </div>
+
+              <!-- ALL EXAM CATEGORIES with search -->
+              <div style="margin-bottom: 48px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+                  <div class="fv-section-title" style="color:#f59e0b; border-color:rgba(245,158,11,0.2); margin-bottom:0;">📝 All Exam Categories</div>
+                  <div style="position:relative;flex:1;max-width:320px;">
+                    <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999;pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="examSearchInput" type="text" placeholder="Search exams… (NEET, SSC, GATE…)" autocomplete="off"
+                      style="width:100%;padding:10px 14px 10px 38px;border:1.5px solid #e5e7eb;border-radius:10px;font:inherit;font-size:.88rem;color:#111;outline:none;transition:border-color .2s;box-sizing:border-box;"
+                      oninput="filterExamCards(this.value)"
+                      onfocus="this.style.borderColor='#f59e0b'" onblur="this.style.borderColor='#e5e7eb'"/>
+                  </div>
+                </div>
+                <!-- Exam Group: Medical & Engineering -->
+                <div class="exam-cat-group" data-group="Medical & Engineering" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#f59e0b;"></span>Medical & Engineering</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="neet" data-label="NEET" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;position:relative;">
+                      <div style="font-size:1.5rem;">🔬</div>
+                      <div style="font-weight:700;font-size:.9rem;color:#111;">NEET</div>
+                      <div style="font-size:.72rem;color:#888;">Medical Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;">
+                        <a href="study-materials.html?exam=neet" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a>
+                        <a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a>
+                      </div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="jee" data-label="JEE" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;position:relative;">
+                      <div style="font-size:1.5rem;">⚙️</div>
+                      <div style="font-weight:700;font-size:.9rem;color:#111;">JEE</div>
+                      <div style="font-size:.72rem;color:#888;">Engineering Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;">
+                        <a href="study-materials.html?exam=jee" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a>
+                        <a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a>
+                      </div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="ncert" data-label="NCERT" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;position:relative;">
+                      <div style="font-size:1.5rem;">📖</div>
+                      <div style="font-weight:700;font-size:.9rem;color:#111;">NCERT</div>
+                      <div style="font-size:.72rem;color:#888;">Foundation Study</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;">
+                        <a href="study-materials.html?exam=ncert" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a>
+                        <a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: Defence & Civil Services -->
+                <div class="exam-cat-group" data-group="Defence & Civil Services" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#6366f1;"></span>Defence & Civil Services</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="upsc" data-label="UPSC" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🏛️</div><div style="font-weight:700;font-size:.9rem;color:#111;">UPSC</div><div style="font-size:.72rem;color:#888;">Civil Services</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=upsc" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="nda" data-label="NDA" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🎖️</div><div style="font-weight:700;font-size:.9rem;color:#111;">NDA</div><div style="font-size:.72rem;color:#888;">National Defence</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=nda" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="cds" data-label="CDS" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🪖</div><div style="font-weight:700;font-size:.9rem;color:#111;">CDS</div><div style="font-size:.72rem;color:#888;">Combined Defence</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=cds" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="afcat" data-label="AFCAT" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">✈️</div><div style="font-weight:700;font-size:.9rem;color:#111;">AFCAT</div><div style="font-size:.72rem;color:#888;">Air Force Common</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=afcat" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: Banking & Government -->
+                <div class="exam-cat-group" data-group="Banking & Government" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#10b981;"></span>Banking & Government</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="ssc" data-label="SSC" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">📋</div><div style="font-weight:700;font-size:.9rem;color:#111;">SSC</div><div style="font-size:.72rem;color:#888;">Staff Selection</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=ssc" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="banking" data-label="Banking IBPS SBI" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🏦</div><div style="font-weight:700;font-size:.9rem;color:#111;">Banking</div><div style="font-size:.72rem;color:#888;">IBPS / SBI</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=banking" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="rrb" data-label="RRB Railway" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🚆</div><div style="font-weight:700;font-size:.9rem;color:#111;">RRB Railway</div><div style="font-size:.72rem;color:#888;">Railway Recruitment</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=rrb" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: State & Board Exams -->
+                <div class="exam-cat-group" data-group="State & Board Exams" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#7c3aed;"></span>State & Board Exams</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="tnpsc" data-label="TNPSC" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🏫</div><div style="font-weight:700;font-size:.9rem;color:#111;">TNPSC</div><div style="font-size:.72rem;color:#888;">TN Public Service</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=tnpsc" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="tet" data-label="TET CTET" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">👩‍🏫</div><div style="font-weight:700;font-size:.9rem;color:#111;">TET / CTET</div><div style="font-size:.72rem;color:#888;">Teacher Eligibility</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=tet" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="ugcnet" data-label="UGC NET" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🎓</div><div style="font-weight:700;font-size:.9rem;color:#111;">UGC NET</div><div style="font-size:.72rem;color:#888;">University Teaching</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=ugcnet" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="polytechnic" data-label="Polytechnic" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🔧</div><div style="font-weight:700;font-size:.9rem;color:#111;">Polytechnic</div><div style="font-size:.72rem;color:#888;">Diploma Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=polytechnic" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="diploma" data-label="Diploma" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">📐</div><div style="font-weight:700;font-size:.9rem;color:#111;">Diploma</div><div style="font-size:.72rem;color:#888;">Diploma Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=diploma" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="stateboard" data-label="State Board Competitive" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🏆</div><div style="font-weight:700;font-size:.9rem;color:#111;">State Board</div><div style="font-size:.72rem;color:#888;">Board Competitive</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=stateboard" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: Management & Aptitude -->
+                <div class="exam-cat-group" data-group="Management & Aptitude" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#ef4444;"></span>Management & Aptitude</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="gate" data-label="GATE" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">⚡</div><div style="font-weight:700;font-size:.9rem;color:#111;">GATE</div><div style="font-size:.72rem;color:#888;">Grad Aptitude Tech</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=gate" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="cat" data-label="CAT" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">📊</div><div style="font-weight:700;font-size:.9rem;color:#111;">CAT</div><div style="font-size:.72rem;color:#888;">MBA Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=cat" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="clat" data-label="CLAT" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">⚖️</div><div style="font-weight:700;font-size:.9rem;color:#111;">CLAT</div><div style="font-size:.72rem;color:#888;">Law Entrance</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=clat" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="gmat" data-label="GMAT" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🎯</div><div style="font-weight:700;font-size:.9rem;color:#111;">GMAT</div><div style="font-size:.72rem;color:#888;">Business School</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=gmat" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: Language & International -->
+                <div class="exam-cat-group" data-group="Language & International" style="margin-bottom:22px;">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#0ea5e9;"></span>Language & International</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="ielts" data-label="IELTS" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🌍</div><div style="font-weight:700;font-size:.9rem;color:#111;">IELTS</div><div style="font-size:.72rem;color:#888;">English Proficiency</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=ielts" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="toefl" data-label="TOEFL" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🗣️</div><div style="font-weight:700;font-size:.9rem;color:#111;">TOEFL</div><div style="font-size:.72rem;color:#888;">Test of English</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=toefl" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="gre" data-label="GRE" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🌐</div><div style="font-weight:700;font-size:.9rem;color:#111;">GRE</div><div style="font-size:.72rem;color:#888;">Grad School Entry</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=gre" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Exam Group: Special Exams -->
+                <div class="exam-cat-group" data-group="Special Exams">
+                  <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#888;padding:4px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:#ec4899;"></span>Special Exams</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+                    <div class="exam-cat-card" data-exam="cute" data-label="CUTE" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">🏅</div><div style="font-weight:700;font-size:.9rem;color:#111;">CUTE</div><div style="font-size:.72rem;color:#888;">Common University</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=cute" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                    <div class="exam-cat-card" data-exam="programming" data-label="Programming" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;transition:all .2s;">
+                      <div style="font-size:1.5rem;">💻</div><div style="font-weight:700;font-size:.9rem;color:#111;">Programming</div><div style="font-size:.72rem;color:#888;">Python, C, Java…</div>
+                      <div style="display:flex;gap:6px;margin-top:4px;"><a href="study-materials.html?exam=programming" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#b45309;text-decoration:none;">📚 Study</a><a href="#admission" onclick="closeMenu('compExamsMenu','compExamsBtn','compExamsChevron')" style="flex:1;text-align:center;padding:5px 0;border-radius:7px;font-size:.74rem;font-weight:700;background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;text-decoration:none;">✅ Enroll</a></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- No results message -->
+                <div id="examSearchEmpty" style="display:none;text-align:center;padding:32px;color:#888;">
+                  <div style="font-size:2rem;margin-bottom:8px;">🔍</div>
+                  <div style="font-weight:700;">No exams match your search</div>
+                  <div style="font-size:.84rem;margin-top:4px;">Try searching by exam name like NEET, SSC, GATE…</div>
+                </div>
               </div>
 
               <!-- Materials Layout -->
@@ -668,7 +845,10 @@
                 <div class="cprog-meta-item"><span class="meta-icon">📚</span><span>Class 11 &amp; 12 (Science Stream)</span></div>
                 <div class="cprog-meta-item"><span class="meta-icon">⏱️</span><span>2-Year &amp; 1-Year Crash Courses</span></div>
               </div>
-              <a class="btn cprog-cta" href="lectures.html">Explore Lectures →</a>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                <a class="btn cprog-cta" href="lectures.html">Explore Lectures →</a>
+                <a class="btn" href="#admission" style="background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;font-weight:700;">✅ Enroll Now</a>
+              </div>
             </div>
             <div class="cprog-cards-grid">
               <div class="cprog-subject-card" style="--accent-clr:#3b82f6;">
@@ -714,7 +894,10 @@
                 <div class="cprog-meta-item"><span class="meta-icon">📚</span><span>10th / 12th / Degree Pass candidates</span></div>
                 <div class="cprog-meta-item"><span class="meta-icon">⏱️</span><span>6-Month Intensive &amp; Weekend Batches</span></div>
               </div>
-              <a class="btn cprog-cta" href="study-materials.html">Study Materials →</a>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                <a class="btn cprog-cta" href="study-materials.html?exam=tnpsc">Study Materials →</a>
+                <a class="btn" href="#admission" style="background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;font-weight:700;">✅ Enroll Now</a>
+              </div>
             </div>
             <div class="cprog-cards-grid">
               <div class="cprog-subject-card" style="--accent-clr:#7c3aed;">
@@ -760,7 +943,10 @@
                 <div class="cprog-meta-item"><span class="meta-icon">📚</span><span>Graduates &amp; Final Year students</span></div>
                 <div class="cprog-meta-item"><span class="meta-icon">⏱️</span><span>Foundation · Prelims · Mains Batches</span></div>
               </div>
-              <a class="btn cprog-cta" href="study-materials.html">Study Materials →</a>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                <a class="btn cprog-cta" href="study-materials.html?exam=upsc">Study Materials →</a>
+                <a class="btn" href="#admission" style="background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;font-weight:700;">✅ Enroll Now</a>
+              </div>
             </div>
             <div class="cprog-cards-grid">
               <div class="cprog-subject-card" style="--accent-clr:#d97706;">
@@ -805,7 +991,10 @@
                 <div class="cprog-meta-item"><span class="meta-icon">📚</span><span>Class 12 students and graduates</span></div>
                 <div class="cprog-meta-item"><span class="meta-icon">⏱️</span><span>3-Month Crash Course &amp; Full Batches</span></div>
               </div>
-              <a class="btn cprog-cta" href="study-materials.html">Study Materials →</a>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                <a class="btn cprog-cta" href="study-materials.html?exam=cute">Study Materials →</a>
+                <a class="btn" href="#admission" style="background:linear-gradient(135deg,#00e5cc,#007a70);color:#000;font-weight:700;">✅ Enroll Now</a>
+              </div>
             </div>
             <div class="cprog-cards-grid">
               <div class="cprog-subject-card" style="--accent-clr:#6366f1;">
@@ -871,7 +1060,33 @@
     <div class="chat-row"><input id="chatInput" type="text" placeholder="Type your question"/><button id="chatSend" type="button">Send</button></div>
   </div>
 
+  <style>
+    .exam-cat-card:hover {
+      border-color: #f59e0b !important;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.15);
+      transform: translateY(-2px);
+    }
+  </style>
   <script>
+  function filterExamCards(query) {
+    const q = query.toLowerCase().trim();
+    let anyVisible = false;
+    document.querySelectorAll('.exam-cat-card').forEach(card => {
+      const label = (card.dataset.label || '').toLowerCase();
+      const exam  = (card.dataset.exam  || '').toLowerCase();
+      const show  = !q || label.includes(q) || exam.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) anyVisible = true;
+    });
+    // Hide/show groups based on whether they have any visible cards
+    document.querySelectorAll('.exam-cat-group').forEach(group => {
+      const hasVisible = [...group.querySelectorAll('.exam-cat-card')].some(c => c.style.display !== 'none');
+      group.style.display = hasVisible ? '' : 'none';
+    });
+    const empty = document.getElementById('examSearchEmpty');
+    if (empty) empty.style.display = anyVisible ? 'none' : 'block';
+  }
+
   function switchProgram(key) {
     document.querySelectorAll('.cprog-tab').forEach(t => {
       const isActive = t.id === 'tab-' + key;

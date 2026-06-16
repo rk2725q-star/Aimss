@@ -590,6 +590,15 @@
           <span id="syncBadge" class="sync-badge" title="Supabase sync status">⬆ Synced</span>
         </h2>
 
+        <!-- Scope toggle: My Usage vs All Users -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <div class="view-toggle" style="flex:1;">
+            <button id="scopeMine" class="active" onclick="setScope('mine')">👤 My Usage</button>
+            <button id="scopeAll" onclick="setScope('all')">🌐 All Users</button>
+          </div>
+          <span id="allUsersBadge" style="display:none;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(0,229,204,0.1);border:1px solid rgba(0,229,204,0.25);color:#00e5cc;">👥 <span id="uniqueUsersCount">0</span> users</span>
+        </div>
+
         <!-- View toggle -->
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div class="view-toggle">
@@ -677,6 +686,45 @@
 
   const RESET_PASSWORD = '200520';
   let CURRENT_VIEW = 'monthly'; // 'monthly' | 'yearly'
+  let CURRENT_SCOPE = 'mine';   // 'mine' | 'all'
+
+  /* ── Scope toggle ── */
+  function setScope(scope) {
+    CURRENT_SCOPE = scope;
+    document.getElementById('scopeMine').classList.toggle('active', scope === 'mine');
+    document.getElementById('scopeAll').classList.toggle('active', scope === 'all');
+    const badge = document.getElementById('allUsersBadge');
+    if (badge) badge.style.display = scope === 'all' ? '' : 'none';
+    if (typeof window.updateTokenStatsUI === 'function') window.updateTokenStatsUI();
+  }
+
+  /* ── Load ALL users' data from Supabase (no user_id filter) ── */
+  async function loadAllUsersFromSupabase() {
+    try {
+      const sb = window.DrAuth?.getClient?.();
+      if (!sb) return {};
+      // Fetch all rows across all users
+      const { data, error } = await sb.from('token_usage').select('user_id,year_month,prompt_tokens,completion_tokens,total_tokens,requests');
+      if (error || !data) return {};
+      // Aggregate by year_month across all users
+      const agg = {};
+      const userSet = new Set();
+      data.forEach(row => {
+        userSet.add(row.user_id);
+        if (!agg[row.year_month]) {
+          agg[row.year_month] = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
+        }
+        agg[row.year_month].prompt_tokens     += row.prompt_tokens     || 0;
+        agg[row.year_month].completion_tokens += row.completion_tokens || 0;
+        agg[row.year_month].total_tokens      += row.total_tokens      || 0;
+        agg[row.year_month].requests          += row.requests          || 0;
+      });
+      // Update unique users count badge
+      const el = document.getElementById('uniqueUsersCount');
+      if (el) el.textContent = userSet.size.toLocaleString();
+      return agg;
+    } catch(e) { console.warn('[Token] All-users load failed:', e); return {}; }
+  }
 
   /* ── Supabase helpers ── */
   async function syncTokenToSupabase(yearMonth, data) {
@@ -808,39 +856,50 @@
         });
       };
 
-      // Refresh Token Stats display
-      const updateTokenStatsUI = () => {
+      // Refresh Token Stats display (supports 'mine' and 'all' scopes)
+      const updateTokenStatsUI = async () => {
         let stats = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
         let periodText = '';
+
+        // Choose data source based on scope
+        let sourceData = {};
+        if (CURRENT_SCOPE === 'all') {
+          sourceData = await loadAllUsersFromSupabase();
+        } else {
+          try { sourceData = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}'); } catch(_) {}
+        }
 
         if (CURRENT_VIEW === 'monthly') {
           const ym = monthSelect.value;
           if (!ym) return;
-          stats = typeof getTokenUsageForMonth === 'function'
-            ? getTokenUsageForMonth(ym)
-            : stats;
+          if (CURRENT_SCOPE === 'all') {
+            stats = sourceData[ym] || stats;
+          } else {
+            stats = typeof getTokenUsageForMonth === 'function'
+              ? getTokenUsageForMonth(ym)
+              : (sourceData[ym] || stats);
+          }
           const [yr, mo] = ym.split('-');
           periodText = new Date(yr, parseInt(mo)-1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          periodText += CURRENT_SCOPE === 'all' ? ' · All Users' : ' · My Usage';
           document.getElementById('yearlyBreakdown').style.display = 'none';
         } else {
           // Yearly aggregation
           const year = yearSelect.value;
           if (!year) return;
-          periodText = `Full Year ${year}`;
-          let allStats = {};
-          try { allStats = JSON.parse(localStorage.getItem('aimss-token-usage') || '{}'); } catch(_) {}
-          const months = Object.keys(allStats).filter(k => k.startsWith(year + '-'));
+          periodText = `Full Year ${year}` + (CURRENT_SCOPE === 'all' ? ' · All Users' : ' · My Usage');
+          const months = Object.keys(sourceData).filter(k => k.startsWith(year + '-'));
           months.forEach(m => {
-            stats.prompt_tokens     += allStats[m].prompt_tokens     || 0;
-            stats.completion_tokens += allStats[m].completion_tokens || 0;
-            stats.total_tokens      += allStats[m].total_tokens      || 0;
-            stats.requests          += allStats[m].requests          || 0;
+            stats.prompt_tokens     += sourceData[m].prompt_tokens     || 0;
+            stats.completion_tokens += sourceData[m].completion_tokens || 0;
+            stats.total_tokens      += sourceData[m].total_tokens      || 0;
+            stats.requests          += sourceData[m].requests          || 0;
           });
           // Monthly breakdown cards
           const grid = document.getElementById('yearlyGrid');
           grid.innerHTML = '';
           months.sort().forEach(m => {
-            const d = allStats[m];
+            const d = sourceData[m];
             const [,mo] = m.split('-');
             const name = new Date(year, parseInt(mo)-1).toLocaleString('en-US', {month: 'short'});
             grid.innerHTML += `<div class="yr-card"><div class="yr-val">${(d.total_tokens||0).toLocaleString()}</div><div class="yr-lbl">${name}</div></div>`;
@@ -869,6 +928,8 @@
           promptPct.textContent = 'Input: 50%'; compPct.textContent = 'Output: 50%';
         }
       };
+      // Expose globally so setScope (outer scope) can call it
+      window.updateTokenStatsUI = updateTokenStatsUI;
 
       const populateDropdown = (selectEl, models, activeModel) => {
         const defaultModel = 'z-ai/glm-5.1';

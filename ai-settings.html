@@ -698,30 +698,32 @@
     if (typeof window.updateTokenStatsUI === 'function') window.updateTokenStatsUI();
   }
 
-  /* ── Load ALL users' data from Supabase (no user_id filter) ── */
+  /* ── Load ALL users' data via SECURITY DEFINER RPC (bypasses RLS) ── */
   async function loadAllUsersFromSupabase() {
     try {
       const sb = window.DrAuth?.getClient?.();
       if (!sb) return {};
-      // Fetch all rows across all users
-      const { data, error } = await sb.from('token_usage').select('user_id,year_month,prompt_tokens,completion_tokens,total_tokens,requests');
-      if (error || !data) return {};
-      // Aggregate by year_month across all users
+      // Call the RPC function that runs as SECURITY DEFINER (bypasses RLS)
+      // Returns aggregated totals per year_month — no individual user data exposed
+      const { data, error } = await sb.rpc('get_all_users_token_usage');
+      if (error) { console.warn('[Token] RPC error:', error.message); return {}; }
+      if (!data || !data.length) return {};
+      // Build a year_month keyed map + total unique users
       const agg = {};
-      const userSet = new Set();
+      let totalUsers = 0;
       data.forEach(row => {
-        userSet.add(row.user_id);
-        if (!agg[row.year_month]) {
-          agg[row.year_month] = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, requests: 0 };
-        }
-        agg[row.year_month].prompt_tokens     += row.prompt_tokens     || 0;
-        agg[row.year_month].completion_tokens += row.completion_tokens || 0;
-        agg[row.year_month].total_tokens      += row.total_tokens      || 0;
-        agg[row.year_month].requests          += row.requests          || 0;
+        agg[row.year_month] = {
+          prompt_tokens:     Number(row.prompt_tokens)     || 0,
+          completion_tokens: Number(row.completion_tokens) || 0,
+          total_tokens:      Number(row.total_tokens)      || 0,
+          requests:          Number(row.requests)          || 0,
+        };
+        // unique_users from the RPC is per-month; use the max across months
+        if (Number(row.unique_users) > totalUsers) totalUsers = Number(row.unique_users);
       });
-      // Update unique users count badge
+      // Update unique users badge
       const el = document.getElementById('uniqueUsersCount');
-      if (el) el.textContent = userSet.size.toLocaleString();
+      if (el) el.textContent = totalUsers.toLocaleString();
       return agg;
     } catch(e) { console.warn('[Token] All-users load failed:', e); return {}; }
   }

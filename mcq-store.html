@@ -172,10 +172,131 @@
     }
 
     /* ── Responsive ── */
+    @media (max-width: 880px) {
+      .stats-strip { grid-template-columns: repeat(2, 1fr) !important; }
+    }
     @media (max-width: 640px) {
       .stats-strip { grid-template-columns: repeat(2, 1fr); }
       .store-pts-big { font-size: 3rem; }
     }
+
+    /* ── Cashback Hero ── */
+    .cashback-hero {
+      text-align: center;
+      padding: 36px 24px 28px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.18) 0%, transparent 70%);
+      border: 1px solid var(--line-gold, rgba(245,158,11,0.25));
+      border-radius: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cashback-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(245,158,11,0.05) 0%, rgba(217,119,6,0.06) 100%);
+      pointer-events: none;
+    }
+    .cashback-rupee {
+      font-family: 'Outfit', sans-serif;
+      font-size: 4rem; font-weight: 900;
+      background: linear-gradient(135deg, #fde68a, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+    .cashback-label {
+      font-size: 1rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .cashback-claim {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 18px;
+      background: linear-gradient(135deg, rgba(245,158,11,0.16), rgba(245,158,11,0.06));
+      border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 999px;
+      padding: 9px 22px;
+      font-weight: 800; font-size: 0.92rem; color: #fde68a;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .cashback-claim:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(245,158,11,0.25);
+    }
+
+    /* ── Tier Ladder ── */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .tier-card {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all .25s;
+    }
+    .tier-card.unlocked {
+      border-color: var(--tier-color, #f59e0b);
+      box-shadow: 0 0 24px rgba(var(--tier-rgb, 245,158,11), 0.22);
+      transform: translateY(-2px);
+    }
+    .tier-icon { font-size: 2.4rem; line-height: 1; margin-bottom: 8px; }
+    .tier-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900; font-size: 1rem;
+      color: var(--tier-color, var(--ink));
+      margin-bottom: 4px;
+    }
+    .tier-amount {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.7rem; font-weight: 900;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .tier-req {
+      font-size: 0.74rem; font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .tier-wins {
+      margin-top: 12px;
+      padding: 5px 12px;
+      background: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(74,222,128,0.06));
+      border: 1px solid rgba(74,222,128,0.35);
+      border-radius: 999px;
+      display: inline-block;
+      font-size: 0.74rem; font-weight: 800;
+      color: #4ade80;
+    }
+    .tier-locked {
+      filter: grayscale(0.7); opacity: 0.7;
+    }
+    .tier-tag {
+      position: absolute; top: 10px; right: 10px;
+      background: linear-gradient(135deg, #4ade80, #16a34a);
+      color: #000; font-size: 0.6rem; font-weight: 900;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .tier-best {
+      position: absolute; top: 10px; left: 10px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000; font-size: 0.6rem; font-weight: 900;
+      padding: 2px 8px; border-radius: 999px;
+    }
+
+    /* ── Cashback history item ── */
+    .history-item .cash-amount { color: #f59e0b !important; }
   </style>
 </head>
 <body>
@@ -233,6 +354,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span id="sidePointsText">0 pts</span>
           </span>
+          <span id="sideCashbackText" style="font-weight:800;font-size:0.85rem;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;">₹ 0</span>
         </div>
         <div style="width:100%;height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
           <div id="sidePointsBar" style="width:0%;height:100%;background:#38a169;border-radius:4px;"></div>
@@ -255,7 +377,7 @@
       </div>
 
       <!-- Stats Strip -->
-      <div class="stats-strip">
+      <div class="stats-strip" style="grid-template-columns: repeat(4, 1fr);">
         <div class="stat-box glass">
           <div class="stat-num" id="statCorrect">0</div>
           <div class="stat-label">Correct Answers</div>
@@ -268,6 +390,10 @@
           <div class="stat-num" id="statBadges">0</div>
           <div class="stat-label">Badges Earned</div>
         </div>
+        <div class="stat-box glass" style="border-color: rgba(245,158,11,0.35); background: linear-gradient(180deg, rgba(245,158,11,0.10), transparent);">
+          <div class="stat-num" id="statCashback" style="background: linear-gradient(135deg, #fde68a, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">₹ 0</div>
+          <div class="stat-label" style="color: #fde68a;">💰 Cashback Earned</div>
+        </div>
       </div>
 
       <!-- Achievement Badges -->
@@ -275,6 +401,37 @@
         <h2 class="store-section-head">🏅 Achievement Badges</h2>
         <div class="badge-grid" id="badgeGrid">
           <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Cashback Hero -->
+      <div id="cashback" class="cashback-hero glass card" style="margin-bottom:24px;">
+        <div class="cashback-rupee" id="cashbackHeroAmount">₹ 0</div>
+        <div class="cashback-label">Total Cashback Earned</div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:10px;max-width:520px;margin-left:auto;margin-right:auto;">
+          🏆 Earn real cashback from MCQ test scores. Payout is collected offline at the institute — show this screen to your class teacher.
+        </div>
+        <div class="cashback-claim" title="Show this page to your teacher to claim">
+          🏫 Claim at Institute
+        </div>
+      </div>
+
+      <!-- Cashback Tiers -->
+      <div class="glass card" style="padding:24px;margin-bottom:24px;">
+        <h2 class="store-section-head">💰 Cashback Tiers</h2>
+        <div style="font-size:0.84rem;color:var(--muted);margin:-6px 0 14px;">
+          Hit these score thresholds on any MCQ test to win the cashback prize.
+        </div>
+        <div class="tier-grid" id="tierGrid">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Cashback History -->
+      <div class="glass card" style="padding:24px;margin-bottom:24px;">
+        <h2 class="store-section-head">📜 Cashback History</h2>
+        <div id="cashbackHistory">
+          <p style="color:var(--muted);text-align:center;padding:20px 0;">Score 80%+ on an MCQ test to unlock your first cashback!</p>
         </div>
       </div>
 
@@ -298,6 +455,8 @@
     const history  = JSON.parse(localStorage.getItem('student-points-history') || '[]');
     const correct  = parseInt(localStorage.getItem('student-correct-total') || '0');
     const tests    = parseInt(localStorage.getItem('student-tests-taken') || '0');
+    const cbHist   = JSON.parse(localStorage.getItem('student-cashback-history') || '[]');
+    const cbTotal  = cbHist.reduce((s, e) => s + e.amount, 0);
 
     /* ── Sidebar sync ── */
     ['sideStorePts', 'sidePointsText'].forEach(id => {
@@ -306,11 +465,66 @@
     });
     const bar = document.getElementById('sidePointsBar');
     if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
+    const sideCb = document.getElementById('sideCashbackText');
+    if (sideCb) sideCb.textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
 
     /* ── Hero ── */
     document.getElementById('heroPts').textContent = pts.toLocaleString();
     document.getElementById('statCorrect').textContent = correct.toLocaleString();
     document.getElementById('statTests').textContent   = tests.toLocaleString();
+    document.getElementById('statCashback').textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
+
+    /* ── Cashback Hero ── */
+    const heroCb = document.getElementById('cashbackHeroAmount');
+    if (heroCb) heroCb.textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
+
+    /* ── Cashback Tier Ladder ── */
+    const TIERS = [
+      { minPct: 95, amount: 10000, tier: 1, label: 'Gold',   color: '#f59e0b', rgb: '245,158,11',  icon: '🥇', pos: '🥇 1st' },
+      { minPct: 90, amount:  5000, tier: 2, label: 'Silver', color: '#aab8c2', rgb: '170,184,194', icon: '🥈', pos: '🥈 2nd' },
+      { minPct: 85, amount:  3000, tier: 3, label: 'Bronze', color: '#cd7f32', rgb: '205,127,50',  icon: '🥉', pos: '🥉 3rd' },
+      { minPct: 80, amount:   500, tier: 4, label: 'Merit',  color: '#4ade80', rgb: '74,222,128',  icon: '🏅', pos: '🏅 4th' },
+    ];
+    const tierGrid = document.getElementById('tierGrid');
+    if (tierGrid) {
+      // Count wins per tier
+      const wins = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      cbHist.forEach(h => { if (wins[h.tier] !== undefined) wins[h.tier]++; });
+      tierGrid.innerHTML = TIERS.map(t => {
+        const w = wins[t.tier] || 0;
+        const unlocked = w > 0;
+        return `
+          <div class="tier-card ${unlocked ? 'unlocked' : 'tier-locked'}" style="--tier-color:${t.color};--tier-rgb:${t.rgb};">
+            ${unlocked ? '<span class="tier-tag">✓ EARNED</span>' : ''}
+            ${t.tier === 1 ? '<span class="tier-best">★ BEST</span>' : ''}
+            <div class="tier-icon">${t.icon}</div>
+            <div class="tier-name">${t.label}</div>
+            <div class="tier-amount">₹ ${t.amount.toLocaleString('en-IN')}</div>
+            <div class="tier-req">Score ${t.minPct}% or higher</div>
+            ${unlocked ? `<div class="tier-wins">Won ${w} time${w>1?'s':''}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ── Cashback History ── */
+    const cbHistEl = document.getElementById('cashbackHistory');
+    if (cbHistEl) {
+      if (cbHist.length === 0) {
+        cbHistEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px 0;">Score 80%+ on an MCQ test to unlock your first cashback!</p>';
+      } else {
+        cbHistEl.innerHTML = [...cbHist].reverse().map(h => `
+          <div class="history-item">
+            <div class="history-icon">${h.icon || '💰'}</div>
+            <div>
+              <div class="history-label"><strong style="color:${h.color || '#f59e0b'}">${h.label} Tier</strong> — ${h.pct}% on ${h.classLbl || 'your class'}${h.bank ? ' · ' + h.bank : ''}</div>
+              <div class="history-date">${new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+            <div class="history-pts cash-amount">+₹ ${h.amount.toLocaleString('en-IN')}</div>
+          </div>
+        `).join('');
+      }
+    }
 
     /* ── Level system ── */
     const levels = [
@@ -370,7 +584,7 @@
     if (history.length === 0) {
       histEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px 0;">Take your first MCQ test to earn points!</p>';
     } else {
-      const icons = { mcq:'📊', pdf:'📄', login:'🔐', bonus:'🎁' };
+      const icons = { mcq:'📊', pdf:'📄', login:'🔐', bonus:'🎁', cashback:'💰' };
       histEl.innerHTML = [...history].reverse().slice(0, 30).map(h => `
         <div class="history-item">
           <div class="history-icon">${icons[h.type] || '⭐'}</div>

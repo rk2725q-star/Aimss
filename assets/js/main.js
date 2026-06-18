@@ -1737,6 +1737,87 @@ function awardPointsTracked(pts, label, type) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   CASHBACK TIERS — MCQ score-based rewards
+   localStorage keys: student-cashback-history (array), student-cashback-total (int)
+══════════════════════════════════════════════════════════════ */
+const CASHBACK_TIERS = [
+  { minPct: 95, amount: 10000, tier: 1, label: 'Gold',   color: '#f59e0b', rgb: '245,158,11',  icon: '🥇' },
+  { minPct: 90, amount:  5000, tier: 2, label: 'Silver', color: '#aab8c2', rgb: '170,184,194', icon: '🥈' },
+  { minPct: 85, amount:  3000, tier: 3, label: 'Bronze', color: '#cd7f32', rgb: '205,127,50',  icon: '🥉' },
+  { minPct: 80, amount:   500, tier: 4, label: 'Merit',  color: '#4ade80', rgb: '74,222,128',  icon: '🏅' },
+];
+
+/** Map a test percentage to a cashback tier (or null if < 80%) */
+function getCashbackTierForPct(pct) {
+  for (const t of CASHBACK_TIERS) {
+    if (pct >= t.minPct) return t;
+  }
+  return null;
+}
+
+/** Format classId (e.g. '6-stateboard') to a human label ('Class 6 (Stateboard)') */
+function formatClassIdLabel(classId) {
+  if (!classId) return '';
+  const map = {
+    'neet': 'NEET', 'jee': 'JEE', 'ncert': 'NCERT', 'nda': 'NDA',
+    'upsc': 'UPSC', 'tnpsc': 'TNPSC', 'cute': 'CUET', 'programming': 'Programming',
+  };
+  const lower = String(classId).toLowerCase();
+  if (map[lower]) return map[lower];
+  const m = String(classId).match(/^(\d+)-?(stateboard|cbse)?$/i);
+  if (m) {
+    const cls = m[1];
+    const brd = m[2] ? (m[2].toLowerCase() === 'cbse' ? 'CBSE' : 'Stateboard') : '';
+    return brd ? `Class ${cls} (${brd})` : `Class ${cls}`;
+  }
+  return classId;
+}
+
+/** Record a cashback event into localStorage. Returns the entry or null. */
+function recordCashback({ classId, pct, score, total, bankTitle }) {
+  const tier = getCashbackTierForPct(pct);
+  if (!tier) return null;
+  const entry = {
+    amount:   tier.amount,
+    pct,
+    score,
+    total,
+    tier:     tier.tier,
+    label:    tier.label,
+    icon:     tier.icon,
+    color:    tier.color,
+    rgb:      tier.rgb,
+    classId:  classId || '',
+    classLbl: formatClassIdLabel(classId),
+    bank:     bankTitle || '',
+    ts:       Date.now(),
+  };
+  // Append to ledger
+  const hist = JSON.parse(localStorage.getItem('student-cashback-history') || '[]');
+  hist.push(entry);
+  localStorage.setItem('student-cashback-history', JSON.stringify(hist));
+  // Running total
+  const totalCash = hist.reduce((s, e) => s + e.amount, 0);
+  localStorage.setItem('student-cashback-total', String(totalCash));
+  // Sync sidebar cashback badge (if present)
+  const sc = document.getElementById('sideCashbackText');
+  if (sc) sc.textContent = '₹ ' + totalCash.toLocaleString('en-IN');
+  return entry;
+}
+
+/** Compute total cashback by tier (counts) for the store tier ladder */
+function getCashbackTierCounts() {
+  const hist = JSON.parse(localStorage.getItem('student-cashback-history') || '[]');
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  let total = 0;
+  for (const h of hist) {
+    if (counts[h.tier] !== undefined) counts[h.tier]++;
+    total += h.amount;
+  }
+  return { counts, total, history: hist };
+}
+
+/* ═══════════════════════════════════════════════════════════════
    MCQ BANK HELPERS  — teacher-published, class-keyed
 ═══════════════════════════════════════════════════════════════ */
 
@@ -2137,6 +2218,7 @@ function initMcqTest() {
 
     let activeQuestions = [];
     let idx = 0, score = 0, locked = false;
+    let activeBank = null;        // closure var — used by cashback on completion
 
     const renderBankList = () => {
       const cid = classSelect.value;
@@ -2160,7 +2242,8 @@ function initMcqTest() {
     renderBankList();
 
     window.startMcqBank = (bankId) => {
-      const bank = loadMcqBank(bankId);
+      activeBank = loadMcqBank(bankId);
+      const bank = activeBank;
       if (!bank || !bank.questions.length) return;
       activeQuestions = bank.questions;
       idx = 0; score = 0; locked = false;
@@ -2227,12 +2310,43 @@ function initMcqTest() {
         awardPointsTracked(0, `Test completed — ${score}/${activeQuestions.length} (${pct}%)`, 'mcq');
         awardPoints(score * 5);
         initStudentRewards && initStudentRewards();
+
+        // ── Score-based cashback ──
+        const cb = recordCashback({
+          classId:   classSelect.value,
+          pct,
+          score,
+          total:     activeQuestions.length,
+          bankTitle: (activeBank && activeBank.title) || '',
+        });
+
+        // Build the completion card (with optional cashback panel)
+        let cashbackHTML = '';
+        if (cb) {
+          cashbackHTML = `
+            <div id="mcqCashbackPanel" style="margin-top:18px; padding:18px 20px; background:linear-gradient(135deg, rgba(245,158,11,0.16), rgba(217,119,6,0.10)); border:1.5px solid ${cb.color}; border-radius:16px; box-shadow:0 0 30px rgba(${cb.rgb},0.35);">
+              <div style="font-size:2.4rem; line-height:1;">${cb.icon}</div>
+              <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:900; color:${cb.color}; margin:6px 0 2px;">${cb.label} Tier Won!</div>
+              <div style="font-family:'Outfit',sans-serif; font-size:1.9rem; font-weight:900; color:#fff; margin-bottom:6px;">₹ ${cb.amount.toLocaleString('en-IN')} Cashback Unlocked</div>
+              <div style="font-size:.82rem; color:var(--muted); margin-bottom:12px;">${cb.pct}% on ${cb.classLbl || 'your class'}${cb.bank ? ' · ' + cb.bank : ''}</div>
+              <a class="btn btn-gold" href="mcq-store.html#cashback" style="text-decoration:none; display:inline-block;">View in Store →</a>
+            </div>`;
+          if (typeof spawnConfetti === 'function') spawnConfetti(40);
+          else if (typeof fireConfetti === 'function') fireConfetti();
+        } else if (pct < 80) {
+          cashbackHTML = `
+            <div style="margin-top:18px; padding:14px 18px; background:rgba(255,255,255,0.04); border:1px dashed var(--line-hard); border-radius:14px; color:var(--muted); font-size:.86rem;">
+              💡 Score <strong style="color:var(--ink)">80%+</strong> to unlock cashback tiers — Gold ₹10,000 / Silver ₹5,000 / Bronze ₹3,000 / Merit ₹500.
+            </div>`;
+        }
+
         box.innerHTML = `
           <div style="text-align:center;padding:20px 0">
             <div style="font-size:3rem;margin-bottom:12px">${pct >= 80 ? '🏆' : pct >= 50 ? '✅' : '📚'}</div>
             <h2 style="margin-bottom:8px">Test Complete!</h2>
             <div style="font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:6px">${pct}%</div>
             <p style="color:var(--muted)">Score: ${score} / ${activeQuestions.length}</p>
+            ${cashbackHTML}
             <button class="btn" style="margin-top:16px" onclick="location.reload()">↩ Try Another Test</button>
           </div>`;
         nextBtn.style.display = 'none';

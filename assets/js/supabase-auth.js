@@ -260,13 +260,24 @@
     _cachedUser        = user;
     _cachedRole        = profile.role;
     _cachedInstitution = profile.institution_id || null;
-    _cachedBoard       = profile.board       || localStorage.getItem('student-board') || null;
-    _cachedClassName   = profile.class_name  || localStorage.getItem('student-class') || null;
+    // Always trust DB first — localStorage only as last-resort fallback
+    _cachedBoard       = profile.board      || localStorage.getItem('student-board') || null;
+    _cachedClassName   = profile.class_name || localStorage.getItem('student-class') || null;
 
-    // Persist to sessionStorage so other pages can read quickly
+    // Sync DB values back to localStorage + sessionStorage so all pages stay consistent
     try {
-      if (_cachedBoard)     sessionStorage.setItem('draimss_student_board', _cachedBoard);
-      if (_cachedClassName) sessionStorage.setItem('draimss_student_class', _cachedClassName);
+      if (profile.board) {
+        sessionStorage.setItem('draimss_student_board', profile.board);
+        localStorage.setItem('student-board', profile.board);
+      } else if (_cachedBoard) {
+        sessionStorage.setItem('draimss_student_board', _cachedBoard);
+      }
+      if (profile.class_name) {
+        sessionStorage.setItem('draimss_student_class', profile.class_name);
+        localStorage.setItem('student-class', profile.class_name);
+      } else if (_cachedClassName) {
+        sessionStorage.setItem('draimss_student_class', _cachedClassName);
+      }
     } catch(_) {}
 
     // Restore login meta from session storage

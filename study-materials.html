@@ -419,9 +419,34 @@
   <script src="assets/js/drive.js"></script>
   <script src="assets/js/main.js?v=5"></script>
   <script>
-    DrAuth.guardPage('student').then(() => {
-      const studentBoard = DrAuth.getBoard();
-      const studentClass = DrAuth.getClassName();
+    DrAuth.guardPage('student').then(async (guardResult) => {
+      // Primary: use values returned fresh from DB by guardPage
+      let studentBoard = guardResult?.board     || DrAuth.getBoard();
+      let studentClass = guardResult?.className || DrAuth.getClassName();
+
+      // Fallback: if still null (e.g. email-confirmed login on new device),
+      // query the profile directly to guarantee restriction is applied
+      if (!studentBoard && !studentClass) {
+        try {
+          const client = DrAuth.getClient();
+          const user   = DrAuth.getUser();
+          if (client && user) {
+            const { data } = await client
+              .from('profiles')
+              .select('board, class_name')
+              .eq('id', user.id)
+              .single();
+            if (data) {
+              studentBoard = data.board      || null;
+              studentClass = data.class_name || null;
+              // Cache so other pages benefit too
+              if (studentBoard) sessionStorage.setItem('draimss_student_board', studentBoard);
+              if (studentClass) sessionStorage.setItem('draimss_student_class', studentClass);
+            }
+          }
+        } catch(_) { /* non-blocking */ }
+      }
+
       if (studentBoard || studentClass) {
         lockToStudentProfile(studentBoard, studentClass);
       }

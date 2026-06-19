@@ -419,155 +419,43 @@
   <script src="assets/js/drive.js"></script>
   <script src="assets/js/main.js?v=5"></script>
   <script>
-    DrAuth.guardPage('student').then(async (guardResult) => {
-      // Primary: use values returned fresh from DB by guardPage
-      let studentBoard = guardResult?.board     || DrAuth.getBoard();
-      let studentClass = guardResult?.className || DrAuth.getClassName();
-
-      // Fallback: if still null (e.g. email-confirmed login on new device),
-      // query the profile directly to guarantee restriction is applied
-      if (!studentBoard && !studentClass) {
-        try {
-          const client = DrAuth.getClient();
-          const user   = DrAuth.getUser();
-          if (client && user) {
-            const { data } = await client
-              .from('profiles')
-              .select('board, class_name')
-              .eq('id', user.id)
-              .single();
-            if (data) {
-              studentBoard = data.board      || null;
-              studentClass = data.class_name || null;
-              // Cache so other pages benefit too
-              if (studentBoard) sessionStorage.setItem('draimss_student_board', studentBoard);
-              if (studentClass) sessionStorage.setItem('draimss_student_class', studentClass);
-            }
-          }
-        } catch(_) { /* non-blocking */ }
-      }
-
-      if (studentBoard || studentClass) {
-        lockToStudentProfile(studentBoard, studentClass);
-      }
-    });
-
-    // Track whether this student session has class restrictions
+    /* ── State ── */
     let _studentLocked   = false;
-    let _lockedClassName = null;   // student's registered class (locked in class tab)
-    let _lockedBoard     = null;   // student's registered board (locked in class tab)
+    let _lockedClassName = null;
+    let _lockedBoard     = null;
+    let mode             = 'class';
+    let selectedId       = null;
+    let currentPath      = '';
+    let currentFiles     = [];
+    let activeFilter     = 'all';
+    let selectedClass    = null;
+    let selectedBoard    = null;
 
-    /* ═══════════════════════════════════════
-       PROFILE LOCK
-       ─ By Class:  student restricted to their registered class + board
-       ─ By Exam:   ALL students can access ALL exams freely (no lock)
-       ─ Teachers:  no restriction whatsoever
-    ═══════════════════════════════════════ */
-    function lockToStudentProfile(board, className) {
-      const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming',
-        'ssc','banking','rrb','gate','cat','clat','cds','afcat','tet','ugcnet',
-        'polytechnic','diploma','stateboard','ielts','toefl','gre','gmat'];
+    /* ── Boards config ── */
+    const BOARDS = [
+      { id: 'stateboard', label: 'Stateboard', sub: 'Tamil Nadu Board', icon: '🏛️', color: '#00e5cc' },
+      { id: 'cbse',       label: 'CBSE',        sub: 'Central Board',    icon: '📘', color: '#a78bfa' },
+    ];
 
-      // Determine if the student is registered as exam-prep or class student
-      const isExamMode = EXAM_MODES.includes((board||'').toLowerCase()) ||
-                         EXAM_MODES.includes((className||'').toLowerCase());
+    /* ── Board picker UI (injected below classSection) ── */
+    const boardPickerWrap = document.createElement('div');
+    boardPickerWrap.id = 'boardPickerWrap';
+    boardPickerWrap.style.cssText = 'display:none;margin-bottom:20px;';
+    boardPickerWrap.innerHTML = `
+      <div style="margin-bottom:10px;font-weight:800;font-size:.88rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">
+        📋 Select Your Board
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;" id="boardGrid"></div>
+    `;
+    document.getElementById('classSection').after(boardPickerWrap);
 
-      const BOARD_LABELS = { stateboard: 'Stateboard (TN)', cbse: 'CBSE' };
-      const boardLabel = !isExamMode ? (BOARD_LABELS[board] || (board ? board.toUpperCase() : null)) : null;
-      const classLabel = !isExamMode && className
-        ? (isNaN(className) ? className.toUpperCase() : `Class ${className}`)
-        : null;
-
-      // ── Banner: show restriction info only for class-mode students ──
-      const banner = document.getElementById('profileLockBanner');
-      if (banner && !isExamMode && (classLabel || boardLabel)) {
-        banner.style.display = 'flex';
-        banner.innerHTML = `
-          <span class="plb-icon">🎓</span>
-          <div class="plb-info">
-            <div class="plb-title">Your Personalized Content</div>
-            <div>
-              ${classLabel ? `<span class="plb-badge">📚 ${classLabel}</span>` : ''}
-              ${boardLabel ? `<span class="plb-badge">🏛️ ${boardLabel}</span>` : ''}
-            </div>
-            <div class="locked-msg">🔒 Class &amp; board access is restricted to your registration. Exam categories are fully open.</div>
-          </div>
-        `;
-      }
-
-      if (isExamMode) {
-        // ── EXAM-MODE student: BOTH tabs visible, auto-open their exam, no lock-out on any exam ──
-        const examId = (board && EXAM_MODES.includes(board.toLowerCase())) ? board.toLowerCase()
-                     : (className && EXAM_MODES.includes(className.toLowerCase())) ? className.toLowerCase()
-                     : null;
-        if (examId) {
-          // Just pre-select and open the exam — student can still browse other exams freely
-          setTimeout(() => {
-            switchMode('exam');
-            selectItem('exam', examId);
-          }, 100);
-        }
-        // No class restriction for exam-mode students either
-      } else {
-        // ── CLASS-MODE student: BOTH tabs visible, class tab restricted, exam tab fully open ──
-        _studentLocked   = true;
-        _lockedClassName = className ? String(className) : null;
-        _lockedBoard     = board || null;
-
-        if (className) {
-          // Lock (grey-out) all other class buttons
-          DrDrive.CLASSES.forEach(cls => {
-            const btn = document.getElementById(`clsBtn-${cls}`);
-            if (btn) {
-              if (String(cls) !== String(className)) btn.classList.add('locked-out');
-              else btn.classList.remove('locked-out');
-            }
-          });
-        }
-
-        if (board) {
-          setTimeout(() => {
-            const knownBoardIds = (typeof BOARDS !== 'undefined' ? BOARDS : []).map(b => b.id);
-            if (knownBoardIds.includes(board)) {
-              document.querySelectorAll('#boardGrid .sel-btn').forEach(btn => {
-                const btnId = btn.id.replace('boardBtn-', '');
-                if (btnId !== board) btn.classList.add('locked-out');
-              });
-            }
-          }, 200);
-        }
-
-        if (className) {
-          // Auto-navigate into the student's class
-          setTimeout(() => { selectItem('class', String(className)); }, 150);
-        }
-      }
-    }
-
-    let mode          = 'class';  // 'class' | 'exam'
-    let selectedId    = null;     // '6' or 'neet'
-    let currentPath   = '';       // e.g. 'class-6/Math'
-    let currentFiles  = [];
-    let activeFilter  = 'all';
-
-    /* ═══════════════════════════════════════
-       BUILD SELECTOR BUTTONS
-    ═══════════════════════════════════════ */
-    (function build() {
-      const cg = document.getElementById('classGrid');
-      DrDrive.CLASSES.forEach(cls => {
-        const b = document.createElement('button');
-        b.className = 'sel-btn';
-        b.id = `clsBtn-${cls}`;
-        b.innerHTML = `<span class="sel-icon">🏫</span><span>${cls}</span><span class="sel-sub">Class</span>`;
-        b.onclick = () => selectItem('class', cls);
-        cg.appendChild(b);
-      });
-
+    /* ══════════════════════════════════════════════════
+       BUILD EXAM BUTTONS — always built immediately,
+       NO restriction ever (all students see all exams)
+    ══════════════════════════════════════════════════ */
+    (function buildExams() {
       const eg = document.getElementById('examGrid');
-      // Build grouped exam sections with labeled headers
-      const groupOrder = [];
-      const groupMap = {};
+      const groupOrder = [], groupMap = {};
       DrDrive.EXAMS.forEach(ex => {
         const g = ex.group || 'Other';
         if (!groupMap[g]) { groupMap[g] = []; groupOrder.push(g); }
@@ -595,80 +483,135 @@
       });
     })();
 
-    /* ═══════════════════════════════════════
-       SWITCH MODE
-    ═══════════════════════════════════════ */
-    function switchMode(m) {
-      mode = m;
-      const tabClassEl = document.getElementById('tabClass');
-      const tabExamEl  = document.getElementById('tabExam');
-      if (tabClassEl) tabClassEl.classList.toggle('active', m === 'class');
-      if (tabExamEl)  tabExamEl.classList.toggle('active',  m === 'exam');
-      document.getElementById('classSection').style.display = m === 'class' ? 'block' : 'none';
-      document.getElementById('examSection').style.display  = m === 'exam'  ? 'block' : 'none';
-      // Hide board picker when switching modes
-      if (document.getElementById('boardPickerWrap')) {
-        document.getElementById('boardPickerWrap').style.display = 'none';
-      }
-      selectedId    = null;
-      selectedClass = null;
-      selectedBoard = null;
-      currentPath   = '';
-      document.getElementById('browserSection').style.display = 'none';
-      document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
-
-      // Re-apply class locks when switching back to class tab
-      if (_studentLocked && _lockedClassName && m === 'class') {
-        DrDrive.CLASSES.forEach(cls => {
-          const btn = document.getElementById(`clsBtn-${cls}`);
-          if (btn && String(cls) !== String(_lockedClassName)) btn.classList.add('locked-out');
-        });
-      }
-      // NOTE: Exam tab — no lock-out, all students can browse all exams freely
-
-      document.getElementById(m === 'class' ? 'noClassMsg' : 'noExamMsg').style.display = 'block';
+    /* ══════════════════════════════════════════════════
+       BUILD CLASS BUTTONS — deferred, called after we
+       know the student's class. Restricted students only
+       get their own class button rendered.
+    ══════════════════════════════════════════════════ */
+    function buildClassButtons(lockedClassName) {
+      const cg = document.getElementById('classGrid');
+      cg.innerHTML = '';
+      DrDrive.CLASSES.forEach(cls => {
+        if (lockedClassName && String(cls) !== String(lockedClassName)) return; // skip other classes
+        const b = document.createElement('button');
+        b.className = 'sel-btn';
+        b.id = `clsBtn-${cls}`;
+        b.innerHTML = `<span class="sel-icon">🏫</span><span>${cls}</span><span class="sel-sub">Class</span>`;
+        b.onclick = () => selectItem('class', cls);
+        cg.appendChild(b);
+      });
     }
 
-    /* ═══════════════════════════════════════
-       SELECT CLASS / EXAM
-    ═══════════════════════════════════════ */
-    // Board picker state
-    let selectedClass = null;
-    let selectedBoard = null;
-
-    // Boards available for class mode
-    const BOARDS = [
-      { id: 'stateboard', label: 'Stateboard', sub: 'Tamil Nadu Board', icon: '🏛️', color: '#00e5cc' },
-      { id: 'cbse',       label: 'CBSE',        sub: 'Central Board',    icon: '📘', color: '#a78bfa' },
-    ];
-
-    // Board picker UI — injected below classSection
-    const boardPickerWrap = document.createElement('div');
-    boardPickerWrap.id = 'boardPickerWrap';
-    boardPickerWrap.style.cssText = 'display:none;margin-bottom:20px;';
-    boardPickerWrap.innerHTML = `
-      <div style="margin-bottom:10px;font-weight:800;font-size:.88rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">
-        📋 Select Your Board
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;" id="boardGrid"></div>
-    `;
-    document.getElementById('classSection').after(boardPickerWrap);
-
-    // Build board cards
-    (function buildBoards() {
-      const savedBoard = localStorage.getItem('student-board') || '';
+    /* ══════════════════════════════════════════════════
+       BUILD BOARD BUTTONS — deferred, called after we
+       know the student's board. Restricted students only
+       get their own board button rendered.
+    ══════════════════════════════════════════════════ */
+    function buildBoardButtons(lockedBoard) {
       const grid = document.getElementById('boardGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
       BOARDS.forEach(b => {
+        if (lockedBoard && b.id !== lockedBoard) return; // skip other boards
         const card = document.createElement('button');
         card.id = `boardBtn-${b.id}`;
         card.className = 'sel-btn';
         card.style.cssText = `--board-color:${b.color};`;
         card.innerHTML = `<span class="sel-icon">${b.icon}</span><span>${b.label}</span><span class="sel-sub">${b.sub}</span>`;
-        if (savedBoard === b.id) card.classList.add('active');
         card.onclick = () => selectBoard(b.id);
         grid.appendChild(card);
       });
-    })();
+    }
+
+    /* ══════════════════════════════════════════════════
+       GUARD PAGE + APPLY RESTRICTIONS
+       1. Get student's board + class from DB (reliable)
+       2. Set restriction state
+       3. Build buttons with restrictions already baked in
+       4. Auto-navigate into student's content
+    ══════════════════════════════════════════════════ */
+    const EXAM_MODES = ['neet','jee','ncert','nda','upsc','tnpsc','cute','programming',
+      'ssc','banking','rrb','gate','cat','clat','cds','afcat','tet','ugcnet',
+      'polytechnic','diploma','ielts','toefl','gre','gmat'];
+
+    DrAuth.guardPage('student').then(async (guardResult) => {
+      /* ─ Step 1: Get board + class from guardPage result (comes from DB) ─ */
+      let studentBoard = guardResult?.board     || DrAuth.getBoard()     || null;
+      let studentClass = guardResult?.className || DrAuth.getClassName() || null;
+
+      /* ─ Step 2: Direct DB query fallback (for new device / fresh session) ─ */
+      if (!studentBoard && !studentClass) {
+        try {
+          const client = DrAuth.getClient();
+          const user   = DrAuth.getUser();
+          if (client && user) {
+            const { data } = await client
+              .from('profiles')
+              .select('board, class_name')
+              .eq('id', user.id)
+              .single();
+            if (data) {
+              studentBoard = data.board      || null;
+              studentClass = data.class_name || null;
+            }
+          }
+        } catch(_) {}
+      }
+
+      /* ─ Step 3: Decide restriction mode ─ */
+      const isExamMode = EXAM_MODES.includes((studentBoard||'').toLowerCase()) ||
+                         EXAM_MODES.includes((studentClass||'').toLowerCase());
+
+      if (!isExamMode && (studentClass || studentBoard)) {
+        _studentLocked   = true;
+        _lockedClassName = studentClass ? String(studentClass) : null;
+        _lockedBoard     = studentBoard || null;
+      }
+
+      /* ─ Step 4: Build class + board buttons NOW with restrictions baked in ─ */
+      buildClassButtons(_lockedClassName);  // restricted student: only their class rendered
+      buildBoardButtons(_lockedBoard);      // restricted student: only their board rendered
+
+      /* ─ Step 5: Show banner + auto-navigate ─ */
+      if (_studentLocked) {
+        const BOARD_LABELS = { stateboard: 'Stateboard (TN)', cbse: 'CBSE' };
+        const boardLabel = BOARD_LABELS[studentBoard] || (studentBoard ? studentBoard.toUpperCase() : null);
+        const classLabel = _lockedClassName
+          ? (isNaN(_lockedClassName) ? _lockedClassName.toUpperCase() : `Class ${_lockedClassName}`)
+          : null;
+        const banner = document.getElementById('profileLockBanner');
+        if (banner && (classLabel || boardLabel)) {
+          banner.style.display = 'flex';
+          banner.innerHTML = `
+            <span class="plb-icon">🎓</span>
+            <div class="plb-info">
+              <div class="plb-title">Your Personalized Content</div>
+              <div>
+                ${classLabel ? `<span class="plb-badge">📚 ${classLabel}</span>` : ''}
+                ${boardLabel ? `<span class="plb-badge">🏛️ ${boardLabel}</span>` : ''}
+              </div>
+              <div class="locked-msg">🔒 Class &amp; board access is restricted. Exam categories are fully open.</div>
+            </div>`;
+        }
+        // Auto-navigate into student's class
+        if (_lockedClassName) {
+          setTimeout(() => selectItem('class', _lockedClassName), 200);
+        }
+      } else if (isExamMode) {
+        /* Exam-mode student: auto-open their exam, can still browse all exams */
+        const examId = EXAM_MODES.includes((studentBoard||'').toLowerCase()) ? studentBoard.toLowerCase()
+                     : EXAM_MODES.includes((studentClass||'').toLowerCase())  ? studentClass.toLowerCase()
+                     : null;
+        if (examId) {
+          setTimeout(() => { switchMode('exam'); selectItem('exam', examId); }, 200);
+        }
+      } else {
+        /* No profile data: build all class buttons (unrestricted / teacher view) */
+        buildClassButtons(null);
+        buildBoardButtons(null);
+      }
+    });
+
 
     function selectItem(itemMode, id) {
       if (itemMode === 'class') {
@@ -686,24 +629,11 @@
         // Show board picker
         boardPickerWrap.style.display = 'block';
 
-        // Re-apply board locks for locked students
-        if (_studentLocked && _lockedBoard) {
-          setTimeout(() => {
-            document.querySelectorAll('#boardGrid .sel-btn').forEach(btn => {
-              const btnId = btn.id.replace('boardBtn-', '');
-              if (btnId !== _lockedBoard) btn.classList.add('locked-out');
-              else btn.classList.remove('locked-out');
-            });
-          }, 50);
-        }
-
         // Hide browser section until board is picked
         document.getElementById('browserSection').style.display = 'none';
 
-        // Auto-select board: use locked board (student) or saved board (free user)
-        const autoBoard = (_studentLocked && _lockedBoard)
-          ? _lockedBoard
-          : (localStorage.getItem('student-board') || '');
+        // Auto-select board (locked students only have their own board in DOM)
+        const autoBoard = _lockedBoard || localStorage.getItem('student-board') || '';
         const knownBoardIds = BOARDS.map(b => b.id);
         if (autoBoard && knownBoardIds.includes(autoBoard)) {
           document.querySelectorAll('#boardGrid .sel-btn').forEach(b => b.classList.remove('active'));

@@ -612,6 +612,30 @@
       }
     });
 
+    /* ═══════════════════════════════════════
+       SWITCH MODE (class ↔ exam tabs)
+       ─ Exam tab: fully open, no restriction ever
+       ─ Class tab: restricted students only see their class/board
+    ═══════════════════════════════════════ */
+    function switchMode(m) {
+      mode = m;
+      const tabClassEl = document.getElementById('tabClass');
+      const tabExamEl  = document.getElementById('tabExam');
+      if (tabClassEl) tabClassEl.classList.toggle('active', m === 'class');
+      if (tabExamEl)  tabExamEl.classList.toggle('active',  m === 'exam');
+      document.getElementById('classSection').style.display = m === 'class' ? 'block' : 'none';
+      document.getElementById('examSection').style.display  = m === 'exam'  ? 'block' : 'none';
+      if (document.getElementById('boardPickerWrap')) {
+        document.getElementById('boardPickerWrap').style.display = 'none';
+      }
+      selectedId    = null;
+      selectedClass = null;
+      selectedBoard = null;
+      currentPath   = '';
+      document.getElementById('browserSection').style.display = 'none';
+      document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(m === 'class' ? 'noClassMsg' : 'noExamMsg').style.display = 'block';
+    }
 
     function selectItem(itemMode, id) {
       if (itemMode === 'class') {

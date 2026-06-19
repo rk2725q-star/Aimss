@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════════════
  *  Dr.AIMSS — Supabase Storage Module  v5.0  (Chunked Upload)
  *
@@ -678,15 +678,53 @@
     if (role !== 'teacher') throw new Error('Only teachers can delete folders.');
 
     const cleanPrefix = (prefix || '').replace(/\/$/, '');
+
+    // Collect all real files (recursive, skips placeholders)
     const allFiles = await _listRecursive(client, cleanPrefix, []);
     const paths = allFiles.map(f => f._fullPath);
-    paths.push(cleanPrefix + '/.emptyFolderPlaceholder');
 
-    if (paths.length > 0) {
-      const { error } = await client.storage.from(BUCKET).remove(paths);
-      if (error) throw new Error(error.message);
+    // Also collect ALL placeholder files at every subfolder level
+    const allPlaceholders = await _collectPlaceholders(client, cleanPrefix, []);
+    allPlaceholders.forEach(p => { if (!paths.includes(p)) paths.push(p); });
+
+    // Always include the top-level placeholder (may or may not exist)
+    const topPlaceholder = cleanPrefix + '/.emptyFolderPlaceholder';
+    if (!paths.includes(topPlaceholder)) paths.push(topPlaceholder);
+
+    if (paths.length === 0) return { success: true };
+
+    // Remove in batches of 20 to avoid Supabase API limits
+    const BATCH = 20;
+    let lastError = null;
+    for (let i = 0; i < paths.length; i += BATCH) {
+      const batch = paths.slice(i, i + BATCH);
+      const { error } = await client.storage.from(BUCKET).remove(batch);
+      if (error) lastError = error;
+      // Some paths may not exist (already gone) -- that is OK
     }
+
+    if (lastError) throw new Error('Delete failed: ' + lastError.message);
     return { success: true };
+  }
+
+  /* Recursively collect all .emptyFolderPlaceholder paths under a prefix */
+  async function _collectPlaceholders(client, prefix, collected) {
+    const { data, error } = await client.storage
+      .from(BUCKET)
+      .list(prefix, { limit: 1000 });
+    if (error || !data) return collected;
+
+    for (const item of data) {
+      if (!item.name) continue;
+      const fullPath = prefix ? (prefix + '/' + item.name) : item.name;
+      if (item.name === '.emptyFolderPlaceholder') {
+        collected.push(fullPath);
+      } else if (!item.id) {
+        // subfolder -- recurse
+        await _collectPlaceholders(client, fullPath, collected);
+      }
+    }
+    return collected;
   }
 
   /* ══════════════════════════════════════════════════════════════

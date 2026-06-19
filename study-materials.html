@@ -427,6 +427,12 @@
       }
     });
 
+    // Track whether this student session has restrictions
+    let _studentLocked   = false;
+    let _lockedExamId    = null;   // set if exam-mode student
+    let _lockedClassName = null;   // set if class-mode student
+    let _lockedBoard     = null;   // set if class-mode student
+
     /* ═══════════════════════════════════════
        PROFILE LOCK — restrict to registered board + class
     ═══════════════════════════════════════ */
@@ -441,6 +447,8 @@
       const classLabel = className
         ? (isNaN(className) ? className.toUpperCase() : `Class ${className}`)
         : null;
+
+      _studentLocked = true;
 
       const banner = document.getElementById('profileLockBanner');
       if (banner) {
@@ -459,28 +467,46 @@
       }
 
       if (isExamMode) {
+        // ── EXAM-MODE STUDENT: hide Class tab, lock to assigned exam ──
         const examId = (board && EXAM_MODES.includes(board.toLowerCase())) ? board.toLowerCase()
                      : (className && EXAM_MODES.includes(className.toLowerCase())) ? className.toLowerCase()
                      : null;
         if (examId) {
+          _lockedExamId = examId;
           const tabClass = document.getElementById('tabClass');
           if (tabClass) tabClass.style.display = 'none';
           setTimeout(() => {
             switchMode('exam');
+            // Lock out all exam buttons except the assigned one
             DrDrive.EXAMS.forEach(ex => {
               const btn = document.getElementById(`examBtn-${ex.id}`);
-              if (btn && ex.id !== examId) btn.classList.add('locked-out');
+              if (btn) {
+                if (ex.id !== examId) btn.classList.add('locked-out');
+                else btn.classList.remove('locked-out');
+              }
             });
             selectItem('exam', examId);
           }, 100);
         }
       } else {
+        // ── CLASS-MODE STUDENT: hide Exam tab, lock to assigned class+board ──
+        const tabExam = document.getElementById('tabExam');
+        if (tabExam) tabExam.style.display = 'none';
+
+        _lockedClassName = className ? String(className) : null;
+        _lockedBoard     = board || null;
+
         if (className) {
+          // Lock class buttons immediately (buttons already rendered at this point)
           DrDrive.CLASSES.forEach(cls => {
             const btn = document.getElementById(`clsBtn-${cls}`);
-            if (btn && String(cls) !== String(className)) btn.classList.add('locked-out');
+            if (btn) {
+              if (String(cls) !== String(className)) btn.classList.add('locked-out');
+              else btn.classList.remove('locked-out');
+            }
           });
         }
+
         if (board) {
           setTimeout(() => {
             const knownBoardIds = (typeof BOARDS !== 'undefined' ? BOARDS : []).map(b => b.id);
@@ -492,7 +518,9 @@
             }
           }, 200);
         }
+
         if (className) {
+          // Auto-navigate into the student's class
           setTimeout(() => { selectItem('class', String(className)); }, 150);
         }
       }
@@ -553,9 +581,17 @@
        SWITCH MODE
     ═══════════════════════════════════════ */
     function switchMode(m) {
+      // ── Prevent locked students from switching to forbidden tabs ──
+      if (_studentLocked) {
+        if (_lockedExamId && m === 'class') return;   // exam-student cannot switch to class
+        if (_lockedClassName && m === 'exam') return;  // class-student cannot switch to exam
+      }
+
       mode = m;
-      document.getElementById('tabClass').classList.toggle('active', m === 'class');
-      document.getElementById('tabExam').classList.toggle('active',  m === 'exam');
+      const tabClassEl = document.getElementById('tabClass');
+      const tabExamEl  = document.getElementById('tabExam');
+      if (tabClassEl) tabClassEl.classList.toggle('active', m === 'class');
+      if (tabExamEl)  tabExamEl.classList.toggle('active',  m === 'exam');
       document.getElementById('classSection').style.display = m === 'class' ? 'block' : 'none';
       document.getElementById('examSection').style.display  = m === 'exam'  ? 'block' : 'none';
       // Hide board picker when switching modes
@@ -568,6 +604,22 @@
       currentPath   = '';
       document.getElementById('browserSection').style.display = 'none';
       document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+
+      // Re-apply class locks after clearing active states
+      if (_studentLocked && _lockedClassName && m === 'class') {
+        DrDrive.CLASSES.forEach(cls => {
+          const btn = document.getElementById(`clsBtn-${cls}`);
+          if (btn && String(cls) !== String(_lockedClassName)) btn.classList.add('locked-out');
+        });
+      }
+      // Re-apply exam locks after clearing active states
+      if (_studentLocked && _lockedExamId && m === 'exam') {
+        DrDrive.EXAMS.forEach(ex => {
+          const btn = document.getElementById(`examBtn-${ex.id}`);
+          if (btn && ex.id !== _lockedExamId) btn.classList.add('locked-out');
+        });
+      }
+
       document.getElementById(m === 'class' ? 'noClassMsg' : 'noExamMsg').style.display = 'block';
     }
 
@@ -614,6 +666,9 @@
 
     function selectItem(itemMode, id) {
       if (itemMode === 'class') {
+        // ── Block locked class-students from accessing a different class ──
+        if (_studentLocked && _lockedClassName && String(id) !== String(_lockedClassName)) return;
+
         // Show board picker for classes
         selectedClass = id;
         selectedBoard = null;
@@ -625,20 +680,36 @@
         // Show board picker
         boardPickerWrap.style.display = 'block';
 
+        // Re-apply board locks for locked students
+        if (_studentLocked && _lockedBoard) {
+          setTimeout(() => {
+            document.querySelectorAll('#boardGrid .sel-btn').forEach(btn => {
+              const btnId = btn.id.replace('boardBtn-', '');
+              if (btnId !== _lockedBoard) btn.classList.add('locked-out');
+              else btn.classList.remove('locked-out');
+            });
+          }, 50);
+        }
+
         // Hide browser section until board is picked
         document.getElementById('browserSection').style.display = 'none';
 
-        // Auto-select board if saved from signup
-        const savedBoard = localStorage.getItem('student-board') || '';
+        // Auto-select board: use locked board (student) or saved board (free user)
+        const autoBoard = (_studentLocked && _lockedBoard)
+          ? _lockedBoard
+          : (localStorage.getItem('student-board') || '');
         const knownBoardIds = BOARDS.map(b => b.id);
-        if (savedBoard && knownBoardIds.includes(savedBoard)) {
-          // Highlight the saved board card
+        if (autoBoard && knownBoardIds.includes(autoBoard)) {
+          // Highlight the board card
           document.querySelectorAll('#boardGrid .sel-btn').forEach(b => b.classList.remove('active'));
-          document.getElementById(`boardBtn-${savedBoard}`)?.classList.add('active');
+          document.getElementById(`boardBtn-${autoBoard}`)?.classList.add('active');
           // Auto-navigate after short delay so user sees the pre-selection
-          setTimeout(() => selectBoard(savedBoard), 300);
+          setTimeout(() => selectBoard(autoBoard), 300);
         }
       } else {
+        // ── Block locked exam-students from accessing a different exam ──
+        if (_studentLocked && _lockedExamId && id !== _lockedExamId) return;
+
         // Exam mode — no board step
         mode       = itemMode;
         selectedId = id;
@@ -648,6 +719,13 @@
 
         document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`examBtn-${id}`)?.classList.add('active');
+        // Re-apply exam locks
+        if (_studentLocked && _lockedExamId) {
+          DrDrive.EXAMS.forEach(ex => {
+            const btn = document.getElementById(`examBtn-${ex.id}`);
+            if (btn && ex.id !== _lockedExamId) btn.classList.add('locked-out');
+          });
+        }
         document.getElementById('noExamMsg')?.style && (document.getElementById('noExamMsg').style.display = 'none');
         document.getElementById('browserSection').style.display = 'block';
         loadCurrentPath();
@@ -655,6 +733,8 @@
     }
 
     function selectBoard(boardId) {
+      // ── Block locked students from choosing a different board ──
+      if (_studentLocked && _lockedBoard && boardId !== _lockedBoard) return;
       selectedBoard = boardId;
       mode          = 'class';
       selectedId    = selectedClass;

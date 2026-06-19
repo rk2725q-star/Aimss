@@ -463,24 +463,42 @@
 
       if (!targetValue) return;
 
+      // ── Hide ALL options except the student's own and the placeholder ──
+      for (const opt of sel.options) {
+        if (opt.value === '' || opt.value === targetValue) {
+          opt.style.display = '';
+        } else {
+          opt.style.display = 'none';
+        }
+      }
+
       // Set the dropdown value
       sel.value = targetValue;
 
-      // If exact match not found, try partial
+      // If exact match not found, try partial (fallback)
       if (!sel.value) {
         for (const opt of sel.options) {
           if (opt.value.startsWith(String(cls) + '-') || opt.value === String(cls)) {
+            opt.style.display = '';
             sel.value = opt.value; break;
           }
         }
       }
 
-      // Lock the dropdown so student can't change it
+      // ── Lock dropdown: student cannot change their class ──
       sel.disabled = true;
       sel.style.opacity = '0.75';
       sel.title = 'Locked to your registered class';
 
-      // Add visual indicator
+      // Safety: block any programmatic value changes
+      sel.addEventListener('change', function(e) {
+        if (targetValue && this.value !== targetValue) {
+          this.value = targetValue;
+          e.stopImmediatePropagation();
+        }
+      }, true);
+
+      // Add visual lock indicator
       const row = sel.closest('.mcq-class-row');
       if (row) {
         const lockBadge = document.createElement('span');

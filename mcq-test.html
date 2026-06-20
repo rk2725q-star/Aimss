@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
-    /* ── Class Selector Row ── */
+    /* â”€â”€ Class Selector Row â”€â”€ */
     .mcq-class-row {
       display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
       padding: 16px 20px; background: rgba(0,229,204,0.04);
@@ -26,7 +26,7 @@
     }
     .mcq-class-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,204,0.12); }
 
-    /* ── Bank Cards ── */
+    /* â”€â”€ Bank Cards â”€â”€ */
     .mcq-bank-card {
       background: var(--surface); border: 1.5px solid var(--line);
       border-radius: 14px; padding: 18px 20px; cursor: pointer;
@@ -38,11 +38,11 @@
     .mcq-bank-meta { font-size: .78rem; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
     .mcq-bank-meta span { display: flex; align-items: center; gap: 4px; }
 
-    /* ── Quiz area ── */
+    /* â”€â”€ Quiz area â”€â”€ */
     #mcqTestArea .mcq-q-header { margin-bottom: 18px; }
     #mcqBankTitle { font-size: .82rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; display: block; }
 
-    /* ── MCQ options ── */
+    /* â”€â”€ MCQ options â”€â”€ */
     .mcq-option {
       display: block; width: 100%; text-align: left;
       padding: 13px 18px; margin-bottom: 10px;
@@ -60,13 +60,13 @@
     .mcq-option.correct { border-color: #4ade80; background: rgba(74,222,128,0.12); color: #4ade80; font-weight: 800; }
     .mcq-option.wrong   { border-color: #f87171; background: rgba(248,113,113,0.1);  color: #f87171; }
 
-    /* ── Progress bar ── */
+    /* â”€â”€ Progress bar â”€â”€ */
     .mcq-progress-wrap { margin-bottom: 16px; }
     .mcq-progress-track { width: 100%; height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
     .mcq-progress-fill { height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width .4s ease; box-shadow: 0 0 10px rgba(0,229,204,0.4); }
     .mcq-progress-label { display: flex; justify-content: space-between; font-size: .76rem; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
 
-    /* ── Score result ── */
+    /* â”€â”€ Score result â”€â”€ */
     .mcq-score-ring {
       width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px;
       display: flex; align-items: center; justify-content: center;
@@ -87,7 +87,7 @@
     .mcq-score-ring-inner .pct { font-size: 1.4rem; color: var(--accent); line-height: 1; }
     .mcq-score-ring-inner .lbl { font-size: .6rem; color: var(--muted); }
 
-    /* ── Review table ── */
+    /* â”€â”€ Review table â”€â”€ */
     .mcq-review-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: .84rem; }
     .mcq-review-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
     .mcq-review-table td { padding: 10px 10px; border-bottom: 1px solid rgba(0,229,204,0.05); vertical-align: top; }
@@ -95,18 +95,18 @@
     .ans-correct { color: #4ade80; font-weight: 700; }
     .ans-wrong   { color: #f87171; }
 
-    /* ── Responsive ── */
+    /* â”€â”€ Responsive â”€â”€ */
     @media (max-width: 640px) {
       .mcq-class-row { flex-direction: column; align-items: stretch; }
       .mcq-class-select { max-width: 100%; }
       .mcq-bank-card { flex-direction: column; align-items: flex-start; }
     }
 
-    /* ═══════════════════════════════════════════════════════════════
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
        3D ANSWER ANIMATIONS
-    ═══════════════════════════════════════════════════════════════ */
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-    /* ── Correct answer overlay ── */
+    /* â”€â”€ Correct answer overlay â”€â”€ */
     #mcqCorrectOverlay {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; align-items: center; justify-content: center;
@@ -177,7 +177,7 @@
       100% { transform: scale(1) translateY(0);    opacity: 1; }
     }
 
-    /* ── Floating +pts text ── */
+    /* â”€â”€ Floating +pts text â”€â”€ */
     .mcq-float-pts {
       position: fixed;
       font-family: 'Outfit', sans-serif;
@@ -194,7 +194,7 @@
       100% { transform: translateY(-140px) scale(0.8); opacity: 0; }
     }
 
-    /* ── Wrong answer animation ── */
+    /* â”€â”€ Wrong answer animation â”€â”€ */
     #mcqWrongOverlay {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; align-items: center; justify-content: center;
@@ -240,7 +240,7 @@
     }
     .mcq-wrong-sub { font-size: .85rem; font-weight: 700; color: rgba(255,255,255,0.6); }
 
-    /* ── MCQ box shake for wrong ── */
+    /* â”€â”€ MCQ box shake for wrong â”€â”€ */
     @keyframes mcqBoxShake {
       0%,100% { transform: translateX(0); }
       15% { transform: translateX(-10px) rotate(-1.5deg); }
@@ -252,7 +252,7 @@
     }
     .mcq-shake { animation: mcqBoxShake 0.6s cubic-bezier(0.36,0.07,0.19,0.97) both; }
 
-    /* ── Confetti particles ── */
+    /* â”€â”€ Confetti particles â”€â”€ */
     .mcq-confetti-piece {
       position: fixed;
       width: 10px; height: 14px;
@@ -310,7 +310,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
         Video Lectures
       </a>
-      <!-- ── EXTRA ACTIVITY ── -->
+      <!-- â”€â”€ EXTRA ACTIVITY â”€â”€ -->
       <div class="portal-title">EXTRA ACTIVITY</div>
       <a class="portal-link" href="#" id="sideProgToggle" onclick="event.preventDefault();toggleProgLangs()" style="justify-content:space-between;">
         <span style="display:flex;align-items:center;gap:8px;">
@@ -320,13 +320,13 @@
         <svg id="progChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" style="transition:transform .25s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
       </a>
       <div id="progLangLinks" style="overflow:hidden;max-height:0;transition:max-height .3s ease;padding-left:10px;">
-        <a class="portal-link" href="student-videos.html?cat=Python" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🐍</span> Python</a>
-        <a class="portal-link" href="student-videos.html?cat=C" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>⚙️</span> C</a>
-        <a class="portal-link" href="student-videos.html?cat=C%2B%2B" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🔧</span> C++</a>
-        <a class="portal-link" href="student-videos.html?cat=Java" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>☕</span> Java</a>
-        <a class="portal-link" href="student-videos.html?cat=JavaScript" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🌐</span> JavaScript</a>
-        <a class="portal-link" href="student-videos.html?cat=HTML" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🧱</span> HTML</a>
-        <a class="portal-link" href="student-videos.html?cat=CSS" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🎨</span> CSS</a>
+        <a class="portal-link" href="programming.html?lang=Python" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ</span> Python</a>
+        <a class="portal-link" href="programming.html?lang=C" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>âš™ï¸</span> C</a>
+        <a class="portal-link" href="programming.html?lang=C%2B%2B" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ”§</span> C++</a>
+        <a class="portal-link" href="programming.html?lang=Java" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>â˜•</span> Java</a>
+        <a class="portal-link" href="programming.html?lang=JavaScript" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸŒ</span> JavaScript</a>
+        <a class="portal-link" href="programming.html?lang=HTML" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ§±</span> HTML</a>
+        <a class="portal-link" href="programming.html?lang=CSS" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸŽ¨</span> CSS</a>
       </div>
 
       <div class="portal-title">ASSESSMENT</div>
@@ -336,7 +336,7 @@
       </a>
       <a class="portal-link" href="mcq-store.html" style="position:relative;">
         <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-        🏪 Store
+        ðŸª Store
         <span id="sideStorePts" style="margin-left:auto;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:999px;">0 pts</span>
       </a>
 
@@ -346,7 +346,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span id="sidePointsText">0 pts</span>
           </span>
-          <span id="sideCashbackText" style="font-weight:800; font-size:0.85rem; padding:3px 9px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#d97706); color:#000;">₹ 0</span>
+          <span id="sideCashbackText" style="font-weight:800; font-size:0.85rem; padding:3px 9px; border-radius:999px; background:linear-gradient(135deg,#f59e0b,#d97706); color:#000;">â‚¹ 0</span>
         </div>
         <div style="width:100%; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;">
           <div id="sidePointsBar" style="width:0%; height:100%; background:#38a169; border-radius:4px;"></div>
@@ -360,15 +360,15 @@
 
         <!-- Header -->
         <div style="margin-bottom:20px;">
-          <h2 style="margin:0 0 6px;">📊 MCQ Test</h2>
+          <h2 style="margin:0 0 6px;">ðŸ“Š MCQ Test</h2>
           <p style="color:var(--muted);margin:0;font-size:.86rem;">Select your class to see tests published by your teacher.</p>
         </div>
 
         <!-- Class selector row -->
         <div class="mcq-class-row">
-          <label for="mcqClassSelect">🎓 Your Class:</label>
+          <label for="mcqClassSelect">ðŸŽ“ Your Class:</label>
           <select id="mcqClassSelect" class="mcq-class-select">
-            <option value="">— Choose your class —</option>
+            <option value="">â€” Choose your class â€”</option>
             <option value="6-stateboard">Class 6 (Stateboard)</option>
             <option value="6-cbse">Class 6 (CBSE)</option>
             <option value="7-stateboard">Class 7 (Stateboard)</option>
@@ -414,7 +414,7 @@
 
         <!-- Next button -->
         <div style="margin-top:18px;">
-          <button id="mcqNext" class="btn" type="button" style="display:none;padding:11px 28px;">Next Question →</button>
+          <button id="mcqNext" class="btn" type="button" style="display:none;padding:11px 28px;">Next Question â†’</button>
         </div>
       </div>
     </section>
@@ -423,7 +423,7 @@
   <!-- 3D Correct Answer Overlay -->
   <div id="mcqCorrectOverlay" style="display:none;">
     <div class="mcq-correct-card" id="mcqCorrectCard">
-      <div class="mcq-correct-icon">✅</div>
+      <div class="mcq-correct-icon">âœ…</div>
       <div class="mcq-correct-text">CORRECT!</div>
       <div class="mcq-correct-sub">Great job, keep it up!</div>
       <div class="mcq-pts-badge" id="mcqPtsBadge">+5 pts</div>
@@ -433,7 +433,7 @@
   <!-- Wrong Answer Overlay -->
   <div id="mcqWrongOverlay" style="display:none;">
     <div class="mcq-wrong-card">
-      <div class="mcq-wrong-icon">❌</div>
+      <div class="mcq-wrong-icon">âŒ</div>
       <div class="mcq-wrong-text">WRONG!</div>
       <div class="mcq-wrong-sub">Study harder &amp; try again!</div>
     </div>
@@ -482,7 +482,7 @@
 
       if (!targetValue) return;
 
-      // ── Hide ALL options except the student's own and the placeholder ──
+      // â”€â”€ Hide ALL options except the student's own and the placeholder â”€â”€
       for (const opt of sel.options) {
         if (opt.value === '' || opt.value === targetValue) {
           opt.style.display = '';
@@ -504,7 +504,7 @@
         }
       }
 
-      // ── Lock dropdown: student cannot change their class ──
+      // â”€â”€ Lock dropdown: student cannot change their class â”€â”€
       sel.disabled = true;
       sel.style.opacity = '0.75';
       sel.title = 'Locked to your registered class';
@@ -522,7 +522,7 @@
       if (row) {
         const lockBadge = document.createElement('span');
         lockBadge.style.cssText = 'font-size:.75rem;font-weight:700;color:rgba(0,229,204,0.85);display:flex;align-items:center;gap:4px;white-space:nowrap;';
-        lockBadge.innerHTML = '🔒 Your Class';
+        lockBadge.innerHTML = 'ðŸ”’ Your Class';
         row.appendChild(lockBadge);
       }
 
@@ -541,10 +541,10 @@
       const bar = document.getElementById('sidePointsBar');
       if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
       const sc = document.getElementById('sideCashbackText');
-      if (sc) sc.textContent = '₹ ' + cash.toLocaleString('en-IN');
+      if (sc) sc.textContent = 'â‚¹ ' + cash.toLocaleString('en-IN');
     })();
 
-    /* ── wire progress bar to quiz flow ── */
+    /* â”€â”€ wire progress bar to quiz flow â”€â”€ */
     const mcqNextBtn = document.getElementById('mcqNext');
     if (mcqNextBtn) {
       const observer = new MutationObserver(() => {
@@ -575,3 +575,4 @@
   </script>
 </body>
 </html>
+

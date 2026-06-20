@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Programming Hub | Dr.AIMSS EDUCATIONAL ACADEMY</title>
+  <meta name="description" content="Access programming study materials and video lectures at Dr.AIMSS Educational Academy." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    /* ── Language Tabs ── */
+    .lang-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+    .lang-tab {
+      display:flex; align-items:center; gap:6px; padding:8px 16px;
+      background:var(--surface); border:1.5px solid var(--line);
+      border-radius:10px; cursor:pointer; font:inherit; font-weight:700;
+      font-size:.88rem; color:var(--muted); transition:all .2s;
+    }
+    .lang-tab:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-2px); }
+    .lang-tab.active {
+      border-color:var(--accent); background:rgba(0,229,204,0.10);
+      color:var(--accent); box-shadow:0 0 20px rgba(0,229,204,0.15);
+    }
+    .lang-icon { font-size:1.1rem; }
+
+    /* ── Section toggle tabs ── */
+    .section-tabs { display:flex; gap:0; margin-bottom:20px; border-radius:12px; overflow:hidden; border:1.5px solid var(--line); }
+    .section-tab {
+      flex:1; padding:11px; text-align:center; cursor:pointer;
+      font:inherit; font-weight:800; font-size:.9rem; color:var(--muted);
+      background:var(--surface); border:none; transition:all .2s;
+    }
+    .section-tab:first-child { border-right:1px solid var(--line); }
+    .section-tab.active { background:rgba(0,229,204,0.10); color:var(--accent); }
+    .section-tab .tab-count {
+      display:inline-block; margin-left:6px; padding:1px 7px;
+      background:var(--accent-gradient); color:#000;
+      border-radius:999px; font-size:.7rem; font-weight:900;
+    }
+
+    /* ── Upload area (teacher only) ── */
+    .upload-zone {
+      border:2px dashed var(--line); border-radius:14px; padding:24px;
+      text-align:center; cursor:pointer; transition:all .22s;
+      margin-bottom:16px; background:var(--surface);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color:var(--accent); background:rgba(0,229,204,0.05);
+    }
+    .upload-icon { font-size:2rem; margin-bottom:8px; }
+    .upload-hint { color:var(--muted); font-size:.82rem; }
+    .upload-progress {
+      height:6px; background:var(--surface-2); border-radius:999px;
+      overflow:hidden; margin-top:10px; display:none;
+    }
+    .upload-progress-fill { height:100%; background:var(--accent-gradient); border-radius:999px; transition:width .3s; }
+
+    /* ── Video add form (teacher) ── */
+    .video-form {
+      background:var(--surface); border:1.5px solid var(--line);
+      border-radius:14px; padding:20px; margin-bottom:20px;
+      display:none;
+    }
+    .video-form.open { display:block; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    @media(max-width:640px) { .form-row { grid-template-columns:1fr; } }
+    .form-field input, .form-field textarea {
+      width:100%; background:var(--surface-2); border:1.5px solid var(--line);
+      border-radius:10px; padding:9px 14px; color:var(--ink);
+      font:inherit; font-size:.9rem; outline:none; resize:vertical;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .form-field input:focus, .form-field textarea:focus {
+      border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,229,204,0.12);
+    }
+    .form-field label { display:block; font-weight:700; font-size:.78rem; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em; }
+
+    /* ── File cards ── */
+    .file-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .file-card {
+      background:var(--surface); border:1.5px solid var(--line);
+      border-radius:14px; padding:16px; display:flex; flex-direction:column;
+      gap:10px; transition:all .22s; position:relative; overflow:hidden;
+    }
+    .file-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:var(--accent-gradient); opacity:0; transition:opacity .3s;
+    }
+    .file-card:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,229,204,0.1); }
+    .file-card:hover::before { opacity:1; }
+    .file-icon { font-size:2rem; }
+    .file-name { font-weight:700; font-size:.88rem; color:var(--ink); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
+    .file-meta { font-size:.72rem; color:var(--muted-2); }
+    .file-actions { display:flex; gap:6px; margin-top:auto; }
+    .file-btn {
+      flex:1; padding:7px 10px; border-radius:8px; border:none;
+      font:inherit; font-size:.78rem; font-weight:700; cursor:pointer;
+      transition:all .15s; text-align:center; text-decoration:none;
+      display:inline-flex; align-items:center; justify-content:center; gap:4px;
+    }
+    .file-btn-view { background:rgba(0,229,204,0.1); border:1px solid rgba(0,229,204,0.25); color:var(--accent); }
+    .file-btn-view:hover { background:rgba(0,229,204,0.18); }
+    .file-btn-dl { background:var(--accent-gradient); color:#000; box-shadow:0 4px 14px rgba(0,229,204,0.2); }
+    .file-btn-dl:hover { transform:translateY(-1px); }
+    .file-btn-del { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; }
+    .file-btn-del:hover { background:rgba(239,68,68,0.18); }
+
+    /* ── Video cards ── */
+    .yt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+    .yt-card {
+      background:var(--surface); border:1.5px solid var(--line); border-radius:14px;
+      overflow:hidden; cursor:pointer; transition:all .22s;
+    }
+    .yt-card:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,229,204,0.1); }
+    .yt-thumb { position:relative; aspect-ratio:16/9; background:#111; overflow:hidden; }
+    .yt-thumb img { width:100%; height:100%; object-fit:cover; }
+    .yt-play {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.3); opacity:0; transition:opacity .2s;
+    }
+    .yt-card:hover .yt-play { opacity:1; }
+    .yt-play svg { width:44px; height:44px; fill:#fff; filter:drop-shadow(0 2px 8px rgba(0,0,0,.6)); }
+    .yt-info { padding:14px; }
+    .yt-title { font-weight:700; font-size:.9rem; color:var(--ink); margin-bottom:4px; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .yt-desc { font-size:.76rem; color:var(--muted); }
+    .yt-actions { display:flex; gap:6px; padding:0 14px 14px; }
+    .yt-del-btn {
+      padding:5px 12px; border-radius:7px; border:1px solid rgba(239,68,68,0.2);
+      background:rgba(239,68,68,0.1); color:#f87171; font:inherit; font-size:.75rem;
+      font-weight:700; cursor:pointer; transition:all .15s;
+    }
+    .yt-del-btn:hover { background:rgba(239,68,68,0.18); }
+
+    /* ── State messages ── */
+    .empty-state { text-align:center; padding:44px 20px; color:var(--muted); }
+    .empty-state .e-icon { font-size:2.8rem; margin-bottom:12px; }
+    .empty-state h3 { color:var(--ink); margin:0 0 6px; }
+    .empty-state p { font-size:.86rem; margin:0; }
+    .loading-state { display:flex; align-items:center; justify-content:center; gap:12px; padding:44px 20px; color:var(--muted); }
+    .spin { width:28px; height:28px; border-radius:50%; border:3px solid rgba(0,229,204,0.15); border-top-color:var(--accent); animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px); background:#1e2a38; border:1.5px solid var(--line); padding:11px 22px; border-radius:12px; font-size:.88rem; font-weight:700; color:var(--ink); z-index:9999; transition:transform .3s; pointer-events:none; white-space:nowrap; }
+    #toast.show { transform:translateX(-50%) translateY(0); }
+    #toast.success { border-color:rgba(0,229,204,0.5); color:#00e5cc; }
+    #toast.error { border-color:rgba(248,113,113,0.5); color:#f87171; }
+
+    /* ── Video player overlay ── */
+    .vid-overlay { position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .25s; }
+    .vid-overlay.open { opacity:1; pointer-events:all; }
+    .vid-box { width:100%; max-width:900px; background:var(--surface); border-radius:20px; border:1px solid var(--line); overflow:hidden; }
+    .vid-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); gap:12px; }
+    .vid-header-info { flex:1; min-width:0; }
+    .vid-title { font-weight:800; font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .vid-meta { font-size:.76rem; color:var(--muted); margin-top:2px; }
+    .vid-close { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:8px; padding:6px 14px; cursor:pointer; font:inherit; font-weight:700; flex-shrink:0; }
+    .vid-iframe-wrap { aspect-ratio:16/9; background:#000; }
+    .vid-iframe-wrap iframe { width:100%; height:100%; border:none; display:block; }
+
+    /* ── Preview modal ── */
+    #previewModal { position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:20px; }
+    #previewModal.open { display:flex; }
+    #previewModal .pm-box { width:100%; max-width:900px; height:85vh; background:var(--surface); border-radius:20px; border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column; }
+    #previewModal .pm-hdr { display:flex; justify-content:space-between; align-items:center; padding:13px 18px; border-bottom:1px solid var(--line); }
+    #previewModal iframe { flex:1; border:none; background:#fff; }
+
+    /* ── Chunk progress overlay ── */
+    .chunk-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
+    .chunk-box { background:var(--surface); border:1px solid var(--line-hard); border-radius:18px; padding:28px 32px; max-width:400px; width:100%; text-align:center; }
+    .chunk-box h3 { margin:0 0 6px; font-size:1rem; }
+    .chunk-box p { margin:0 0 14px; color:var(--muted); font-size:.82rem; }
+    .chunk-bar { width:100%; height:8px; background:var(--surface-2); border-radius:999px; overflow:hidden; margin-bottom:8px; }
+    .chunk-fill { height:100%; width:0%; background:var(--accent-gradient); border-radius:999px; box-shadow:0 0 12px rgba(0,229,204,0.5); }
+    .chunk-pct { font-size:.8rem; color:var(--accent); font-weight:700; }
+
+    /* ── Teacher badge ── */
+    .teacher-badge {
+      display:inline-flex; align-items:center; gap:5px; padding:3px 10px;
+      background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3);
+      border-radius:999px; font-size:.72rem; font-weight:700; color:#a78bfa;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="assets/images/logo.jpg" alt="Dr.AIMSS Logo" class="brand-logo" />
+        <span>Dr.AIMSS EDUCATIONAL ACADEMY</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" data-logout id="navLogout">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="portal-shell">
+    <div class="portal-side-overlay" id="sidebarOverlay"></div>
+    <aside class="portal-side" id="portalSidebar">
+      <div class="sidebar-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#00e5cc,#007a70);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;">DA</div>
+          <span style="font-size:1.1rem;font-weight:800;font-family:'Outfit',sans-serif;">Dr.AIMSS</span>
+        </div>
+        <button id="sidebarCloseBtn" class="btn btn-soft" style="padding:4px 8px;border:none;display:none;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Sidebar filled dynamically based on role -->
+      <div id="sidebarNav"></div>
+    </aside>
+
+    <section class="portal-main">
+      <div class="glass card" style="padding:26px;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:1.4rem;">💻 Programming Hub</h2>
+            <p style="margin:0;color:var(--muted);font-size:.86rem;">Study materials & video lectures — all in one place</p>
+          </div>
+          <span class="teacher-badge" id="roleBadge" style="display:none;">👨‍🏫 Teacher Mode</span>
+        </div>
+
+        <!-- Language tabs -->
+        <div class="lang-tabs" id="langTabs">
+          <button class="lang-tab" data-lang="Python"><span class="lang-icon">🐍</span> Python</button>
+          <button class="lang-tab" data-lang="C"><span class="lang-icon">⚙️</span> C</button>
+          <button class="lang-tab" data-lang="C++"><span class="lang-icon">🔧</span> C++</button>
+          <button class="lang-tab" data-lang="Java"><span class="lang-icon">☕</span> Java</button>
+          <button class="lang-tab" data-lang="JavaScript"><span class="lang-icon">🌐</span> JavaScript</button>
+          <button class="lang-tab" data-lang="HTML"><span class="lang-icon">🧱</span> HTML</button>
+          <button class="lang-tab" data-lang="CSS"><span class="lang-icon">🎨</span> CSS</button>
+        </div>
+
+        <!-- Teacher upload controls (hidden for students) -->
+        <div id="teacherControls" style="display:none;margin-bottom:18px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <button class="btn" id="uploadMaterialBtn" style="display:flex;align-items:center;gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Material
+            </button>
+            <button class="btn btn-soft" id="addVideoBtn" style="display:flex;align-items:center;gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              Add Video
+            </button>
+          </div>
+
+          <!-- File upload zone -->
+          <div id="uploadZone" class="upload-zone" style="display:none;">
+            <div class="upload-icon">📁</div>
+            <div style="font-weight:700;margin-bottom:4px;">Drop files here or click to browse</div>
+            <div class="upload-hint">Any file type · No size limit</div>
+            <input type="file" id="fileInput" multiple style="display:none;">
+            <div class="upload-progress" id="uploadProgress">
+              <div class="upload-progress-fill" id="uploadProgressFill"></div>
+            </div>
+            <div id="uploadStatus" style="font-size:.82rem;margin-top:8px;color:var(--muted);"></div>
+          </div>
+
+          <!-- Video add form -->
+          <div class="video-form" id="videoForm">
+            <h4 style="margin:0 0 14px;font-size:.95rem;">📺 Add YouTube Video</h4>
+            <div class="form-row">
+              <div class="form-field">
+                <label>YouTube URL or Video ID</label>
+                <input type="text" id="vtUrl" placeholder="https://youtube.com/watch?v=... or video ID" />
+              </div>
+              <div class="form-field">
+                <label>Title</label>
+                <input type="text" id="vtTitle" placeholder="e.g. Python Basics - Introduction" />
+              </div>
+            </div>
+            <div class="form-field" style="margin-bottom:12px;">
+              <label>Description (optional)</label>
+              <input type="text" id="vtDesc" placeholder="Short description..." />
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" id="saveVideoBtn" style="padding:9px 20px;">💾 Save Video</button>
+              <button class="btn btn-soft" id="cancelVideoBtn" style="padding:9px 16px;">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section toggle (Materials / Videos) -->
+        <div class="section-tabs" id="sectionTabs" style="display:none;">
+          <button class="section-tab active" id="tabMaterials" onclick="switchSection('materials')">
+            📁 Study Materials <span class="tab-count" id="matCount">0</span>
+          </button>
+          <button class="section-tab" id="tabVideos" onclick="switchSection('videos')">
+            🎬 Video Lectures <span class="tab-count" id="vidCount">0</span>
+          </button>
+        </div>
+
+        <!-- Welcome / no lang selected -->
+        <div id="welcomePanel" style="text-align:center;padding:50px 20px;color:var(--muted);">
+          <div style="font-size:3rem;margin-bottom:12px;">💻</div>
+          <h3 style="color:var(--ink);margin:0 0 6px;">Select a Language</h3>
+          <p style="margin:0;font-size:.86rem;">Choose a programming language above to view its study materials and video lectures.</p>
+        </div>
+
+        <!-- Materials section -->
+        <div id="materialsSection" style="display:none;">
+          <div id="matLoading" class="loading-state"><div class="spin"></div><span>Loading materials…</span></div>
+          <div id="matEmpty" class="empty-state" style="display:none;">
+            <div class="e-icon">📭</div>
+            <h3>No materials yet</h3>
+            <p id="matEmptyMsg">Ask your teacher to upload study materials for this language.</p>
+          </div>
+          <div class="file-grid" id="matGrid" style="display:none;"></div>
+        </div>
+
+        <!-- Videos section -->
+        <div id="videosSection" style="display:none;">
+          <div id="vidLoading" class="loading-state"><div class="spin"></div><span>Loading videos…</span></div>
+          <div id="vidEmpty" class="empty-state" style="display:none;">
+            <div class="e-icon">📭</div>
+            <h3>No videos yet</h3>
+            <p id="vidEmptyMsg">Ask your teacher to add video lectures for this language.</p>
+          </div>
+          <div class="yt-grid" id="vidGrid" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Video player overlay -->
+  <div class="vid-overlay" id="vidOverlay">
+    <div class="vid-box">
+      <div class="vid-header">
+        <div class="vid-header-info">
+          <div class="vid-title" id="vidTitle"></div>
+          <div class="vid-meta" id="vidMeta"></div>
+        </div>
+        <button class="vid-close" onclick="closePlayer()">✕ Close</button>
+      </div>
+      <div class="vid-iframe-wrap">
+        <iframe id="vidFrame" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview modal -->
+  <div id="previewModal">
+    <div class="pm-box">
+      <div class="pm-hdr">
+        <span id="pmTitle" style="font-weight:700;font-size:.92rem;"></span>
+        <button onclick="closePreview()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 13px;cursor:pointer;font:inherit;font-weight:700;">✕ Close</button>
+      </div>
+      <iframe id="pmFrame" style="flex:1;border:none;background:#fff;"></iframe>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/supabase-auth.js"></script>
+  <script src="assets/js/drive.js"></script>
+  <script src="assets/js/main.js?v=7"></script>
+  <script>
+    /* ══════════════════════════════════════════════════
+       STATE
+    ══════════════════════════════════════════════════ */
+    let _role        = null;        // 'teacher' | 'student'
+    let _lang        = null;        // currently selected language
+    let _section     = 'materials'; // 'materials' | 'videos'
+    let _matFiles    = [];
+    let _videos      = [];
+
+    const LANGS = [
+      { id:'Python',     icon:'🐍' },
+      { id:'C',          icon:'⚙️' },
+      { id:'C++',        icon:'🔧' },
+      { id:'Java',       icon:'☕' },
+      { id:'JavaScript', icon:'🌐' },
+      { id:'HTML',       icon:'🧱' },
+      { id:'CSS',        icon:'🎨' },
+    ];
+
+    /* ══════════════════════════════════════════════════
+       AUTH GUARD — allows teacher + student
+    ══════════════════════════════════════════════════ */
+    (async function() {
+      await new Promise(r => setTimeout(r, 100));
+      const client = DrAuth.getClient();
+      if (!client) { window.location.href = 'login.html'; return; }
+
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        const res = await client.auth.getSession();
+        if (res.data?.session) { session = res.data.session; break; }
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (!session) { window.location.href = 'login.html'; return; }
+
+      const { data: profile } = await client.from('profiles')
+        .select('role, institution_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile || !['student','teacher'].includes(profile.role)) {
+        await client.auth.signOut();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      _role = profile.role;
+      onRoleReady();
+    })();
+
+    /* ══════════════════════════════════════════════════
+       ROLE-BASED SETUP
+    ══════════════════════════════════════════════════ */
+    function onRoleReady() {
+      buildSidebar();
+
+      if (_role === 'teacher') {
+        document.getElementById('teacherControls').style.display = '';
+        document.getElementById('roleBadge').style.display = '';
+      }
+
+      // Attach lang tab listeners
+      document.querySelectorAll('.lang-tab').forEach(btn => {
+        btn.addEventListener('click', () => selectLang(btn.dataset.lang));
+      });
+
+      // Read URL param
+      const urlLang = new URLSearchParams(window.location.search).get('lang');
+      if (urlLang) {
+        selectLang(urlLang);
+      }
+
+      // Upload zone click
+      const zone = document.getElementById('uploadZone');
+      const fileInput = document.getElementById('fileInput');
+      if (zone) {
+        zone.addEventListener('click', () => fileInput.click());
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+        zone.addEventListener('drop', e => {
+          e.preventDefault();
+          zone.classList.remove('drag-over');
+          handleFileUpload(Array.from(e.dataTransfer.files));
+        });
+        fileInput.addEventListener('change', () => handleFileUpload(Array.from(fileInput.files)));
+      }
+
+      // Teacher buttons
+      document.getElementById('uploadMaterialBtn')?.addEventListener('click', () => {
+        const z = document.getElementById('uploadZone');
+        z.style.display = z.style.display === 'none' ? '' : 'none';
+        document.getElementById('videoForm').classList.remove('open');
+      });
+
+      document.getElementById('addVideoBtn')?.addEventListener('click', () => {
+        const vf = document.getElementById('videoForm');
+        vf.classList.toggle('open');
+        document.getElementById('uploadZone').style.display = 'none';
+      });
+
+      document.getElementById('cancelVideoBtn')?.addEventListener('click', () => {
+        document.getElementById('videoForm').classList.remove('open');
+      });
+
+      document.getElementById('saveVideoBtn')?.addEventListener('click', saveVideo);
+    }
+
+    /* ══════════════════════════════════════════════════
+       BUILD SIDEBAR based on role
+    ══════════════════════════════════════════════════ */
+    function buildSidebar() {
+      const nav = document.getElementById('sidebarNav');
+      if (_role === 'teacher') {
+        nav.innerHTML = `
+          <div class="portal-title">MAIN</div>
+          <a class="portal-link" href="command-center.html">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </a>
+          <div class="portal-title">EXTRA ACTIVITY</div>
+          <a class="portal-link active" href="programming.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Programming Hub
+          </a>
+          <div class="portal-title">ASSESSMENT</div>
+          <a class="portal-link" href="command-center.html#mcqManagerCard">
+            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            MCQ Tests
+          </a>`;
+      } else {
+        nav.innerHTML = `
+          <div class="portal-title">MAIN</div>
+          <a class="portal-link" href="student-dashboard.html">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Student Profile
+          </a>
+          <div class="portal-title">CONTENT STUDIO</div>
+          <a class="portal-link" href="study-materials.html">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Study Materials
+          </a>
+          <a class="portal-link" href="ai-pdf-generator.html">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            ePDF Generator
+          </a>
+          <a class="portal-link" href="student-videos.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+            Video Lectures
+          </a>
+          <div class="portal-title">EXTRA ACTIVITY</div>
+          <a class="portal-link active" href="programming.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Programming Hub
+          </a>
+          <div class="portal-title">ASSESSMENT</div>
+          <a class="portal-link" href="mcq-test.html">
+            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            MCQ Test
+          </a>
+          <a class="portal-link" href="mcq-store.html">
+            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            🏪 Store
+          </a>`;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       SELECT LANGUAGE
+    ══════════════════════════════════════════════════ */
+    function selectLang(lang) {
+      _lang = lang;
+      // Update URL param silently
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', lang);
+      history.replaceState({}, '', url);
+
+      // Update tab UI
+      document.querySelectorAll('.lang-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      // Show section tabs and default to materials
+      document.getElementById('sectionTabs').style.display = '';
+      document.getElementById('welcomePanel').style.display = 'none';
+
+      // Update teacher upload area label if teacher
+      if (_role === 'teacher') {
+        const uploadBtn = document.getElementById('uploadMaterialBtn');
+        if (uploadBtn) uploadBtn.textContent = `📁 Upload ${lang} Material`;
+        const addBtn = document.getElementById('addVideoBtn');
+        if (addBtn) addBtn.textContent = `🎬 Add ${lang} Video`;
+      }
+
+      // Update empty state msgs
+      document.getElementById('matEmptyMsg').textContent =
+        _role === 'teacher'
+          ? `No materials uploaded for ${lang} yet. Use "Upload Material" above.`
+          : `Ask your teacher to upload study materials for ${lang}.`;
+      document.getElementById('vidEmptyMsg').textContent =
+        _role === 'teacher'
+          ? `No videos added for ${lang} yet. Use "Add Video" above.`
+          : `Ask your teacher to add video lectures for ${lang}.`;
+
+      // Load both
+      loadMaterials();
+      loadVideos();
+      switchSection(_section);
+    }
+
+    /* ══════════════════════════════════════════════════
+       SWITCH SECTION
+    ══════════════════════════════════════════════════ */
+    function switchSection(sec) {
+      _section = sec;
+      document.getElementById('tabMaterials').classList.toggle('active', sec === 'materials');
+      document.getElementById('tabVideos').classList.toggle('active', sec === 'videos');
+      document.getElementById('materialsSection').style.display = sec === 'materials' ? '' : 'none';
+      document.getElementById('videosSection').style.display   = sec === 'videos'    ? '' : 'none';
+    }
+
+    /* ══════════════════════════════════════════════════
+       LOAD MATERIALS from DrDrive
+    ══════════════════════════════════════════════════ */
+    async function loadMaterials() {
+      const drivePath = `exam-programming/${_lang}`;
+      document.getElementById('matLoading').style.display = '';
+      document.getElementById('matEmpty').style.display   = 'none';
+      document.getElementById('matGrid').style.display    = 'none';
+
+      try {
+        const { files } = await DrDrive.listFolderContents(drivePath);
+        _matFiles = files;
+        document.getElementById('matLoading').style.display = 'none';
+        document.getElementById('matCount').textContent = files.length;
+
+        if (files.length === 0) {
+          document.getElementById('matEmpty').style.display = '';
+        } else {
+          document.getElementById('matGrid').style.display = '';
+          renderMaterials(files);
+        }
+      } catch(e) {
+        document.getElementById('matLoading').style.display = 'none';
+        document.getElementById('matEmpty').style.display   = '';
+        document.getElementById('matEmptyMsg').textContent  = 'Could not load materials: ' + e.message;
+      }
+    }
+
+    function renderMaterials(files) {
+      const grid = document.getElementById('matGrid');
+      grid.innerHTML = '';
+      files.forEach(f => {
+        const icon = DrDrive.getIcon(f.mimeType);
+        const size = DrDrive.formatSize(f.size);
+        const card = document.createElement('div');
+        card.className = 'file-card';
+        card.innerHTML = `
+          <div class="file-icon">${icon}</div>
+          <div class="file-name" title="${f.displayName}">${f.displayName}</div>
+          <div class="file-meta">${size} · ${DrDrive.formatDate(f.createdTime)}</div>
+          <div class="file-actions">
+            <button class="file-btn file-btn-view" onclick="previewFile('${f.path}','${escAttr(f.displayName)}',${f.isChunked},${JSON.stringify(f).replace(/"/g,"'")})">👁 View</button>
+            <button class="file-btn file-btn-dl" onclick="downloadFile('${f.path}','${escAttr(f.displayName)}',${f.isChunked})">⬇ Download</button>
+            ${_role === 'teacher' ? `<button class="file-btn file-btn-del" onclick="deleteFile('${f.path}','${escAttr(f.displayName)}',${f.isChunked})">🗑</button>` : ''}
+          </div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       LOAD VIDEOS from yt_videos table
+    ══════════════════════════════════════════════════ */
+    async function loadVideos() {
+      document.getElementById('vidLoading').style.display = '';
+      document.getElementById('vidEmpty').style.display   = 'none';
+      document.getElementById('vidGrid').style.display    = 'none';
+
+      try {
+        const client = DrAuth.getClient();
+        const instId = DrAuth.getInstitutionId() || '';
+        const { data, error } = await client
+          .from('yt_videos')
+          .select('id, title, video_id, category, description, created_at')
+          .eq('institution_id', instId)
+          .eq('category', _lang)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        _videos = data || [];
+        document.getElementById('vidLoading').style.display = 'none';
+        document.getElementById('vidCount').textContent = _videos.length;
+
+        if (_videos.length === 0) {
+          document.getElementById('vidEmpty').style.display = '';
+        } else {
+          document.getElementById('vidGrid').style.display = '';
+          renderVideos(_videos);
+        }
+      } catch(e) {
+        document.getElementById('vidLoading').style.display = 'none';
+        document.getElementById('vidEmpty').style.display   = '';
+        document.getElementById('vidEmptyMsg').textContent  = 'Could not load videos: ' + e.message;
+      }
+    }
+
+    function renderVideos(videos) {
+      const grid = document.getElementById('vidGrid');
+      grid.innerHTML = '';
+      videos.forEach(v => {
+        const thumb = `https://img.youtube.com/vi/${v.video_id}/mqdefault.jpg`;
+        const card = document.createElement('div');
+        card.className = 'yt-card';
+        card.innerHTML = `
+          <div class="yt-thumb" onclick="openPlayer('${v.video_id}','${escAttr(v.title)}','${v.category}${v.description ? ' · ' + escAttr(v.description) : ''}')">
+            <img src="${thumb}" alt="${v.title}" loading="lazy" onerror="this.parentElement.style.background='#1a1a2e'">
+            <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
+          </div>
+          <div class="yt-info">
+            <div class="yt-title">${v.title}</div>
+            ${v.description ? `<div class="yt-desc">${v.description}</div>` : ''}
+          </div>
+          ${_role === 'teacher' ? `<div class="yt-actions"><button class="yt-del-btn" onclick="deleteVideo('${v.id}','${escAttr(v.title)}')">🗑 Remove</button></div>` : ''}`;
+        grid.appendChild(card);
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       FILE UPLOAD (teacher)
+    ══════════════════════════════════════════════════ */
+    async function handleFileUpload(files) {
+      if (!files.length || !_lang) return;
+      const drivePath = `exam-programming/${_lang}`;
+      const prog = document.getElementById('uploadProgress');
+      const fill = document.getElementById('uploadProgressFill');
+      const status = document.getElementById('uploadStatus');
+
+      for (const file of files) {
+        try {
+          prog.style.display = '';
+          fill.style.width   = '0%';
+          status.textContent = `Uploading ${file.name}…`;
+
+          await DrDrive.uploadFile(file, drivePath, pct => {
+            fill.style.width = pct + '%';
+          });
+
+          status.textContent = `✅ ${file.name} uploaded!`;
+          fill.style.width   = '100%';
+          showToast('✅ ' + file.name + ' uploaded!', 'success');
+        } catch(e) {
+          status.textContent = '❌ ' + e.message;
+          showToast('❌ Upload failed: ' + e.message, 'error');
+        }
+      }
+
+      // Refresh materials
+      await loadMaterials();
+      document.getElementById('fileInput').value = '';
+      setTimeout(() => { prog.style.display = 'none'; status.textContent = ''; }, 2000);
+    }
+
+    /* ══════════════════════════════════════════════════
+       VIDEO SAVE (teacher)
+    ══════════════════════════════════════════════════ */
+    async function saveVideo() {
+      if (!_lang) { showToast('Select a language first', 'error'); return; }
+      const rawUrl  = document.getElementById('vtUrl').value.trim();
+      const title   = document.getElementById('vtTitle').value.trim();
+      const desc    = document.getElementById('vtDesc').value.trim();
+
+      if (!rawUrl || !title) { showToast('URL and Title are required', 'error'); return; }
+
+      // Extract video ID
+      let videoId = rawUrl;
+      const ytMatch = rawUrl.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+      if (ytMatch) videoId = ytMatch[1];
+      if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) { showToast('Invalid YouTube URL or ID', 'error'); return; }
+
+      const btn = document.getElementById('saveVideoBtn');
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      try {
+        const client = DrAuth.getClient();
+        const instId = DrAuth.getInstitutionId() || '';
+        const { error } = await client.from('yt_videos').insert({
+          title, video_id: videoId, category: _lang,
+          description: desc || null,
+          institution_id: instId
+        });
+        if (error) throw error;
+
+        showToast('✅ Video added!', 'success');
+        document.getElementById('vtUrl').value   = '';
+        document.getElementById('vtTitle').value = '';
+        document.getElementById('vtDesc').value  = '';
+        document.getElementById('videoForm').classList.remove('open');
+        await loadVideos();
+        switchSection('videos');
+      } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+      } finally {
+        btn.textContent = '💾 Save Video';
+        btn.disabled = false;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       FILE DELETE (teacher)
+    ══════════════════════════════════════════════════ */
+    async function deleteFile(path, name, isChunked) {
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const fileObj = _matFiles.find(f => f.path === path);
+        await DrDrive.deleteFile(path, fileObj);
+        showToast('🗑 Deleted: ' + name, 'success');
+        await loadMaterials();
+      } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       VIDEO DELETE (teacher)
+    ══════════════════════════════════════════════════ */
+    async function deleteVideo(id, title) {
+      if (!confirm(`Remove video "${title}"?`)) return;
+      try {
+        const client = DrAuth.getClient();
+        const { error } = await client.from('yt_videos').delete().eq('id', id);
+        if (error) throw error;
+        showToast('🗑 Removed: ' + title, 'success');
+        await loadVideos();
+      } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       VIDEO PLAYER
+    ══════════════════════════════════════════════════ */
+    function openPlayer(videoId, title, meta) {
+      document.getElementById('vidTitle').textContent = title;
+      document.getElementById('vidMeta').textContent  = meta || '';
+      document.getElementById('vidFrame').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+      document.getElementById('vidOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePlayer() {
+      document.getElementById('vidOverlay').classList.remove('open');
+      document.getElementById('vidFrame').src = '';
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePlayer(); closePreview(); } });
+
+    /* ══════════════════════════════════════════════════
+       FILE PREVIEW / DOWNLOAD
+    ══════════════════════════════════════════════════ */
+    function previewFile(path, name, isChunked, fileObjJson) {
+      if (isChunked) {
+        const fileObj = JSON.parse(fileObjJson.replace(/'/g,'"'));
+        showChunkDownload(fileObj, true);
+        return;
+      }
+      const url = DrDrive.getPreviewUrl(path);
+      document.getElementById('pmTitle').textContent = name;
+      document.getElementById('pmFrame').src = url;
+      document.getElementById('previewModal').classList.add('open');
+      document.getElementById('previewModal').style.display = 'flex';
+    }
+    function closePreview() {
+      document.getElementById('previewModal').classList.remove('open');
+      document.getElementById('previewModal').style.display = 'none';
+      document.getElementById('pmFrame').src = '';
+    }
+
+    function downloadFile(path, name, isChunked) {
+      if (isChunked) {
+        const fileObj = _matFiles.find(f => f.path === path);
+        if (fileObj) showChunkDownload(fileObj, false);
+        return;
+      }
+      const url = DrDrive.getDownloadUrl(path);
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+    }
+
+    function showChunkDownload(fileObj, isPreview) {
+      const overlay = document.createElement('div');
+      overlay.className = 'chunk-overlay';
+      overlay.innerHTML = `<div class="chunk-box"><h3>📦 ${isPreview ? 'Preparing Preview' : 'Downloading'}</h3><p>${fileObj.displayName}</p><div class="chunk-bar"><div class="chunk-fill" id="_cFill"></div></div><div class="chunk-pct" id="_cPct">0%</div></div>`;
+      document.body.appendChild(overlay);
+      const fill = overlay.querySelector('#_cFill');
+      const pct  = overlay.querySelector('#_cPct');
+      const onP  = p => { fill.style.width = p+'%'; pct.textContent = p+'%'; };
+
+      if (isPreview) {
+        DrDrive.getChunkedBlobUrl(fileObj, onP).then(url => {
+          overlay.remove();
+          document.getElementById('pmTitle').textContent = fileObj.displayName;
+          document.getElementById('pmFrame').src = url;
+          document.getElementById('previewModal').style.display = 'flex';
+        }).catch(e => { overlay.remove(); showToast('❌ ' + e.message, 'error'); });
+      } else {
+        DrDrive.downloadChunkedFile(fileObj, onP).then(() => { overlay.remove(); })
+          .catch(e => { overlay.remove(); showToast('❌ ' + e.message, 'error'); });
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════════════════ */
+    function escAttr(s) { return String(s).replace(/['"<>&]/g, c => ({'\'':'&#39;','"':'&quot;','<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+    let _toastTimer;
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + (type||'');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => t.className = '', 3200);
+    }
+  </script>
+</body>
+</html>

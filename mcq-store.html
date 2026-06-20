@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
-    /* ── Points Hero ── */
+    /* â”€â”€ Points Hero â”€â”€ */
     .store-hero {
       text-align: center;
       padding: 40px 24px 32px;
@@ -79,7 +79,7 @@
       font-weight: 800; font-size: 1rem; color: var(--accent);
     }
 
-    /* ── Badge Grid ── */
+    /* â”€â”€ Badge Grid â”€â”€ */
     .badge-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -122,7 +122,7 @@
       transition: width 0.8s ease;
     }
 
-    /* ── Points History ── */
+    /* â”€â”€ Points History â”€â”€ */
     .history-item {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 16px;
@@ -138,7 +138,7 @@
     .history-date { font-size: .76rem; color: var(--muted); }
     .history-pts { font-weight: 900; font-size: 1rem; color: #4ade80; white-space: nowrap; }
 
-    /* ── Stats Strip ── */
+    /* â”€â”€ Stats Strip â”€â”€ */
     .stats-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -162,7 +162,7 @@
     }
     .stat-label { font-size: .76rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
 
-    /* ── Section headers ── */
+    /* â”€â”€ Section headers â”€â”€ */
     .store-section-head {
       font-family: 'Outfit', sans-serif;
       font-size: 1.1rem; font-weight: 800;
@@ -171,7 +171,7 @@
       display: flex; align-items: center; gap: 8px;
     }
 
-    /* ── Responsive ── */
+    /* â”€â”€ Responsive â”€â”€ */
     @media (max-width: 880px) {
       .stats-strip { grid-template-columns: repeat(2, 1fr) !important; }
     }
@@ -180,7 +180,7 @@
       .store-pts-big { font-size: 3rem; }
     }
 
-    /* ── Cashback Hero ── */
+    /* â”€â”€ Cashback Hero â”€â”€ */
     .cashback-hero {
       text-align: center;
       padding: 36px 24px 28px;
@@ -228,7 +228,7 @@
       box-shadow: 0 6px 24px rgba(245,158,11,0.25);
     }
 
-    /* ── Tier Ladder ── */
+    /* â”€â”€ Tier Ladder â”€â”€ */
     .tier-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -295,7 +295,7 @@
       padding: 2px 8px; border-radius: 999px;
     }
 
-    /* ── Cashback history item ── */
+    /* â”€â”€ Cashback history item â”€â”€ */
     .history-item .cash-amount { color: #f59e0b !important; }
   </style>
 </head>
@@ -338,7 +338,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
         Video Lectures
       </a>
-      <!-- ── EXTRA ACTIVITY ── -->
+      <!-- â”€â”€ EXTRA ACTIVITY â”€â”€ -->
       <div class="portal-title">EXTRA ACTIVITY</div>
       <a class="portal-link" href="#" id="sideProgToggle" onclick="event.preventDefault();toggleProgLangs()" style="justify-content:space-between;">
         <span style="display:flex;align-items:center;gap:8px;">
@@ -348,13 +348,13 @@
         <svg id="progChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" style="transition:transform .25s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
       </a>
       <div id="progLangLinks" style="overflow:hidden;max-height:0;transition:max-height .3s ease;padding-left:10px;">
-        <a class="portal-link" href="student-videos.html?cat=Python" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🐍</span> Python</a>
-        <a class="portal-link" href="student-videos.html?cat=C" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>⚙️</span> C</a>
-        <a class="portal-link" href="student-videos.html?cat=C%2B%2B" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🔧</span> C++</a>
-        <a class="portal-link" href="student-videos.html?cat=Java" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>☕</span> Java</a>
-        <a class="portal-link" href="student-videos.html?cat=JavaScript" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🌐</span> JavaScript</a>
-        <a class="portal-link" href="student-videos.html?cat=HTML" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🧱</span> HTML</a>
-        <a class="portal-link" href="student-videos.html?cat=CSS" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>🎨</span> CSS</a>
+        <a class="portal-link" href="programming.html?lang=Python" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ</span> Python</a>
+        <a class="portal-link" href="programming.html?lang=C" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>âš™ï¸</span> C</a>
+        <a class="portal-link" href="programming.html?lang=C%2B%2B" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ”§</span> C++</a>
+        <a class="portal-link" href="programming.html?lang=Java" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>â˜•</span> Java</a>
+        <a class="portal-link" href="programming.html?lang=JavaScript" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸŒ</span> JavaScript</a>
+        <a class="portal-link" href="programming.html?lang=HTML" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸ§±</span> HTML</a>
+        <a class="portal-link" href="programming.html?lang=CSS" style="font-size:.82rem;padding:7px 12px;gap:8px;"><span>ðŸŽ¨</span> CSS</a>
       </div>
 
       <div class="portal-title">ASSESSMENT</div>
@@ -364,7 +364,7 @@
       </a>
       <a class="portal-link active" href="mcq-store.html" style="position:relative;">
         <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-        🏪 Store
+        ðŸª Store
         <span id="sideStorePts" style="margin-left:auto;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:999px;">0 pts</span>
       </a>
       <div class="sidebar-footer" style="margin-top:auto;padding-top:24px;border-top:1px solid var(--line);">
@@ -373,7 +373,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span id="sidePointsText">0 pts</span>
           </span>
-          <span id="sideCashbackText" style="font-weight:800;font-size:0.85rem;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;">₹ 0</span>
+          <span id="sideCashbackText" style="font-weight:800;font-size:0.85rem;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;">â‚¹ 0</span>
         </div>
         <div style="width:100%;height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
           <div id="sidePointsBar" style="width:0%;height:100%;background:#38a169;border-radius:4px;"></div>
@@ -387,12 +387,12 @@
       <!-- Points Hero -->
       <div class="store-hero glass card" style="margin-bottom:24px;">
         <div class="store-coin">
-          <div class="store-coin-face store-coin-front">🪙</div>
-          <div class="store-coin-face store-coin-back">★</div>
+          <div class="store-coin-face store-coin-front">ðŸª™</div>
+          <div class="store-coin-face store-coin-back">â˜…</div>
         </div>
         <div class="store-pts-big" id="heroPts">0</div>
         <div class="store-pts-label">Total Points Earned</div>
-        <div class="store-level-badge" id="heroLevel">⚡ Level 1 — Beginner</div>
+        <div class="store-level-badge" id="heroLevel">âš¡ Level 1 â€” Beginner</div>
       </div>
 
       <!-- Stats Strip -->
@@ -410,14 +410,14 @@
           <div class="stat-label">Badges Earned</div>
         </div>
         <div class="stat-box glass" style="border-color: rgba(245,158,11,0.35); background: linear-gradient(180deg, rgba(245,158,11,0.10), transparent);">
-          <div class="stat-num" id="statCashback" style="background: linear-gradient(135deg, #fde68a, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">₹ 0</div>
-          <div class="stat-label" style="color: #fde68a;">💰 Cashback Earned</div>
+          <div class="stat-num" id="statCashback" style="background: linear-gradient(135deg, #fde68a, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">â‚¹ 0</div>
+          <div class="stat-label" style="color: #fde68a;">ðŸ’° Cashback Earned</div>
         </div>
       </div>
 
       <!-- Achievement Badges -->
       <div class="glass card" style="padding:24px;margin-bottom:24px;">
-        <h2 class="store-section-head">🏅 Achievement Badges</h2>
+        <h2 class="store-section-head">ðŸ… Achievement Badges</h2>
         <div class="badge-grid" id="badgeGrid">
           <!-- Filled by JS -->
         </div>
@@ -425,19 +425,19 @@
 
       <!-- Cashback Hero -->
       <div id="cashback" class="cashback-hero glass card" style="margin-bottom:24px;">
-        <div class="cashback-rupee" id="cashbackHeroAmount">₹ 0</div>
+        <div class="cashback-rupee" id="cashbackHeroAmount">â‚¹ 0</div>
         <div class="cashback-label">Total Cashback Earned</div>
         <div style="font-size:0.85rem;color:var(--muted);margin-top:10px;max-width:520px;margin-left:auto;margin-right:auto;">
-          🏆 Earn real cashback from MCQ test scores. Payout is collected offline at the institute — show this screen to your class teacher.
+          ðŸ† Earn real cashback from MCQ test scores. Payout is collected offline at the institute â€” show this screen to your class teacher.
         </div>
         <div class="cashback-claim" title="Show this page to your teacher to claim">
-          🏫 Claim at Institute
+          ðŸ« Claim at Institute
         </div>
       </div>
 
       <!-- Cashback Tiers -->
       <div class="glass card" style="padding:24px;margin-bottom:24px;">
-        <h2 class="store-section-head">💰 Cashback Tiers</h2>
+        <h2 class="store-section-head">ðŸ’° Cashback Tiers</h2>
         <div style="font-size:0.84rem;color:var(--muted);margin:-6px 0 14px;">
           Hit these score thresholds on any MCQ test to win the cashback prize.
         </div>
@@ -448,7 +448,7 @@
 
       <!-- Cashback History -->
       <div class="glass card" style="padding:24px;margin-bottom:24px;">
-        <h2 class="store-section-head">📜 Cashback History</h2>
+        <h2 class="store-section-head">ðŸ“œ Cashback History</h2>
         <div id="cashbackHistory">
           <p style="color:var(--muted);text-align:center;padding:20px 0;">Score 80%+ on an MCQ test to unlock your first cashback!</p>
         </div>
@@ -456,7 +456,7 @@
 
       <!-- Points History -->
       <div class="glass card" style="padding:24px;">
-        <h2 class="store-section-head">📜 Points History</h2>
+        <h2 class="store-section-head">ðŸ“œ Points History</h2>
         <div id="historyList">
           <p style="color:var(--muted);text-align:center;padding:20px 0;">Take your first MCQ test to earn points!</p>
         </div>
@@ -469,7 +469,7 @@
   <script src="assets/js/main.js?v=6"></script>
   <script>
   (function() {
-    /* ── Data from localStorage ── */
+    /* â”€â”€ Data from localStorage â”€â”€ */
     const pts      = parseInt(localStorage.getItem('student-points') || '0');
     const history  = JSON.parse(localStorage.getItem('student-points-history') || '[]');
     const correct  = parseInt(localStorage.getItem('student-correct-total') || '0');
@@ -477,7 +477,7 @@
     const cbHist   = JSON.parse(localStorage.getItem('student-cashback-history') || '[]');
     const cbTotal  = cbHist.reduce((s, e) => s + e.amount, 0);
 
-    /* ── Sidebar sync ── */
+    /* â”€â”€ Sidebar sync â”€â”€ */
     ['sideStorePts', 'sidePointsText'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = pts + ' pts';
@@ -485,24 +485,24 @@
     const bar = document.getElementById('sidePointsBar');
     if (bar) bar.style.width = Math.min(100, Math.round(pts / 10)) + '%';
     const sideCb = document.getElementById('sideCashbackText');
-    if (sideCb) sideCb.textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
+    if (sideCb) sideCb.textContent = 'â‚¹ ' + cbTotal.toLocaleString('en-IN');
 
-    /* ── Hero ── */
+    /* â”€â”€ Hero â”€â”€ */
     document.getElementById('heroPts').textContent = pts.toLocaleString();
     document.getElementById('statCorrect').textContent = correct.toLocaleString();
     document.getElementById('statTests').textContent   = tests.toLocaleString();
-    document.getElementById('statCashback').textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
+    document.getElementById('statCashback').textContent = 'â‚¹ ' + cbTotal.toLocaleString('en-IN');
 
-    /* ── Cashback Hero ── */
+    /* â”€â”€ Cashback Hero â”€â”€ */
     const heroCb = document.getElementById('cashbackHeroAmount');
-    if (heroCb) heroCb.textContent = '₹ ' + cbTotal.toLocaleString('en-IN');
+    if (heroCb) heroCb.textContent = 'â‚¹ ' + cbTotal.toLocaleString('en-IN');
 
-    /* ── Cashback Tier Ladder ── */
+    /* â”€â”€ Cashback Tier Ladder â”€â”€ */
     const TIERS = [
-      { minPct: 95, amount: 10000, tier: 1, label: 'Gold',   color: '#f59e0b', rgb: '245,158,11',  icon: '🥇', pos: '🥇 1st' },
-      { minPct: 90, amount:  5000, tier: 2, label: 'Silver', color: '#aab8c2', rgb: '170,184,194', icon: '🥈', pos: '🥈 2nd' },
-      { minPct: 85, amount:  3000, tier: 3, label: 'Bronze', color: '#cd7f32', rgb: '205,127,50',  icon: '🥉', pos: '🥉 3rd' },
-      { minPct: 80, amount:   500, tier: 4, label: 'Merit',  color: '#4ade80', rgb: '74,222,128',  icon: '🏅', pos: '🏅 4th' },
+      { minPct: 95, amount: 10000, tier: 1, label: 'Gold',   color: '#f59e0b', rgb: '245,158,11',  icon: 'ðŸ¥‡', pos: 'ðŸ¥‡ 1st' },
+      { minPct: 90, amount:  5000, tier: 2, label: 'Silver', color: '#aab8c2', rgb: '170,184,194', icon: 'ðŸ¥ˆ', pos: 'ðŸ¥ˆ 2nd' },
+      { minPct: 85, amount:  3000, tier: 3, label: 'Bronze', color: '#cd7f32', rgb: '205,127,50',  icon: 'ðŸ¥‰', pos: 'ðŸ¥‰ 3rd' },
+      { minPct: 80, amount:   500, tier: 4, label: 'Merit',  color: '#4ade80', rgb: '74,222,128',  icon: 'ðŸ…', pos: 'ðŸ… 4th' },
     ];
     const tierGrid = document.getElementById('tierGrid');
     if (tierGrid) {
@@ -514,11 +514,11 @@
         const unlocked = w > 0;
         return `
           <div class="tier-card ${unlocked ? 'unlocked' : 'tier-locked'}" style="--tier-color:${t.color};--tier-rgb:${t.rgb};">
-            ${unlocked ? '<span class="tier-tag">✓ EARNED</span>' : ''}
-            ${t.tier === 1 ? '<span class="tier-best">★ BEST</span>' : ''}
+            ${unlocked ? '<span class="tier-tag">âœ“ EARNED</span>' : ''}
+            ${t.tier === 1 ? '<span class="tier-best">â˜… BEST</span>' : ''}
             <div class="tier-icon">${t.icon}</div>
             <div class="tier-name">${t.label}</div>
-            <div class="tier-amount">₹ ${t.amount.toLocaleString('en-IN')}</div>
+            <div class="tier-amount">â‚¹ ${t.amount.toLocaleString('en-IN')}</div>
             <div class="tier-req">Score ${t.minPct}% or higher</div>
             ${unlocked ? `<div class="tier-wins">Won ${w} time${w>1?'s':''}</div>` : ''}
           </div>
@@ -526,7 +526,7 @@
       }).join('');
     }
 
-    /* ── Cashback History ── */
+    /* â”€â”€ Cashback History â”€â”€ */
     const cbHistEl = document.getElementById('cashbackHistory');
     if (cbHistEl) {
       if (cbHist.length === 0) {
@@ -534,40 +534,40 @@
       } else {
         cbHistEl.innerHTML = [...cbHist].reverse().map(h => `
           <div class="history-item">
-            <div class="history-icon">${h.icon || '💰'}</div>
+            <div class="history-icon">${h.icon || 'ðŸ’°'}</div>
             <div>
-              <div class="history-label"><strong style="color:${h.color || '#f59e0b'}">${h.label} Tier</strong> — ${h.pct}% on ${h.classLbl || 'your class'}${h.bank ? ' · ' + h.bank : ''}</div>
+              <div class="history-label"><strong style="color:${h.color || '#f59e0b'}">${h.label} Tier</strong> â€” ${h.pct}% on ${h.classLbl || 'your class'}${h.bank ? ' Â· ' + h.bank : ''}</div>
               <div class="history-date">${new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
             </div>
-            <div class="history-pts cash-amount">+₹ ${h.amount.toLocaleString('en-IN')}</div>
+            <div class="history-pts cash-amount">+â‚¹ ${h.amount.toLocaleString('en-IN')}</div>
           </div>
         `).join('');
       }
     }
 
-    /* ── Level system ── */
+    /* â”€â”€ Level system â”€â”€ */
     const levels = [
-      { min: 0,    label: 'Beginner',     icon: '⚡' },
-      { min: 50,   label: 'Scholar',      icon: '📚' },
-      { min: 150,  label: 'Achiever',     icon: '🌟' },
-      { min: 300,  label: 'Expert',       icon: '🔥' },
-      { min: 600,  label: 'Champion',     icon: '🏆' },
-      { min: 1000, label: 'Grandmaster',  icon: '💎' },
+      { min: 0,    label: 'Beginner',     icon: 'âš¡' },
+      { min: 50,   label: 'Scholar',      icon: 'ðŸ“š' },
+      { min: 150,  label: 'Achiever',     icon: 'ðŸŒŸ' },
+      { min: 300,  label: 'Expert',       icon: 'ðŸ”¥' },
+      { min: 600,  label: 'Champion',     icon: 'ðŸ†' },
+      { min: 1000, label: 'Grandmaster',  icon: 'ðŸ’Ž' },
     ];
     let curLevel = levels[0];
     for (const lv of levels) { if (pts >= lv.min) curLevel = lv; }
-    document.getElementById('heroLevel').textContent = `${curLevel.icon} Level ${levels.indexOf(curLevel)+1} — ${curLevel.label}`;
+    document.getElementById('heroLevel').textContent = `${curLevel.icon} Level ${levels.indexOf(curLevel)+1} â€” ${curLevel.label}`;
 
-    /* ── Badges ── */
+    /* â”€â”€ Badges â”€â”€ */
     const badges = [
-      { icon:'🥉', name:'Bronze Scholar',  req:50,   color:'#cd7f32', rgb:'205,127,50',  desc:'Earn 50 points' },
-      { icon:'🥈', name:'Silver Achiever', req:200,  color:'#aab8c2', rgb:'170,184,194', desc:'Earn 200 points' },
-      { icon:'🥇', name:'Gold Champion',   req:500,  color:'#f59e0b', rgb:'245,158,11',  desc:'Earn 500 points' },
-      { icon:'💎', name:'Diamond Master',  req:1000, color:'#67e8f9', rgb:'103,232,249', desc:'Earn 1000 points' },
-      { icon:'🎯', name:'Sharp Shooter',   req:null, special:'first-correct', color:'#4ade80', rgb:'74,222,128', desc:'Get first correct answer' },
-      { icon:'🔥', name:'On Fire',         req:null, special:'streak', color:'#fb923c', rgb:'251,146,60', desc:'Answer 5 in a row correctly' },
-      { icon:'🎓', name:'Test Taker',      req:null, special:'test', color:'#a78bfa', rgb:'167,139,250', desc:'Complete first test' },
-      { icon:'⚡', name:'Speed Demon',     req:null, special:'fast', color:'#facc15', rgb:'250,204,21', desc:'Complete a test in under 2 min' },
+      { icon:'ðŸ¥‰', name:'Bronze Scholar',  req:50,   color:'#cd7f32', rgb:'205,127,50',  desc:'Earn 50 points' },
+      { icon:'ðŸ¥ˆ', name:'Silver Achiever', req:200,  color:'#aab8c2', rgb:'170,184,194', desc:'Earn 200 points' },
+      { icon:'ðŸ¥‡', name:'Gold Champion',   req:500,  color:'#f59e0b', rgb:'245,158,11',  desc:'Earn 500 points' },
+      { icon:'ðŸ’Ž', name:'Diamond Master',  req:1000, color:'#67e8f9', rgb:'103,232,249', desc:'Earn 1000 points' },
+      { icon:'ðŸŽ¯', name:'Sharp Shooter',   req:null, special:'first-correct', color:'#4ade80', rgb:'74,222,128', desc:'Get first correct answer' },
+      { icon:'ðŸ”¥', name:'On Fire',         req:null, special:'streak', color:'#fb923c', rgb:'251,146,60', desc:'Answer 5 in a row correctly' },
+      { icon:'ðŸŽ“', name:'Test Taker',      req:null, special:'test', color:'#a78bfa', rgb:'167,139,250', desc:'Complete first test' },
+      { icon:'âš¡', name:'Speed Demon',     req:null, special:'fast', color:'#facc15', rgb:'250,204,21', desc:'Complete a test in under 2 min' },
     ];
     let earnedBadges = 0;
     const grid = document.getElementById('badgeGrid');
@@ -583,7 +583,7 @@
       card.style.setProperty('--badge-color', b.color);
       card.style.setProperty('--badge-rgb', b.rgb);
       card.innerHTML = `
-        ${unlocked ? '<span class="badge-unlocked-tag">✓ EARNED</span>' : ''}
+        ${unlocked ? '<span class="badge-unlocked-tag">âœ“ EARNED</span>' : ''}
         <div class="badge-icon">${b.icon}</div>
         <div class="badge-name">${b.name}</div>
         <div class="badge-req">${b.desc}</div>
@@ -598,15 +598,15 @@
     });
     document.getElementById('statBadges').textContent = earnedBadges;
 
-    /* ── Points History ── */
+    /* â”€â”€ Points History â”€â”€ */
     const histEl = document.getElementById('historyList');
     if (history.length === 0) {
       histEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px 0;">Take your first MCQ test to earn points!</p>';
     } else {
-      const icons = { mcq:'📊', pdf:'📄', login:'🔐', bonus:'🎁', cashback:'💰' };
+      const icons = { mcq:'ðŸ“Š', pdf:'ðŸ“„', login:'ðŸ”', bonus:'ðŸŽ', cashback:'ðŸ’°' };
       histEl.innerHTML = [...history].reverse().slice(0, 30).map(h => `
         <div class="history-item">
-          <div class="history-icon">${icons[h.type] || '⭐'}</div>
+          <div class="history-icon">${icons[h.type] || 'â­'}</div>
           <div>
             <div class="history-label">${h.label}</div>
             <div class="history-date">${new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
@@ -620,3 +620,4 @@
   </script>
 </body>
 </html>
+

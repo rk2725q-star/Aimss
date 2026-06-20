@@ -264,10 +264,47 @@
     }
 
     // Fetch role + institution from DB
-    const profile = await fetchProfile(supabase, user.id);
+    let profile = await fetchProfile(supabase, user.id);
+
+    // ── Backward compatibility: old accounts may not have a profiles row ──
+    // Fall back to user_metadata (set at original signup via options.data)
     if (!profile || !profile.role) {
-      await supabase.auth.signOut();
-      return { success: false, error: 'Account setup incomplete. Please register again or contact admin.' };
+      const meta_role = user.user_metadata?.role || user.app_metadata?.role || null;
+      const meta_inst = user.user_metadata?.institution_id || null;
+
+      if (meta_role && meta_role === expectedRole) {
+        // Auto-repair: create the missing profiles row silently
+        try {
+          await supabase.from('profiles').upsert({
+            id:             user.id,
+            role:           meta_role,
+            institution_id: meta_inst || '',
+            email:          user.email
+          }, { onConflict: 'id' });
+        } catch(_) { /* non-blocking */ }
+        // Use metadata as the profile for this session
+        profile = { role: meta_role, institution_id: meta_inst };
+      } else if (!meta_role) {
+        // Truly no role anywhere — legacy account with no metadata at all
+        // Allow login on the portal they're using (trust the portal they chose)
+        try {
+          await supabase.from('profiles').upsert({
+            id:             user.id,
+            role:           expectedRole,
+            institution_id: meta?.institutionCode?.trim().toUpperCase() || '',
+            email:          user.email
+          }, { onConflict: 'id' });
+        } catch(_) { /* non-blocking */ }
+        profile = { role: expectedRole, institution_id: meta?.institutionCode?.trim().toUpperCase() || null };
+      } else {
+        // Has metadata role but it doesn't match this portal — wrong portal
+        await supabase.auth.signOut();
+        const portalMap = { teacher: 'Teacher Login', student: 'Student Login', admin: 'Admin Login' };
+        return {
+          success: false,
+          error: `This is a ${meta_role} account. Please use the ${portalMap[meta_role] || meta_role} page.`
+        };
+      }
     }
 
     if (profile.role !== expectedRole) {
@@ -340,9 +377,29 @@
     if (error || !session) { window.location.href = 'login.html'; return; }
 
     const user    = session.user;
-    const profile = await fetchProfile(supabase, user.id);
+    let profile = await fetchProfile(supabase, user.id);
 
-    if (!profile || profile.role !== expectedRole) {
+    // ── Backward compatibility: fall back to JWT metadata for old accounts ──
+    if (!profile || !profile.role) {
+      const meta_role = user.user_metadata?.role || user.app_metadata?.role || null;
+      const meta_inst = user.user_metadata?.institution_id || null;
+      if (meta_role && meta_role === expectedRole) {
+        // Auto-repair the missing profiles row
+        try {
+          await supabase.from('profiles').upsert({
+            id: user.id, role: meta_role,
+            institution_id: meta_inst || '', email: user.email
+          }, { onConflict: 'id' });
+        } catch(_) {}
+        profile = { role: meta_role, institution_id: meta_inst, board: null, class_name: null };
+      } else {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+        return;
+      }
+    }
+
+    if (profile.role !== expectedRole) {
       await supabase.auth.signOut();
       window.location.href = 'login.html';
       return;

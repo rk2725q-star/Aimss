@@ -35,7 +35,7 @@
         unnecessary round-trips for obviously wrong codes.
         True enforcement is in Supabase (DB function / RLS).       ──*/
   const _TC = atob('RFJBSU1TUzIwMjQ=');   // teacher registration gate
-  const _AC = atob('QUVNU1MtSEVBRE1BU1RFUi0yMDI0'); // admin (headmaster) registration gate
+  const _AC = atob('QUlNU1MtSEVBRE1BU1RFUi0yMDI0'); // admin (headmaster) registration gate
 
   /* ── Rate Limiting Config ───────────────────────────────────── */
   const MAX_FAILS      = 5;        // lock after this many consecutive failures

@@ -1155,9 +1155,23 @@
         return (b/1048576).toFixed(2) + ' MB';
       }
 
-      /* ── File selection ── */
+      /* ── File selection (with security validation) ── */
       function handleRagFile(file) {
         if (!file) return;
+
+        // ── Security: validate file type before processing ──
+        if (window.DrAuth?.validateFile) {
+          const check = DrAuth.validateFile(file);
+          if (!check.ok) {
+            if (ragStatus) {
+              ragStatus.textContent = '🚫 ' + check.error;
+              ragStatus.className = 'status-msg error';
+            }
+            ragSelectedFile = null;
+            return;
+          }
+        }
+
         ragSelectedFile = file;
         ragFpIcon.textContent = ragIcon(file);
         ragFpName.textContent = file.name;

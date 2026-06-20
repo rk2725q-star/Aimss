@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════════════
  *  Dr.AIMSS — Supabase Storage Module  v5.0  (Chunked Upload)
  *
@@ -340,6 +340,12 @@
     const role = await _getRole();
     if (!role) throw new Error('Not logged in.');
     if (role !== 'teacher') throw new Error('Only teachers can upload files.');
+
+    // ── Security: validate file type before upload ──
+    if (window.DrAuth?.validateFile) {
+      const check = DrAuth.validateFile(file);
+      if (!check.ok) throw new Error(check.error);
+    }
 
     // No hard cap anymore — we chunk large files
     const prefix = (folderPath || '').replace(/\/+$/, '');

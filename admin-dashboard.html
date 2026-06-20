@@ -326,11 +326,11 @@
             <button onclick="copyCode('shareSchoolCode','schoolCopyBtn')" id="schoolCopyBtn" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:8px;color:#fbbf24;font-family:inherit;font-size:.72rem;font-weight:700;padding:5px 12px;cursor:pointer;transition:all .2s;">📋 Copy Code</button>
           </div>
 
-          <!-- Teacher Code -->
+          <!-- Teacher Code (click to reveal \u2014 share privately with teachers) -->
           <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(139,92,246,0.2);border-radius:13px;padding:14px 16px;">
             <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">🔑 Teacher Registration Code</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:#c4b5fd;letter-spacing:.04em;margin-bottom:6px;">DRAIMSS2024</div>
-            <div style="font-size:.71rem;color:#64748b;margin-bottom:10px;">Share with <strong style="color:#94a3b8;">teachers only</strong> — common for all schools.</div>
+            <div id="teacherCodeBlur" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:#c4b5fd;letter-spacing:.04em;margin-bottom:6px;filter:blur(5px);user-select:none;transition:filter .3s;" onclick="revealTeacherCode()" title="Click to reveal">••••••••••</div>
+            <div style="font-size:.71rem;color:#64748b;margin-bottom:10px;">Share with <strong style="color:#94a3b8;">teachers only</strong> — <button onclick="revealTeacherCode()" id="revealCodeBtn" style="background:none;border:none;color:#a78bfa;font-size:.71rem;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;">Click to reveal</button></div>
             <button onclick="copyCode('teacherCodeDisplay','teacherCopyBtn')" id="teacherCopyBtn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:8px;color:#c4b5fd;font-family:inherit;font-size:.72rem;font-weight:700;padding:5px 12px;cursor:pointer;transition:all .2s;">📋 Copy Code</button>
             <span id="teacherCodeDisplay" style="display:none;">DRAIMSS2024</span>
           </div>
@@ -682,6 +682,24 @@ function updateClock() {
 }
 
 function doLogout() { DrAuth.signOut(); }
+
+// Reveal teacher code only on explicit click (blurred by default for security)
+function revealTeacherCode() {
+  const el  = document.getElementById('teacherCodeBlur');
+  const btn = document.getElementById('revealCodeBtn');
+  if (!el) return;
+  el.style.filter = 'none';
+  el.style.userSelect = 'text';
+  el.textContent = 'DRAIMSS2024';
+  if (btn) btn.textContent = 'Hide';
+  btn.onclick = () => {
+    el.style.filter = 'blur(5px)';
+    el.style.userSelect = 'none';
+    el.textContent = '••••••••••';
+    btn.textContent = 'Click to reveal';
+    btn.onclick = revealTeacherCode;
+  };
+}
 
 // ════════════════════════════════════════════════════
 //  HELPERS

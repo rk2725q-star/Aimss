@@ -203,7 +203,39 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/supabase-auth.js"></script>
-  <script>DrAuth.guardPage('student');</script>
+  <script>
+    // Allow both teachers and students to view programming videos
+    (async function() {
+      await new Promise(r => setTimeout(r, 100)); // wait for Supabase init
+      const client = DrAuth.getClient();
+      if (!client) { window.location.href = 'login.html'; return; }
+
+      // Poll for session
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        const res = await client.auth.getSession();
+        if (res.data?.session) { session = res.data.session; break; }
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (!session) { window.location.href = 'login.html'; return; }
+
+      const { data: profile } = await client.from('profiles')
+        .select('role, institution_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile || !['student', 'teacher'].includes(profile.role)) {
+        await client.auth.signOut();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Populate auth-email elements
+      document.querySelectorAll('[data-auth-email]').forEach(el => {
+        el.textContent = session.user.email || '';
+      });
+    })();
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="assets/js/ai-resilience.js?v=10"></script>
   <script src="assets/js/main.js?v=6"></script>

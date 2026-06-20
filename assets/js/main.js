@@ -1,3 +1,15 @@
+/* ── Programming accordion toggle (sidebar: all student + teacher pages) ── */
+let _progLangsOpen = false;
+function toggleProgLangs() {
+  _progLangsOpen = !_progLangsOpen;
+  const panel   = document.getElementById('progLangLinks');
+  const chevron = document.getElementById('progChevron');
+  const trigger = document.getElementById('sideProgToggle');
+  if (panel)   panel.style.maxHeight   = _progLangsOpen ? panel.scrollHeight + 'px' : '0';
+  if (chevron) chevron.style.transform = _progLangsOpen ? 'rotate(180deg)' : '';
+  if (trigger) trigger.classList.toggle('active', _progLangsOpen);
+}
+
 function initReveal() {
   const items = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver((entries) => {

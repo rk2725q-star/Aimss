@@ -221,7 +221,7 @@
 
       // Fetch profile — do NOT sign out on DB errors (could be transient)
       const { data: profile } = await client.from('profiles')
-        .select('role, institution_id')
+        .select('role, institution_id, class_name, board')
         .eq('id', session.user.id)
         .single();
 
@@ -231,10 +231,19 @@
         return;
       }
 
-      // Populate DrAuth cache so getInstitutionId() / getRole() work on this page
+      // Populate DrAuth cache so getInstitutionId() / getRole() / getClassName() / getBoard() work on this page
       if (profile) {
         DrAuth.setInstitutionId(profile.institution_id || null);
         DrAuth.setRole(profile.role);
+        // Store class and board in sessionStorage so loadVideos() can filter correctly
+        if (profile.class_name) {
+          try { sessionStorage.setItem('draimss_student_class', profile.class_name); } catch(_) {}
+          try { localStorage.setItem('student-class', profile.class_name); } catch(_) {}
+        }
+        if (profile.board) {
+          try { sessionStorage.setItem('draimss_student_board', profile.board); } catch(_) {}
+          try { localStorage.setItem('student-board', profile.board); } catch(_) {}
+        }
       }
     })();
   </script>
@@ -266,22 +275,44 @@
     async function loadVideos() {
       try {
         const client = DrAuth.getClient();
-        // Wait for session
+        // Wait for the auth guard to finish + session to be available
         let session = null;
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 15; i++) {
           const res = await client.auth.getSession();
           if (res.data?.session) { session = res.data.session; break; }
           await new Promise(r => setTimeout(r, 300));
         }
-        const instId = DrAuth.getInstitutionId() || '';
+        if (!session) throw new Error('Not authenticated.');
+
+        // Get institution_id and student class/board from DrAuth cache
+        // (populated by the auth guard above)
+        const instId = DrAuth.getInstitutionId() || sessionStorage.getItem('draimss_institution_id') || '';
+        const studentClass = DrAuth.getClassName() || sessionStorage.getItem('draimss_student_class') || null;
+        const studentBoard = DrAuth.getBoard()    || sessionStorage.getItem('draimss_student_board') || null;
+
+        // Fetch all videos for this institution
         const { data, error } = await client
           .from('yt_videos')
-          .select('id, title, video_id, category, description, created_at')
+          .select('id, title, video_id, category, description, class_name, board, created_at')
           .eq('institution_id', instId)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        allVideos = data || [];
+
+        // Filter client-side: show video if:
+        //   • video.class_name === 'all'  (meant for everyone), OR
+        //   • student has no class set (unrestricted), OR
+        //   • video.class_name matches student's class
+        // Same logic for board.
+        allVideos = (data || []).filter(v => {
+          const classMatch = !studentClass
+            || (v.class_name || 'all') === 'all'
+            || String(v.class_name) === String(studentClass);
+          const boardMatch = !studentBoard
+            || (v.board || 'all') === 'all'
+            || (v.board || '').toLowerCase() === (studentBoard || '').toLowerCase();
+          return classMatch && boardMatch;
+        });
 
         // Check URL param ?cat=
         const urlCat = new URLSearchParams(window.location.search).get('cat');

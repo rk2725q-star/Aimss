@@ -517,6 +517,9 @@
     getInstitutionId: () => _cachedInstitution,
     getLoginMeta:     () => _loginMeta,
     getClient,
+    // Setters — let pages with custom guards populate the cache
+    setInstitutionId: (id) => { _cachedInstitution = id || null; try { if (id) sessionStorage.setItem('draimss_institution_id', id); } catch(_) {} },
+    setRole:          (r)  => { _cachedRole = r || null; },
     // Student profile fields
     getBoard:     () => _cachedBoard     || sessionStorage.getItem('draimss_student_board') || localStorage.getItem('student-board') || null,
     getClassName: () => _cachedClassName || sessionStorage.getItem('draimss_student_class') || localStorage.getItem('student-class') || null,

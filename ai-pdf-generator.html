@@ -576,18 +576,29 @@
   <script>
     /* ── Auth: allow both student and teacher ── */
     (async () => {
-      const supabase = window.__supabaseClient ||
-        window.supabase.createClient(
-          'https://pgrjzsqylhchmelmwhkv.supabase.co',
-          'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh'
-        );
-      window.__supabaseClient = supabase;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = 'login.html'; return; }
+      const client = DrAuth.getClient();
+      if (!client) { window.location.href = 'student-login.html'; return; }
 
-      const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+      // Poll for active session (up to 10 × 300ms = 3 s)
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        const res = await client.auth.getSession();
+        if (res.data?.session) { session = res.data.session; break; }
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (!session) { window.location.href = 'student-login.html'; return; }
+
+      const { data } = await client.from('profiles').select('role, institution_id').eq('id', session.user.id).single();
       const role = data?.role;
-      if (!role) { window.location.href = 'login.html'; return; }
+      if (role && !['student','teacher'].includes(role)) {
+        window.location.href = 'student-login.html'; return;
+      }
+
+      // Populate DrAuth cache
+      if (data) {
+        DrAuth.setInstitutionId(data.institution_id || null);
+        DrAuth.setRole(role);
+      }
 
       // Update nav link based on role
       const navLink = document.getElementById('studentNavLink');

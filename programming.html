@@ -384,32 +384,45 @@
 
     /* ══════════════════════════════════════════════════
        AUTH GUARD — allows teacher + student
+       Does NOT sign out on transient DB errors.
+       Redirects to the correct login page per role.
     ══════════════════════════════════════════════════ */
     (async function() {
-      await new Promise(r => setTimeout(r, 100));
       const client = DrAuth.getClient();
-      if (!client) { window.location.href = 'login.html'; return; }
+      if (!client) { window.location.href = 'student-login.html'; return; }
 
+      // Poll for active session (up to 10 × 300ms = 3 s)
       let session = null;
       for (let i = 0; i < 10; i++) {
         const res = await client.auth.getSession();
         if (res.data?.session) { session = res.data.session; break; }
         await new Promise(r => setTimeout(r, 300));
       }
-      if (!session) { window.location.href = 'login.html'; return; }
+      if (!session) { window.location.href = 'student-login.html'; return; }
 
+      // Fetch profile — do NOT sign out on DB errors (could be transient)
       const { data: profile } = await client.from('profiles')
         .select('role, institution_id')
         .eq('id', session.user.id)
         .single();
 
-      if (!profile || !['student','teacher'].includes(profile.role)) {
-        await client.auth.signOut();
-        window.location.href = 'login.html';
+      if (profile && !['student', 'teacher'].includes(profile.role)) {
+        // Wrong portal — redirect without signing out
+        window.location.href = 'student-login.html';
         return;
       }
 
-      _role = profile.role;
+      // Populate DrAuth cache so getInstitutionId() works for video/material loading
+      if (profile) {
+        DrAuth.setInstitutionId(profile.institution_id || null);
+        DrAuth.setRole(profile.role);
+        _role = profile.role;
+      } else {
+        // Transient DB error — still allow access, try to recover role from session metadata
+        _role = session.user.user_metadata?.role || 'student';
+        DrAuth.setRole(_role);
+      }
+
       onRoleReady();
     })();
 

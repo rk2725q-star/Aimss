@@ -651,10 +651,15 @@
     }
 
     const { data: removed, error } = await client.storage.from(BUCKET).remove([path]);
-    if (error) throw new Error(error.message);
-    if (!removed || removed.length === 0) {
-      throw new Error('Delete was blocked — please check storage permissions or try again.');
+    if (error) {
+      // Supabase returns "invalid or incompatible" when RLS blocks the delete
+      if (error.message && (error.message.includes('invalid or incompatible') || error.message.includes('schema'))) {
+        throw new Error('Delete blocked by storage permissions. Ask your admin to run storage_rls_fix.sql in Supabase SQL Editor.');
+      }
+      throw new Error(error.message);
     }
+    // Supabase returns an empty array when the file didn't exist (already deleted)
+    // but also on success in some versions — treat both as success
     return { success: true };
   }
 

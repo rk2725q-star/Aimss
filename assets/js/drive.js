@@ -96,14 +96,31 @@
     return null;
   }
 
-  /* ── Get current user role ── */
+  /* ── Get current user role (with retry for session restore race condition) ── */
   async function _getRole() {
     const client = getClient();
     if (!client) return null;
-    const { data: { session } } = await client.auth.getSession();
-    if (!session) return null;
-    const { data } = await client.from('profiles').select('role').eq('id', session.user.id).single();
-    return data?.role || null;
+
+    // Fast path: DrAuth already has the role cached from guardPage()
+    if (window.DrAuth && typeof window.DrAuth.getRole === 'function' && window.DrAuth.getRole()) {
+      return window.DrAuth.getRole();
+    }
+
+    // Retry loop: Supabase session may still be restoring from localStorage
+    // on fresh page loads — give it up to 10 attempts x 300ms = 3 seconds.
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const { data: { session } } = await client.auth.getSession();
+      if (session) {
+        // Check DrAuth cache again after session resolves
+        if (window.DrAuth && typeof window.DrAuth.getRole === 'function' && window.DrAuth.getRole()) {
+          return window.DrAuth.getRole();
+        }
+        const { data } = await client.from('profiles').select('role').eq('id', session.user.id).single();
+        if (data && data.role) return data.role;
+      }
+      if (attempt < 9) await new Promise(function(r) { setTimeout(r, 300); });
+    }
+    return null;
   }
 
   /* ══════════════════════════════════════════════════════════════

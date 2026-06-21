@@ -368,21 +368,39 @@
 
   /* ══════════════════════════════════════════════════════════════
      GUARD PAGE — protect dashboard pages
+     Retries session fetch up to 10 times (x300ms) to handle the
+     Supabase session-restore race condition on fresh page loads.
   ══════════════════════════════════════════════════════════════ */
   async function guardPage(expectedRole) {
     const supabase = getClient();
-    if (!supabase) { window.location.href = 'login.html'; return; }
+    const portalMap = { teacher: 'teacher-login.html', student: 'student-login.html', admin: 'admin-login.html' };
+    const loginPage = portalMap[expectedRole] || 'login.html';
 
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) { window.location.href = 'login.html'; return; }
+    if (!supabase) { window.location.href = loginPage; return; }
+
+    // ── Retry loop: session may not be immediately available on fresh page loads ──
+    let session = null;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const { data, error } = await supabase.auth.getSession();
+      if (!error && data && data.session) {
+        session = data.session;
+        break;
+      }
+      if (attempt < 9) await new Promise(function(r) { setTimeout(r, 300); });
+    }
+
+    if (!session) { window.location.href = loginPage; return; }
 
     const user    = session.user;
     let profile = await fetchProfile(supabase, user.id);
 
     // ── Backward compatibility: fall back to JWT metadata for old accounts ──
     if (!profile || !profile.role) {
-      const meta_role = user.user_metadata?.role || user.app_metadata?.role || null;
-      const meta_inst = user.user_metadata?.institution_id || null;
+      const meta_role = user.user_metadata && user.user_metadata.role
+                      ? user.user_metadata.role
+                      : (user.app_metadata && user.app_metadata.role ? user.app_metadata.role : null);
+      const meta_inst = user.user_metadata && user.user_metadata.institution_id
+                      ? user.user_metadata.institution_id : null;
       if (meta_role && meta_role === expectedRole) {
         // Auto-repair the missing profiles row
         try {
@@ -392,16 +410,26 @@
           }, { onConflict: 'id' });
         } catch(_) {}
         profile = { role: meta_role, institution_id: meta_inst, board: null, class_name: null };
-      } else {
+      } else if (meta_role && meta_role !== expectedRole) {
+        // Wrong portal — redirect to their correct portal
         await supabase.auth.signOut();
-        window.location.href = 'login.html';
+        window.location.href = portalMap[meta_role] || loginPage;
         return;
+      } else {
+        // Truly no role data — assign expected role (legacy account)
+        try {
+          await supabase.from('profiles').upsert({
+            id: user.id, role: expectedRole,
+            institution_id: '', email: user.email
+          }, { onConflict: 'id' });
+        } catch(_) {}
+        profile = { role: expectedRole, institution_id: null, board: null, class_name: null };
       }
     }
 
     if (profile.role !== expectedRole) {
       await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = portalMap[profile.role] || loginPage;
       return;
     }
 
@@ -440,11 +468,11 @@
     }
 
     // Auto-fill UI elements
-    document.querySelectorAll('[data-auth-email]').forEach(el => { el.textContent = user.email || ''; });
-    document.querySelectorAll('[data-auth-role]').forEach(el => {
+    document.querySelectorAll('[data-auth-email]').forEach(function(el) { el.textContent = user.email || ''; });
+    document.querySelectorAll('[data-auth-role]').forEach(function(el) {
       el.textContent = profile.role.charAt(0).toUpperCase() + profile.role.slice(1);
     });
-    document.querySelectorAll('[data-auth-institution]').forEach(el => {
+    document.querySelectorAll('[data-auth-institution]').forEach(function(el) {
       el.textContent = _cachedInstitution || '—';
     });
 

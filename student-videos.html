@@ -205,7 +205,7 @@
   <script src="assets/js/supabase-auth.js"></script>
   <script>
     // Guard: allow students and teachers to view video lectures
-    // Uses DrAuth.guardPage which has built-in retry + correct redirect logic
+    // IMPORTANT: call loadVideos() only AFTER profile is fetched to avoid race condition
     (async function() {
       const client = DrAuth.getClient();
       if (!client) { window.location.href = 'student-login.html'; return; }
@@ -219,23 +219,21 @@
       }
       if (!session) { window.location.href = 'student-login.html'; return; }
 
-      // Fetch profile — do NOT sign out on DB errors (could be transient)
+      // Fetch profile
       const { data: profile } = await client.from('profiles')
         .select('role, institution_id, class_name, board')
         .eq('id', session.user.id)
         .single();
 
       if (profile && !['student', 'teacher'].includes(profile.role)) {
-        // Wrong portal — redirect without signing out
         window.location.href = 'student-login.html';
         return;
       }
 
-      // Populate DrAuth cache so getInstitutionId() / getRole() / getClassName() / getBoard() work on this page
+      // Populate DrAuth cache
       if (profile) {
         DrAuth.setInstitutionId(profile.institution_id || null);
         DrAuth.setRole(profile.role);
-        // Store class and board in sessionStorage so loadVideos() can filter correctly
         if (profile.class_name) {
           try { sessionStorage.setItem('draimss_student_class', profile.class_name); } catch(_) {}
           try { localStorage.setItem('student-class', profile.class_name); } catch(_) {}
@@ -245,6 +243,15 @@
           try { localStorage.setItem('student-board', profile.board); } catch(_) {}
         }
       }
+
+      // Mark guard done — loadVideos() will read these globals
+      window._drAuthReady = true;
+      window._drStudentClass = profile?.class_name || null;
+      window._drStudentBoard = profile?.board || null;
+      window._drInstId       = profile?.institution_id || null;
+
+      // Now safe to load videos
+      if (typeof loadVideos === 'function') loadVideos();
     })();
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -273,59 +280,79 @@
     let activeCategory = 'all';
 
     async function loadVideos() {
+      const grid = document.getElementById('ytGrid');
       try {
         const client = DrAuth.getClient();
-        // Wait for the auth guard to finish + session to be available
-        let session = null;
-        for (let i = 0; i < 15; i++) {
-          const res = await client.auth.getSession();
-          if (res.data?.session) { session = res.data.session; break; }
-          await new Promise(r => setTimeout(r, 300));
-        }
-        if (!session) throw new Error('Not authenticated.');
+        if (!client) throw new Error('Supabase client not available');
 
-        // Get institution_id and student class/board from DrAuth cache
-        // (populated by the auth guard above)
-        const instId = DrAuth.getInstitutionId() || sessionStorage.getItem('draimss_institution_id') || '';
-        const studentClass = DrAuth.getClassName() || sessionStorage.getItem('draimss_student_class') || null;
-        const studentBoard = DrAuth.getBoard()    || sessionStorage.getItem('draimss_student_board') || null;
+        // Use globals set by the auth guard (most reliable source)
+        const studentClass = window._drStudentClass
+          || DrAuth.getClassName()
+          || sessionStorage.getItem('draimss_student_class')
+          || localStorage.getItem('student-class')
+          || null;
+        const studentBoard = window._drStudentBoard
+          || DrAuth.getBoard()
+          || sessionStorage.getItem('draimss_student_board')
+          || localStorage.getItem('student-board')
+          || null;
+        const instId = window._drInstId
+          || DrAuth.getInstitutionId()
+          || sessionStorage.getItem('draimss_institution_id')
+          || null;
 
-        // Fetch all videos for this institution
+        // Fetch ALL videos — no institution filter to avoid mismatch issues
+        // Class/board filtering is done client-side below
         const { data, error } = await client
           .from('yt_videos')
-          .select('id, title, video_id, category, description, class_name, board, created_at')
-          .eq('institution_id', instId)
+          .select('id, title, video_id, category, description, class_name, board, institution_id, created_at')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        // Filter client-side: show video if:
-        //   • video.class_name === 'all'  (meant for everyone), OR
-        //   • student has no class set (unrestricted), OR
-        //   • video.class_name matches student's class
-        // Same logic for board.
-        allVideos = (data || []).filter(v => {
+        const rows = data || [];
+
+        // Filter: institution match OR no institution data
+        // Then filter by class+board
+        allVideos = rows.filter(v => {
+          // Institution filter: if both have institution_id, they must match.
+          // If either is missing, skip institution check (be permissive).
+          const instMatch = !instId || !v.institution_id || v.institution_id === instId;
+
+          // Class filter
           const classMatch = !studentClass
             || (v.class_name || 'all') === 'all'
-            || String(v.class_name) === String(studentClass);
+            || String(v.class_name).toLowerCase() === String(studentClass).toLowerCase();
+
+          // Board filter
           const boardMatch = !studentBoard
             || (v.board || 'all') === 'all'
             || (v.board || '').toLowerCase() === (studentBoard || '').toLowerCase();
-          return classMatch && boardMatch;
+
+          return instMatch && classMatch && boardMatch;
         });
 
         // Check URL param ?cat=
         const urlCat = new URLSearchParams(window.location.search).get('cat');
         if (urlCat) filterByCategory(urlCat);
         else renderVideos();
+
       } catch(e) {
-        document.getElementById('ytGrid').innerHTML = `
+        if (grid) grid.innerHTML = `
           <div class="yt-empty" style="grid-column:1/-1;">
             <div class="e-icon">⚠️</div>
             <div style="color:#f87171;font-size:.9rem;">Could not load videos.<br><small>${e.message}</small></div>
           </div>`;
       }
     }
+
+    // Don't auto-call loadVideos on DOMContentLoaded — auth guard calls it
+    // after profile is loaded (avoiding race condition)
+    window.addEventListener('DOMContentLoaded', () => {
+      // Fallback: if auth guard already finished before DOMContentLoaded
+      if (window._drAuthReady) loadVideos();
+      // Otherwise the guard will call loadVideos() when done
+    });
 
     function filterByCategory(cat) {
       activeCategory = cat;
@@ -354,6 +381,7 @@
       });
 
       const grid = document.getElementById('ytGrid');
+      if (!grid) return;
       if (filtered.length === 0) {
         const label = activeCategory !== 'all' ? ` for <strong>${activeCategory}</strong>` : '';
         grid.innerHTML = `<div class="yt-empty" style="grid-column:1/-1;"><div class="e-icon">📭</div><div>No videos found${label}. Ask your teacher to add some!</div></div>`;
@@ -405,10 +433,6 @@
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlayer(); });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(loadVideos, 400);
-    });
   </script>
 </body>
 </html>

@@ -2665,6 +2665,115 @@ function initTeacherVideo() {
     setTimeout(() => document.getElementById('modalVideoTitleInput').focus(), 100);
   };
 
+  // ── Sync All Videos to Supabase ──
+  const btnSync = document.getElementById('btnSyncSupabase');
+  const syncStatus = document.getElementById('driveSyncStatus');
+
+  const normalizeClassForSync = (c) => {
+    const m = (c || '').match(/^Class\s+(\d+)$/i);
+    return m ? m[1] : (c || '').toLowerCase();
+  };
+  const normalizeBoardForSync = (b) => (b || '').toLowerCase();
+
+  if (btnSync) {
+    btnSync.onclick = async () => {
+      const db = window.__supabaseClient || (window.DrAuth && DrAuth.getClient && DrAuth.getClient());
+      if (!db) {
+        if (syncStatus) { syncStatus.style.display = 'block'; syncStatus.style.background = 'rgba(239,68,68,0.15)'; syncStatus.style.color = '#f87171'; syncStatus.textContent = '❌ Supabase not available. Reload the page.'; }
+        return;
+      }
+
+      btnSync.disabled = true;
+      btnSync.textContent = '⏳ Syncing...';
+      if (syncStatus) { syncStatus.style.display = 'block'; syncStatus.style.background = 'rgba(99,102,241,0.12)'; syncStatus.style.color = '#a5b4fc'; syncStatus.textContent = 'Syncing videos to Supabase...'; }
+
+      // Get teacher info
+      let instId = '';
+      if (window.DrAuth && DrAuth.getInstitutionId) instId = DrAuth.getInstitutionId() || '';
+      if (!instId) instId = sessionStorage.getItem('draimss_institution_id') || '';
+      if (!instId) {
+        try {
+          const { data: { session } } = await db.auth.getSession();
+          if (session) {
+            const { data: prof } = await db.from('profiles').select('institution_id').eq('id', session.user.id).single();
+            if (prof && prof.institution_id) { instId = prof.institution_id; sessionStorage.setItem('draimss_institution_id', instId); }
+          }
+        } catch(_) {}
+      }
+
+      const { data: { user } } = await db.auth.getUser();
+      const userEmail = user?.email || '';
+
+      const allVids = readVideos();
+      if (!allVids.length) {
+        btnSync.disabled = false; btnSync.innerHTML = '<span>☁️</span> Sync to Students';
+        if (syncStatus) { syncStatus.style.color = '#94a3b8'; syncStatus.textContent = 'No videos in local drive to sync.'; }
+        return;
+      }
+
+      let synced = 0, skipped = 0, failed = 0, lastError = '';
+      const updatedList = [...allVids];
+
+      for (let i = 0; i < allVids.length; i++) {
+        const v = allVids[i];
+        if (v.supabaseId) { skipped++; continue; } // already synced
+
+        const segs = (v.parentPath || '').split('/').filter(Boolean);
+        const cls = segs[0] || v.classLevel || 'Unknown';
+        const brd = segs[1] || v.board || 'Unknown';
+
+        try {
+          const { data: ins, error: insErr } = await db.from('yt_videos').insert({
+            title: v.title,
+            video_id: v.videoId,
+            category: 'General',
+            description: '',
+            uploaded_by: userEmail,
+            institution_id: instId,
+            class_name: normalizeClassForSync(cls),
+            board: normalizeBoardForSync(brd)
+          }).select('id').single();
+
+          if (insErr) {
+            failed++;
+            lastError = insErr.message;
+            console.error('Sync error for', v.title, insErr);
+          } else if (ins && ins.id) {
+            updatedList[i] = { ...v, supabaseId: ins.id };
+            synced++;
+          }
+        } catch (e) {
+          failed++;
+          lastError = e.message;
+        }
+
+        // Small delay to avoid rate limiting
+        if (i < allVids.length - 1) await new Promise(r => setTimeout(r, 200));
+      }
+
+      writeVideos(updatedList);
+
+      btnSync.disabled = false;
+      btnSync.innerHTML = '<span>☁️</span> Sync to Students';
+
+      if (syncStatus) {
+        if (failed === 0 && synced > 0) {
+          syncStatus.style.background = 'rgba(74,222,128,0.12)'; syncStatus.style.color = '#4ade80';
+          syncStatus.textContent = `✅ ${synced} video(s) synced! ${skipped > 0 ? skipped + ' already synced.' : ''} Students can now see them.`;
+        } else if (failed > 0 && synced === 0) {
+          syncStatus.style.background = 'rgba(239,68,68,0.12)'; syncStatus.style.color = '#f87171';
+          syncStatus.textContent = `❌ All ${failed} video(s) failed. Error: ${lastError}. Run video_rls_fix.sql in Supabase Dashboard → SQL Editor.`;
+        } else if (failed > 0) {
+          syncStatus.style.background = 'rgba(245,158,11,0.12)'; syncStatus.style.color = '#fbbf24';
+          syncStatus.textContent = `⚠️ ${synced} synced, ${failed} failed: ${lastError}`;
+        } else {
+          syncStatus.style.background = 'rgba(148,163,184,0.1)'; syncStatus.style.color = '#94a3b8';
+          syncStatus.textContent = `All ${skipped} video(s) already synced to Supabase.`;
+        }
+      }
+    };
+  }
+
   document.getElementById('btnCloseFolderModal')?.addEventListener('click', closeFolderModal);
   document.getElementById('btnCancelFolderModal')?.addEventListener('click', closeFolderModal);
   document.getElementById('btnCloseUploadModal')?.addEventListener('click', closeUploadModal);
@@ -2702,7 +2811,7 @@ function initTeacherVideo() {
   // Upload Video Submit
   const uploadForm = document.getElementById('driveUploadForm');
   if (uploadForm) {
-    uploadForm.onsubmit = (e) => {
+    uploadForm.onsubmit = async (e) => {
       e.preventDefault();
       const title = document.getElementById('modalVideoTitleInput').value.trim();
       const urlInput = document.getElementById('modalVideoUrlInput').value.trim();
@@ -2712,29 +2821,41 @@ function initTeacherVideo() {
       const videoId = extractYoutubeId(urlInput);
 
       if (!videoId) {
-        if(status) { status.textContent = "Invalid YouTube URL or iframe code."; status.style.color = '#f87171'; }
+        if(status) { status.textContent = 'Invalid YouTube URL or iframe code.'; status.style.color = '#f87171'; }
         return;
       }
 
-      // backward compatibility for classLevel and board
+      // Parse class and board from current drive path
       const segments = getPathSegments(currentPath);
-      const cls = segments[0] || 'Unknown';
-      const brd = segments[1] || 'Unknown';
+      const cls = segments[0] || 'Unknown';   // e.g. "Class 6"
+      const brd = segments[1] || 'Unknown';   // e.g. "Stateboard"
 
-      const videos = readVideos();
-      videos.unshift({
-        id: 'vid_' + Date.now().toString(36),
+      // Normalize class_name: strip "Class " prefix → just the number or exam name
+      const normalizeClass = (c) => {
+        const m = c.match(/^Class\s+(\d+)$/i);
+        return m ? m[1] : c.toLowerCase();
+      };
+      // Normalize board: lowercase
+      const normalizeBoard = (b) => b.toLowerCase();
+
+      const localId = 'vid_' + Date.now().toString(36);
+      const newEntry = {
+        id: localId,
         title: title,
         videoId: videoId,
         parentPath: currentPath,
         classLevel: cls,
         board: brd,
-        addedAt: new Date().toISOString()
-      });
+        addedAt: new Date().toISOString(),
+        supabaseId: null   // will be filled after Supabase insert
+      };
+
+      const videos = readVideos();
+      videos.unshift(newEntry);
       writeVideos(videos);
 
-      if(status) { status.textContent = "Video uploaded successfully!"; status.style.color = '#4ade80'; }
-      
+      if(status) { status.textContent = 'Video uploaded successfully!'; status.style.color = '#4ade80'; }
+
       const toast = document.getElementById('tpSuccessToast');
       const toastMsg = document.getElementById('tpToastMsg');
       if (toast && toastMsg) {
@@ -2747,6 +2868,71 @@ function initTeacherVideo() {
         closeUploadModal();
         renderDrive();
       }, 800);
+
+      // ── Also write to Supabase yt_videos so students can see the video ──
+      (async () => {
+        const statusEl = document.getElementById('modalUploadStatus');
+        try {
+          const db = window.__supabaseClient || (window.DrAuth && DrAuth.getClient && DrAuth.getClient());
+          if (!db) { console.warn('No Supabase client — video saved locally only'); return; }
+
+          // Get institution_id with multiple fallbacks
+          let instId = '';
+          if (window.DrAuth && DrAuth.getInstitutionId) instId = DrAuth.getInstitutionId() || '';
+          if (!instId) instId = sessionStorage.getItem('draimss_institution_id') || '';
+          if (!instId) instId = localStorage.getItem('draimss_institution_id') || '';
+          // Last resort: fetch from profile directly
+          if (!instId) {
+            try {
+              const { data: { session } } = await db.auth.getSession();
+              if (session) {
+                const { data: prof } = await db.from('profiles').select('institution_id').eq('id', session.user.id).single();
+                if (prof && prof.institution_id) {
+                  instId = prof.institution_id;
+                  sessionStorage.setItem('draimss_institution_id', instId);
+                }
+              }
+            } catch (_) {}
+          }
+
+          const { data: { user } } = await db.auth.getUser();
+          const userEmail = user?.email || '';
+
+          const { data: inserted, error: insErr } = await db.from('yt_videos').insert({
+            title: title,
+            video_id: videoId,
+            category: 'General',
+            description: '',
+            uploaded_by: userEmail,
+            institution_id: instId,
+            class_name: normalizeClass(cls),
+            board: normalizeBoard(brd)
+          }).select('id').single();
+
+          if (insErr) {
+            console.error('yt_videos insert error:', insErr);
+            if (statusEl) {
+              statusEl.textContent = '⚠️ Saved locally but Supabase sync failed: ' + insErr.message + '. Run video_rls_fix.sql in Supabase.';
+              statusEl.style.color = '#f87171';
+            }
+            return;
+          }
+
+          if (inserted && inserted.id) {
+            // Store Supabase UUID back in localStorage entry for later deletion
+            const updatedList = readVideos();
+            const idx2 = updatedList.findIndex(v => v.id === localId);
+            if (idx2 !== -1) {
+              updatedList[idx2].supabaseId = inserted.id;
+              writeVideos(updatedList);
+            }
+            if (statusEl) { statusEl.textContent = '✅ Synced to Supabase — students can now see this video!'; statusEl.style.color = '#4ade80'; }
+          }
+        } catch (sbErr) {
+          console.error('Supabase yt_videos insert exception:', sbErr);
+          if (statusEl) { statusEl.textContent = '⚠️ Supabase sync error: ' + sbErr.message; statusEl.style.color = '#f87171'; }
+        }
+      })();
     };
   }
 
@@ -2771,11 +2957,19 @@ function initTeacherVideo() {
     renderDrive();
   };
 
-  window.deleteVideo = (id) => {
+  window.deleteVideo = async (id) => {
     if (!confirm('Delete this video?')) return;
     const videos = readVideos();
+    const toDelete = videos.find(v => v.id === id);
     writeVideos(videos.filter(v => v.id !== id));
     renderDrive();
+    // Also delete from Supabase yt_videos if we have the Supabase UUID
+    if (toDelete && toDelete.supabaseId) {
+      try {
+        const db = window.__supabaseClient || (window.DrAuth && DrAuth.getClient && DrAuth.getClient());
+        if (db) await db.from('yt_videos').delete().eq('id', toDelete.supabaseId);
+      } catch (e) { console.warn('Supabase yt_videos delete failed:', e); }
+    }
   };
 
   /* ══ VIDEO PLAYER MODAL ══ */

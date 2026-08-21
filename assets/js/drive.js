@@ -44,7 +44,8 @@
   const SUPABASE_URL  = 'https://pgrjzsqylhchmelmwhkv.supabase.co';
   const SUPABASE_KEY  = 'sb_publishable_iw8Pmvpylj0rGyl5Bs_19w_SEdfUdYh';
   const BUCKET        = 'material';
-  const CHUNK_SIZE    = 45 * 1024 * 1024;   // 45 MB per chunk
+  const CHUNK_SIZE_MB = 6;                  // 6 MB per chunk for reliable mobile & desktop transfers
+  const CHUNK_SIZE    = CHUNK_SIZE_MB * 1024 * 1024;
   const CHUNKS_FOLDER = '__chunks__';        // virtual folder name
 
   const CLASSES = ['6', '7', '8', '9', '10', '11', '12'];
@@ -343,11 +344,45 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
+     RETRY HELPER — Self-heals transient network & fetch failures
+  ══════════════════════════════════════════════════════════════ */
+  async function _retryWithBackoff(fn, retries = 3, delayMs = 1000) {
+    let lastError;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const result = await fn();
+        if (result && result.error) {
+          const errMsg = result.error.message || String(result.error);
+          const isTransient = /fetch|network|timeout|connection|abort|econnreset|502|503|504|load failed/i.test(errMsg);
+          if (isTransient && attempt < retries) {
+            console.warn(`[DrDrive] Transient network error on attempt ${attempt}: ${errMsg}. Retrying in ${delayMs * attempt}ms...`);
+            await new Promise(r => setTimeout(r, delayMs * attempt));
+            continue;
+          }
+          throw new Error(errMsg);
+        }
+        return result;
+      } catch (err) {
+        lastError = err;
+        const errMsg = err?.message || String(err);
+        const isTransient = /fetch|network|timeout|connection|abort|econnreset|502|503|504|load failed/i.test(errMsg);
+        if (isTransient && attempt < retries) {
+          console.warn(`[DrDrive] Network exception on attempt ${attempt}: ${errMsg}. Retrying in ${delayMs * attempt}ms...`);
+          await new Promise(r => setTimeout(r, delayMs * attempt));
+        } else {
+          break;
+        }
+      }
+    }
+    throw lastError || new Error('Operation failed after network retries.');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      UPLOAD FILE  (teachers only)
-     Automatically uses chunked upload if file > CHUNK_SIZE (45 MB)
+     Automatically uses chunked upload if file > CHUNK_SIZE (6 MB)
 
      @param {File}     file        — HTML File object
-     @param {string}   folderPath  — destination e.g. 'class-6/Math'
+     @param {string}   folderPath  — destination e.g. 'class-6/stateboard'
      @param {function} onProgress  — optional callback (0–100)
   ══════════════════════════════════════════════════════════════ */
   async function uploadFile(file, folderPath, onProgress) {
@@ -355,7 +390,7 @@
     if (!client) throw new Error('Supabase not loaded.');
 
     const role = await _getRole();
-    if (!role) throw new Error('Not logged in.');
+    if (!role) throw new Error('Not logged in. Please refresh or sign in again.');
     if (role !== 'teacher') throw new Error('Only teachers can upload files.');
 
     // ── Security: validate file type before upload ──
@@ -364,7 +399,7 @@
       if (!check.ok) throw new Error(check.error);
     }
 
-    // No hard cap anymore — we chunk large files
+    // Clean folder prefix
     const prefix = (folderPath || '').replace(/\/+$/, '');
 
     if (file.size > CHUNK_SIZE) {
@@ -374,32 +409,34 @@
     }
   }
 
-  /* ─── Single file upload (≤ 45 MB) ─── */
+  /* ─── Single file upload (≤ 6 MB) ─── */
   async function _uploadSingle(client, file, prefix, onProgress) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
     const filePath = prefix ? `${prefix}/${Date.now()}_${safeName}` : `${Date.now()}_${safeName}`;
+    const contentType = file.type || _mimeFromName(file.name) || 'application/octet-stream';
 
-    if (onProgress) onProgress(10);
+    if (onProgress) onProgress(15);
 
-    const { error } = await client.storage
-      .from(BUCKET)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type || 'application/octet-stream'
-      });
+    await _retryWithBackoff(async () => {
+      return await client.storage
+        .from(BUCKET)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: contentType
+        });
+    }, 3, 1000);
 
-    if (error) throw new Error(error.message);
     if (onProgress) onProgress(100);
 
     const { data: urlData } = client.storage.from(BUCKET).getPublicUrl(filePath);
     return {
       success: true,
-      file: { id: filePath, name: file.name, mimeType: file.type, size: file.size, webViewLink: urlData.publicUrl, path: filePath }
+      file: { id: filePath, name: file.name, mimeType: contentType, size: file.size, webViewLink: urlData.publicUrl, path: filePath }
     };
   }
 
-  /* ─── Chunked upload (> 45 MB) ─── */
+  /* ─── Chunked upload (> 6 MB) ─── */
   async function _uploadChunked(client, file, prefix, onProgress) {
     const chunkId   = _makeChunkId(file);
     const groupPath = prefix
@@ -407,10 +444,11 @@
       : `${CHUNKS_FOLDER}/${chunkId}`;
 
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const contentType = file.type || _mimeFromName(file.name) || 'application/octet-stream';
 
     if (onProgress) onProgress(2);
 
-    // Upload each chunk
+    // Upload each chunk with retry
     for (let i = 0; i < totalChunks; i++) {
       const start  = i * CHUNK_SIZE;
       const end    = Math.min(start + CHUNK_SIZE, file.size);
@@ -418,31 +456,33 @@
       const partName = `part_${String(i).padStart(3, '0')}`;
       const partPath = `${groupPath}/${partName}`;
 
-      const { error } = await client.storage
-        .from(BUCKET)
-        .upload(partPath, blob, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'application/octet-stream'
-        });
-
-      if (error) {
+      try {
+        await _retryWithBackoff(async () => {
+          return await client.storage
+            .from(BUCKET)
+            .upload(partPath, blob, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: 'application/octet-stream'
+            });
+        }, 3, 1200);
+      } catch (error) {
         // Clean up any already-uploaded chunks
         await _cleanupChunkGroup(client, groupPath, i).catch(() => {});
-        throw new Error(`Chunk ${i + 1}/${totalChunks} failed: ${error.message}`);
+        throw new Error(`Chunk ${i + 1}/${totalChunks} upload failed (${error.message}). Please check connection and retry.`);
       }
 
       if (onProgress) {
         // Reserve first 2% for init, last 3% for meta upload
-        const pct = 2 + Math.round(((i + 1) / totalChunks) * 90);
-        onProgress(pct);
+        const pct = 2 + Math.round(((i + 1) / totalChunks) * 95);
+        onProgress(Math.min(97, pct));
       }
     }
 
     // Upload meta.json
     const meta = {
       name:        file.name,
-      mimeType:    file.type || 'application/octet-stream',
+      mimeType:    contentType,
       size:        file.size,
       totalChunks,
       chunkSize:   CHUNK_SIZE,
@@ -450,16 +490,16 @@
       chunkId
     };
 
-    const metaBlob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
-    const { error: metaErr } = await client.storage
-      .from(BUCKET)
-      .upload(`${groupPath}/meta.json`, metaBlob, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: 'application/json'
-      });
-
-    if (metaErr) throw new Error('Meta upload failed: ' + metaErr.message);
+    const metaBlob = new Blob([JSON.stringify(meta, null, 2)], { type: 'application/json' });
+    await _retryWithBackoff(async () => {
+      return await client.storage
+        .from(BUCKET)
+        .upload(`${groupPath}/meta.json`, metaBlob, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'application/json'
+        });
+    }, 3, 1000);
 
     if (onProgress) onProgress(100);
 
@@ -468,7 +508,7 @@
       file: {
         id:         groupPath,
         name:       file.name,
-        mimeType:   file.type,
+        mimeType:   contentType,
         size:       file.size,
         path:       groupPath,
         isChunked:  true
@@ -492,18 +532,19 @@
      Fetches one chunk part via its signed URL using a ReadableStream
      reader loop so we get real byte-level progress instead of a
      single blocking arrayBuffer() call.
-
-     @param {string}   signedUrl   — pre-signed URL for the part
-     @param {number}   chunkIndex  — 0-based index of this chunk
-     @param {number}   totalChunks — total number of chunks
-     @param {number}   totalBytes  — total file size in bytes (for %-calc)
-     @param {number}   bytesAlreadyLoaded — bytes from previous chunks
-     @param {function} onProgress  — callback(0-100)
-     @returns {Uint8Array}
   ══════════════════════════════════════════════════════════════ */
   async function _fetchChunkStreamed(signedUrl, chunkIndex, totalChunks, totalBytes, bytesAlreadyLoaded, onProgress) {
-    const resp = await fetch(signedUrl);
-    if (!resp.ok) throw new Error(`Chunk ${chunkIndex} download failed (HTTP ${resp.status})`);
+    let resp;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        resp = await fetch(signedUrl);
+        if (resp.ok) break;
+        if (attempt === 3) throw new Error(`Chunk ${chunkIndex + 1} download failed (HTTP ${resp.status})`);
+      } catch (err) {
+        if (attempt === 3) throw err;
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+    }
 
     // Use streaming reader for real progress
     const reader = resp.body.getReader();
@@ -866,6 +907,8 @@
   window.DrDrive = {
     CLASSES, EXAMS,
     CHUNKS_FOLDER,
+    CHUNK_SIZE_MB,
+    CHUNK_SIZE,
     listFolderContents,
     listFiles,
     createFolder,

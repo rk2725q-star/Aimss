@@ -724,10 +724,13 @@
 
           status.textContent = `✅ ${file.name} uploaded!`;
           fill.style.width   = '100%';
-          showToast('✅ ' + file.name + ' uploaded!', 'success');
         } catch(e) {
-          status.textContent = '❌ ' + e.message;
-          showToast('❌ Upload failed: ' + e.message, 'error');
+          const msg = (e && e.message) ? e.message : 'Upload failed';
+          const userMsg = msg.includes('Failed to fetch') || msg.includes('fetch')
+            ? 'Network / Connection error. Please check your internet connection and retry.'
+            : msg;
+          status.textContent = '❌ ' + userMsg;
+          showToast('❌ Upload failed: ' + userMsg, 'error');
         }
       }
 

@@ -1688,7 +1688,7 @@
     const chunkInfo    = document.getElementById('chunkInfo');
     const statusEl     = document.getElementById('uploadStatus');
 
-    const CHUNK_SIZE_MB = 45;
+    const CHUNK_SIZE_MB = (typeof DrDrive !== 'undefined' && DrDrive.CHUNK_SIZE_MB) ? DrDrive.CHUNK_SIZE_MB : 6;
     const CHUNK_BYTES   = CHUNK_SIZE_MB * 1024 * 1024;
 
     uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -1921,7 +1921,11 @@
       } catch(err) {
         progressWrap.style.display = 'none';
         chunkInfo.style.display    = 'none';
-        setStatus('❌ ' + (err.message || 'Upload failed.'), 'error');
+        const msg = (err && err.message) ? err.message : 'Upload failed.';
+        const userMsg = msg.includes('Failed to fetch') || msg.includes('fetch')
+          ? 'Network / Connection error. Please check your internet connection and retry.'
+          : msg;
+        setStatus('❌ ' + userMsg, 'error');
       } finally { fileInput.disabled = false; fileInput.value = ''; }
     }
 

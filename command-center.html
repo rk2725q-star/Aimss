@@ -1850,7 +1850,7 @@
 
       files.forEach((f) => {
         uploadQueue.items.push({
-          file,
+          file: f,
           state: 'queued',
           stateLabel: 'Queued',
           sizeLabel: DrDrive.formatSize(f.size),

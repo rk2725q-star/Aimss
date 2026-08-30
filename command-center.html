@@ -1784,6 +1784,26 @@
       // Auto-detect subject from the first file
       refreshAutoSubject(files[0].name);
 
+      // If a previous session is fully done, clear the queue list
+      // so a new selection starts with a fresh slate (no stale
+      // "✅ Done" rows from the previous batch).
+      if (!uploadQueue.running) {
+        uploadQueue.items = [];
+        uploadQueue.successCount = 0;
+        uploadQueue.failCount = 0;
+        uploadQueue.cancelled = false;
+        // Reset progress UI for the new session
+        progressFill.style.width    = '0%';
+        progressPct.textContent     = '0%';
+        progressFile.textContent    = 'Uploading…';
+        progressCount.textContent   = '';
+        cancelQueueBtn.disabled     = false;
+        cancelQueueBtn.textContent  = '✕ Cancel remaining';
+        // Clear stale status message
+        statusEl.className = 'status-msg';
+        statusEl.textContent = '';
+      }
+
       files.forEach((f) => {
         uploadQueue.items.push({
           file,
@@ -1864,7 +1884,8 @@
         summary = `❌ All ${total2} uploads failed.`;
         setStatus(summary, 'error');
       }
-      fileInput.value = '';
+      // fileInput.value is cleared immediately in the `change` handler,
+      // so re-selecting the same file works correctly.
       // Auto-hide queue list after a short delay (keep visible briefly so user can see the result)
       setTimeout(() => {
         if (!uploadQueue.running) {
@@ -1982,9 +2003,16 @@
     }
 
     // Run detection when file is picked before upload starts
+    // IMPORTANT: reset value FIRST so the same file can be re-picked
+    // after a failed/cancelled upload.
     fileInput.addEventListener('change', () => {
       const files = Array.from(fileInput.files || []);
+      // Capture the files into a local list BEFORE clearing value
+      // so the queue runner has stable references.
       if (files.length) enqueueUploads(files);
+      // Clear the input synchronously so re-selecting the same
+      // file (or the picker being re-opened) always fires `change`.
+      try { fileInput.value = ''; } catch(_) {}
     });
 
     /* ── Upload a single file. Used by the queue runner. ── */

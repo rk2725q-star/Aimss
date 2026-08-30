@@ -155,7 +155,17 @@
     .upload-zone .upload-icon { font-size: 2rem; margin-bottom: 8px; }
     .upload-zone h3 { margin: 0 0 4px; color: var(--ink); font-size: .95rem; }
     .upload-zone p  { margin: 0; color: var(--muted); font-size: .8rem; }
-    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    /* The input is on top of the zone. Make sure it actually
+       receives taps on mobile by being a real clickable layer. */
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%; z-index: 2;
+    }
+    /* The icon / headings sit BELOW the input so the input
+       always wins the tap target. */
+    .upload-zone > .upload-icon,
+    .upload-zone > h3,
+    .upload-zone > p { position: relative; z-index: 1; pointer-events: none; }
     .upload-progress { display: none; margin-top: 12px; }
     .upload-progress-bar { width: 100%; height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
     .upload-progress-fill { height: 100%; width: 0%; background: var(--accent-gradient); border-radius: 999px; transition: width .35s ease; box-shadow: 0 0 10px rgba(0,229,204,0.5); }
@@ -683,12 +693,13 @@
           <span class="path-text" id="uploadPathText">—</span>
         </div>
 
-        <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="Upload files">
           <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt,.mp4,.mp3" />
           <div class="upload-icon">☁️</div>
           <h3>Drag &amp; Drop or Click to Upload</h3>
           <p>PDF, Word, PPT, Excel, Images, Video, Audio · <strong style="color:var(--accent)">No size limit</strong> — large files auto-chunked ⚡</p>
           <p style="margin-top:6px;font-size:.72rem;color:var(--accent);font-weight:600;">📚 Select or drop multiple files — they upload one-by-one automatically</p>
+          <p id="uploadZoneHint" style="margin-top:8px;font-size:.7rem;color:var(--muted);">Tap the box to open the file picker</p>
         </div>
         <div class="upload-progress" id="uploadProgress">
           <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
@@ -1732,6 +1743,28 @@
       if (files.length) enqueueUploads(files);
     });
 
+    /* ── Fallback click on the zone (mobile reliability) ──
+       Some mobile browsers don't reliably fire the file input
+       change when the input is the click target of an overlay.
+       So we add a delegated click on the zone that calls
+       fileInput.click() programmatically. The input itself
+       already has its own change handler.                       */
+    uploadZone.addEventListener('click', (e) => {
+      // If the click came from the input itself, let it handle
+      if (e.target === fileInput) return;
+      // If the input is disabled (during upload), do nothing
+      if (fileInput.disabled) return;
+      e.preventDefault();
+      try { fileInput.click(); } catch(_) {}
+    });
+    // Keyboard accessibility
+    uploadZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        try { fileInput.click(); } catch(_) {}
+      }
+    });
+
     /* ═══════════════════════════════════════
        MULTI-FILE UPLOAD QUEUE
        Accepts a FileList / array, runs uploads
@@ -1780,7 +1813,18 @@
     }
 
     function enqueueUploads(files) {
-      if (!files || !files.length) return;
+      if (!files || !files.length) {
+        setStatus('⚠️ No files to upload.', 'error');
+        return;
+      }
+
+      // Guard: a class/exam must be selected so the upload has a destination
+      if (!selectedId) {
+        setStatus('❌ Please select a class or exam first (top of the page).', 'error');
+        return;
+      }
+
+      console.log('[upload] enqueueing', files.length, 'file(s) to', currentPath);
       // Auto-detect subject from the first file
       refreshAutoSubject(files[0].name);
 
@@ -1815,7 +1859,10 @@
       });
       queueList.style.display = 'block';
       cancelQueueBtn.style.display = 'inline-block';
+      progressWrap.style.display  = 'block';
       renderQueue();
+      // Show immediate feedback that files were accepted
+      setStatus(`📥 ${files.length} file${files.length>1?'s':''} queued — uploading…`, 'success');
       // Start runner if not already running
       if (!uploadQueue.running) processQueue();
     }
@@ -2006,13 +2053,33 @@
     // IMPORTANT: reset value FIRST so the same file can be re-picked
     // after a failed/cancelled upload.
     fileInput.addEventListener('change', () => {
+      try {
+        const files = Array.from(fileInput.files || []);
+        console.log('[upload] fileInput change fired with', files.length, 'file(s)');
+        if (files.length) {
+          enqueueUploads(files);
+        } else {
+          setStatus('⚠️ No files detected. Please try again.', 'error');
+        }
+      } catch (err) {
+        console.error('[upload] change handler error:', err);
+        setStatus('❌ Could not read selected files: ' + (err?.message || err), 'error');
+      } finally {
+        // Clear the input synchronously so re-selecting the same
+        // file (or the picker being re-opened) always fires `change`.
+        try { fileInput.value = ''; } catch(_) {}
+      }
+    });
+
+    // Some mobile browsers don't fire `change` reliably on the
+    // overlay input. Listen to `input` event as a backup.
+    fileInput.addEventListener('input', () => {
       const files = Array.from(fileInput.files || []);
-      // Capture the files into a local list BEFORE clearing value
-      // so the queue runner has stable references.
-      if (files.length) enqueueUploads(files);
-      // Clear the input synchronously so re-selecting the same
-      // file (or the picker being re-opened) always fires `change`.
-      try { fileInput.value = ''; } catch(_) {}
+      if (files.length) {
+        console.log('[upload] input event backup fired with', files.length, 'file(s)');
+        enqueueUploads(files);
+        try { fileInput.value = ''; } catch(_) {}
+      }
     });
 
     /* ── Upload a single file. Used by the queue runner. ── */

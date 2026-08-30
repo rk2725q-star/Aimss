@@ -159,7 +159,33 @@
     .upload-progress { display: none; margin-top: 12px; }
     .upload-progress-bar { width: 100%; height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
     .upload-progress-fill { height: 100%; width: 0%; background: var(--accent-gradient); border-radius: 999px; transition: width .35s ease; box-shadow: 0 0 10px rgba(0,229,204,0.5); }
-    .upload-progress-label { font-size: .76rem; color: var(--muted); margin-top: 5px; display: flex; justify-content: space-between; }
+    .upload-progress-label { font-size: .76rem; color: var(--muted); margin-top: 5px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .upload-cancel-btn {
+      margin-top: 8px; padding: 6px 12px; font-size: .76rem; font-weight: 700;
+      color: #fca5a5; background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25); border-radius: 8px;
+      cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .upload-cancel-btn:hover { background: rgba(239,68,68,0.18); color: #fecaca; }
+    .upload-queue {
+      list-style: none; padding: 10px 12px; margin: 10px 0 0;
+      background: rgba(0,229,204,0.04); border: 1px solid rgba(0,229,204,0.18);
+      border-radius: 10px; max-height: 200px; overflow-y: auto; font-size: .8rem;
+    }
+    .upload-queue li {
+      display: flex; align-items: center; gap: 8px; padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--muted);
+    }
+    .upload-queue li:last-child { border-bottom: none; }
+    .upload-queue .uq-icon { font-size: 1rem; flex-shrink: 0; }
+    .upload-queue .uq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; font-weight: 500; }
+    .upload-queue .uq-size { font-size: .7rem; color: var(--muted); flex-shrink: 0; }
+    .upload-queue .uq-state { font-size: .7rem; font-weight: 700; flex-shrink: 0; min-width: 70px; text-align: right; }
+    .upload-queue .uq-state.queued  { color: var(--muted); }
+    .upload-queue .uq-state.active  { color: var(--accent); }
+    .upload-queue .uq-state.done    { color: #4ade80; }
+    .upload-queue .uq-state.failed  { color: #f87171; }
+    .upload-queue .uq-state.skipped { color: #fbbf24; }
     .upload-chunk-info { font-size: .74rem; color: var(--accent); margin-top: 4px; font-weight: 700; display: none; }
     .status-msg { padding: 10px 14px; border-radius: 9px; font-size: .84rem; font-weight: 600; margin-top: 10px; display: none; }
     .status-msg.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80; display: block; }
@@ -658,16 +684,23 @@
         </div>
 
         <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt,.mp4,.mp3" />
+          <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt,.mp4,.mp3" />
           <div class="upload-icon">☁️</div>
           <h3>Drag &amp; Drop or Click to Upload</h3>
           <p>PDF, Word, PPT, Excel, Images, Video, Audio · <strong style="color:var(--accent)">No size limit</strong> — large files auto-chunked ⚡</p>
+          <p style="margin-top:6px;font-size:.72rem;color:var(--accent);font-weight:600;">📚 Select or drop multiple files — they upload one-by-one automatically</p>
         </div>
         <div class="upload-progress" id="uploadProgress">
           <div class="upload-progress-bar"><div class="upload-progress-fill" id="progressFill"></div></div>
-          <div class="upload-progress-label"><span id="progressFile">Uploading…</span><span id="progressPct">0%</span></div>
+          <div class="upload-progress-label">
+            <span id="progressFile">Uploading…</span>
+            <span id="progressCount" style="font-weight:700;color:var(--accent);"></span>
+            <span id="progressPct">0%</span>
+          </div>
           <div class="upload-chunk-info" id="chunkInfo"></div>
+          <button type="button" id="cancelQueueBtn" class="upload-cancel-btn" style="display:none;">✕ Cancel remaining</button>
         </div>
+        <ul class="upload-queue" id="uploadQueue" style="display:none;"></ul>
         <div class="status-msg" id="uploadStatus"></div>
 
         <!-- ── Auto-index for AI toggle ── -->
@@ -1695,10 +1728,159 @@
     uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
     uploadZone.addEventListener('drop', e => {
       e.preventDefault(); uploadZone.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) {
-        refreshAutoSubject(e.dataTransfer.files[0].name);
-        startUpload(e.dataTransfer.files[0]);
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length) enqueueUploads(files);
+    });
+
+    /* ═══════════════════════════════════════
+       MULTI-FILE UPLOAD QUEUE
+       Accepts a FileList / array, runs uploads
+       sequentially (Supabase friendly), shows
+       per-file progress and a live queue list.
+    ═══════════════════════════════════════ */
+    const queueList     = document.getElementById('uploadQueue');
+    const progressCount = document.getElementById('progressCount');
+    const cancelQueueBtn= document.getElementById('cancelQueueBtn');
+
+    const uploadQueue = {
+      items: [],          // [{ file, state, liEl, sizeLabel }]
+      running: false,
+      cancelled: false,
+      currentIdx: -1,
+      successCount: 0,
+      failCount: 0
+    };
+
+    function getFileIcon(name) {
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      if (['pdf'].includes(ext))            return '📕';
+      if (['doc','docx'].includes(ext))     return '📘';
+      if (['ppt','pptx'].includes(ext))     return '📙';
+      if (['xls','xlsx'].includes(ext))     return '📗';
+      if (['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext)) return '🖼️';
+      if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎬';
+      if (['mp3','wav','ogg','m4a'].includes(ext))        return '🎵';
+      if (['txt','md'].includes(ext))       return '📄';
+      return '📎';
+    }
+
+    function renderQueue() {
+      queueList.innerHTML = '';
+      uploadQueue.items.forEach((it) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="uq-icon">${getFileIcon(it.file.name)}</span>
+          <span class="uq-name" title="${it.file.name}">${it.file.name}</span>
+          <span class="uq-size">${it.sizeLabel}</span>
+          <span class="uq-state ${it.state}">${it.stateLabel}</span>
+        `;
+        it.liEl = li;
+        queueList.appendChild(li);
+      });
+    }
+
+    function enqueueUploads(files) {
+      if (!files || !files.length) return;
+      // Auto-detect subject from the first file
+      refreshAutoSubject(files[0].name);
+
+      files.forEach((f) => {
+        uploadQueue.items.push({
+          file,
+          state: 'queued',
+          stateLabel: 'Queued',
+          sizeLabel: DrDrive.formatSize(f.size),
+          liEl: null
+        });
+      });
+      queueList.style.display = 'block';
+      cancelQueueBtn.style.display = 'inline-block';
+      renderQueue();
+      // Start runner if not already running
+      if (!uploadQueue.running) processQueue();
+    }
+
+    async function processQueue() {
+      if (uploadQueue.running) return;
+      uploadQueue.running = true;
+      uploadQueue.cancelled = false;
+      uploadQueue.successCount = 0;
+      uploadQueue.failCount = 0;
+
+      const total = uploadQueue.items.length;
+      for (let i = 0; i < total; i++) {
+        if (uploadQueue.cancelled) {
+          // Mark remaining as skipped
+          for (let j = i; j < total; j++) {
+            const it = uploadQueue.items[j];
+            if (it.state === 'queued') {
+              it.state = 'skipped';
+              it.stateLabel = 'Skipped';
+            }
+          }
+          renderQueue();
+          break;
+        }
+        const it = uploadQueue.items[i];
+        if (it.state !== 'queued') continue; // skip already-done
+        uploadQueue.currentIdx = i;
+        it.state = 'active';
+        it.stateLabel = 'Uploading…';
+        renderQueue();
+        progressCount.textContent = `${i + 1}/${total}`;
+        try {
+          await uploadSingleFile(it.file, i + 1, total);
+          it.state = 'done';
+          it.stateLabel = '✅ Done';
+          uploadQueue.successCount++;
+        } catch (err) {
+          it.state = 'failed';
+          it.stateLabel = '❌ Failed';
+          uploadQueue.failCount++;
+          console.error('[upload]', it.file.name, err);
+        }
+        renderQueue();
       }
+      uploadQueue.running = false;
+
+      // Final status summary
+      const skipped = uploadQueue.items.filter(x => x.state === 'skipped').length;
+      const total2  = uploadQueue.items.length;
+      const ok      = uploadQueue.successCount;
+      const fail    = uploadQueue.failCount;
+      let summary = '';
+      if (uploadQueue.cancelled) {
+        summary = `⏹ Cancelled. ${ok} uploaded, ${skipped} skipped.`;
+        setStatus(summary, fail ? 'error' : 'success');
+      } else if (ok === total2) {
+        summary = `✅ All ${total2} file${total2>1?'s':''} uploaded successfully!`;
+        setStatus(summary, 'success');
+        loadCurrentPath();
+      } else if (ok > 0) {
+        summary = `⚠️ ${ok} of ${total2} uploaded. ${fail} failed.`;
+        setStatus(summary, 'error');
+        loadCurrentPath();
+      } else {
+        summary = `❌ All ${total2} uploads failed.`;
+        setStatus(summary, 'error');
+      }
+      fileInput.value = '';
+      // Auto-hide queue list after a short delay (keep visible briefly so user can see the result)
+      setTimeout(() => {
+        if (!uploadQueue.running) {
+          queueList.style.display = 'none';
+          cancelQueueBtn.style.display = 'none';
+          progressWrap.style.display = 'none';
+          chunkInfo.style.display    = 'none';
+        }
+      }, 4500);
+    }
+
+    cancelQueueBtn.addEventListener('click', () => {
+      if (!uploadQueue.running) return;
+      uploadQueue.cancelled = true;
+      cancelQueueBtn.disabled = true;
+      cancelQueueBtn.textContent = '⏳ Cancelling…';
     });
 
     function setStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status-msg ' + type; }
@@ -1801,22 +1983,22 @@
 
     // Run detection when file is picked before upload starts
     fileInput.addEventListener('change', () => {
-      if (fileInput.files[0]) {
-        refreshAutoSubject(fileInput.files[0].name);
-        startUpload(fileInput.files[0]);
-      }
+      const files = Array.from(fileInput.files || []);
+      if (files.length) enqueueUploads(files);
     });
 
-    async function startUpload(file) {
-      if (!selectedId) { setStatus('❌ Please select a class or exam first.', 'error'); return; }
+    /* ── Upload a single file. Used by the queue runner. ── */
+    async function uploadSingleFile(file, idx, total) {
+      if (!selectedId) { throw new Error('Please select a class or exam first.'); }
 
       const isChunked   = file.size > CHUNK_BYTES;
       const totalChunks = isChunked ? Math.ceil(file.size / CHUNK_BYTES) : 1;
 
       statusEl.className = 'status-msg';
       progressWrap.style.display  = 'block';
+      cancelQueueBtn.style.display= 'inline-block';
       progressFill.style.width    = '0%';
-      progressFile.textContent    = `Uploading: ${file.name} (${DrDrive.formatSize(file.size)})`;
+      progressFile.textContent    = `[${idx}/${total}] ${file.name} (${DrDrive.formatSize(file.size)})`;
       progressPct.textContent     = '0%';
 
       if (isChunked) {
@@ -1825,8 +2007,6 @@
       } else {
         chunkInfo.style.display   = 'none';
       }
-
-      fileInput.disabled = true;
 
       // For chunked files, intercept to show per-chunk status
       let lastChunkShown = 0;
@@ -1852,7 +2032,6 @@
         await DrDrive.uploadFile(file, currentPath, updateProgress);
         progressFill.style.width = '100%'; progressPct.textContent = '100%';
         if (isChunked) chunkInfo.textContent = `✅ All ${totalChunks} chunks uploaded successfully!`;
-        setStatus(`✅ "${file.name}" uploaded successfully!`, 'success');
 
         // ── Auto-index for AI Assistant ──
         const aiToggle = document.getElementById('autoIndexToggle');
@@ -1912,21 +2091,14 @@
           }
           setTimeout(() => { aiProg.style.display = 'none'; aiStatus.style.color = ''; }, 5000);
         }
-
-        setTimeout(() => {
-          progressWrap.style.display = 'none';
-          chunkInfo.style.display    = 'none';
-          loadCurrentPath();
-        }, 1800);
       } catch(err) {
-        progressWrap.style.display = 'none';
-        chunkInfo.style.display    = 'none';
+        // Translate network / fetch errors into a friendly message
         const msg = (err && err.message) ? err.message : 'Upload failed.';
-        const userMsg = msg.includes('Failed to fetch') || msg.includes('fetch')
-          ? 'Network / Connection error. Please check your internet connection and retry.'
-          : msg;
-        setStatus('❌ ' + userMsg, 'error');
-      } finally { fileInput.disabled = false; fileInput.value = ''; }
+        if (msg.includes('Failed to fetch') || msg.includes('fetch')) {
+          throw new Error('Network / Connection error. Please check your internet connection and retry.');
+        }
+        throw new Error(msg);
+      }
     }
 
     /* ═══════════════════════════════════════

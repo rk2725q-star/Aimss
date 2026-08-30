@@ -3072,8 +3072,8 @@ function initMobileNav() {
         <a href="mcq-test.html">📊 MCQ Tests</a>
         <a href="study-materials.html">📄 Study Materials</a>
         <a href="ai-pdf-generator.html">🤖 AI PDF Generator</a>
-        <a href="login.html">🔐 Login</a>
-        <a href="login.html">🏛️ Command Center</a>
+        <a href="login.html" id="mobileNavLoginLink" class="mobile-nav-tile-login">🔐 Login</a>
+        <a href="login.html" id="mobileNavCmdLink">🏛️ Command Center</a>
       </nav>
       <div class="mobile-nav-footer">
         <a class="btn" href="index.html#admission">Apply Now</a>
@@ -3082,8 +3082,89 @@ function initMobileNav() {
   `;
   document.body.appendChild(drawer);
 
+  /* ── Smart Login / Logout tile ───────────────────────────────
+     The Login tile in the drawer doubles as a Logout button when
+     a Supabase session is active. The Command Center link also
+     changes destination to the correct portal dashboard based
+     on the user's role.                                              */
+  const loginLink = drawer.querySelector('#mobileNavLoginLink');
+  const cmdLink   = drawer.querySelector('#mobileNavCmdLink');
+  const ROLE_DASH = {
+    student: 'student-dashboard.html',
+    teacher: 'command-center.html',
+    admin:   'admin-dashboard.html'
+  };
+  const ROLE_LABEL = {
+    student: 'Student',
+    teacher: 'Teacher',
+    admin:   'Admin'
+  };
+
+  const refreshAuthTile = () => {
+    let user  = null;
+    let role  = null;
+    try { user = window.DrAuth?.getUser?.() || null; } catch(_) {}
+    try { role = window.DrAuth?.getRole?.() || null; } catch(_) {}
+
+    // Also peek directly at localStorage so the tile reflects state
+    // even on pages where DrAuth is not yet initialised.
+    if (!user) {
+      try {
+        const rawStu = localStorage.getItem('auth-student');
+        if (rawStu) {
+          const s = JSON.parse(rawStu);
+          if (s && s.email) { user = s; role = role || 'student'; }
+        }
+      } catch(_) {}
+    }
+
+    if (user && loginLink) {
+      const email  = (user.email || user.user_metadata?.email || '').toString();
+      const rLabel = ROLE_LABEL[role] || (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'User');
+      const short  = email ? (email.length > 18 ? email.slice(0, 16) + '…' : email) : 'Logged in';
+      loginLink.innerHTML = `🚪 Logout <span class="mobile-nav-tile-meta">${rLabel} · ${short}</span>`;
+      loginLink.setAttribute('href', '#');
+      loginLink.classList.add('mobile-nav-tile-logout');
+      loginLink.setAttribute('data-logout', '1');
+      loginLink.setAttribute('aria-label', `Logout ${email || ''}`.trim());
+    } else if (loginLink) {
+      loginLink.innerHTML = '🔐 Login';
+      loginLink.setAttribute('href', 'login.html');
+      loginLink.classList.remove('mobile-nav-tile-logout');
+      loginLink.removeAttribute('data-logout');
+      loginLink.setAttribute('aria-label', 'Login');
+    }
+
+    // Command Center: when logged in, point to the right dashboard
+    if (cmdLink) {
+      if (role && ROLE_DASH[role]) {
+        cmdLink.setAttribute('href', ROLE_DASH[role]);
+        cmdLink.innerHTML = role === 'admin'
+          ? '🛡️ Admin Dashboard'
+          : '🏛️ Command Center';
+      } else {
+        cmdLink.setAttribute('href', 'login.html');
+        cmdLink.innerHTML = '🏛️ Command Center';
+      }
+    }
+  };
+
+  // Run once on injection, then again after auth fully boots
+  refreshAuthTile();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', refreshAuthTile, { once: true });
+  } else {
+    setTimeout(refreshAuthTile, 50);
+  }
+  // Re-check when the drawer re-opens (covers fresh logins on the same tab)
+  const observer = new MutationObserver(() => {
+    if (drawer.classList.contains('open')) refreshAuthTile();
+  });
+  observer.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+
   /* 3. Wire open/close */
   const openDrawer = () => {
+    refreshAuthTile(); // always pick up the latest auth state on open
     drawer.classList.add('open');
     ham.classList.add('open');
     ham.setAttribute('aria-expanded', 'true');
@@ -3100,8 +3181,32 @@ function initMobileNav() {
   document.getElementById('mobileNavClose')?.addEventListener('click', closeDrawer);
   document.getElementById('mobileNavOverlay')?.addEventListener('click', closeDrawer);
 
-  // Close on link click
+  // Logout confirmation handler — intercept the smart tile only
+  loginLink?.addEventListener('click', (e) => {
+    if (!loginLink.classList.contains('mobile-nav-tile-logout')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const user   = (() => { try { return window.DrAuth?.getUser?.(); } catch(_) { return null; } })();
+    const email  = user?.email || 'your account';
+    const ok = window.confirm(`Sign out ${email}?\n\nYou will be returned to the home page.`);
+    if (!ok) return;
+    closeDrawer();
+    if (typeof window.DrAuth?.signOut === 'function') {
+      window.DrAuth.signOut();
+    } else {
+      // Fallback: clear local session keys and reload
+      try {
+        localStorage.removeItem('auth-student');
+        localStorage.removeItem('auth-teacher');
+        localStorage.removeItem('auth-admin');
+      } catch(_) {}
+      window.location.href = 'login.html';
+    }
+  });
+
+  // Close on link click (but NOT for the logout tile — its handler does its own close)
   drawer.querySelectorAll('.mobile-nav-links a').forEach(a => {
+    if (a === loginLink && loginLink.classList.contains('mobile-nav-tile-logout')) return;
     a.addEventListener('click', closeDrawer);
   });
 

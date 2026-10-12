@@ -610,32 +610,48 @@
 
     if (onProgress) onProgress(99); // almost done — building blob
 
-    // Assemble all parts into one single unified Blob.
-    // Always derive MIME from the real filename as a fallback so the blob is
-    // never treated as raw octet-stream when meta.mimeType is empty/missing.
+    // ── Magic-bytes detection ─────────────────────────────────────────────
+    // Read the first bytes of the assembled data to identify the real file
+    // format.  This handles the common case where a teacher uploads a file
+    // named without an extension (e.g. "Class_9_Mathematics_English"):
+    // the stored mimeType is "application/octet-stream" and the filename
+    // has no extension, so Android / iOS cannot open the downloaded file.
+    const detected = parts.length > 0 ? _detectTypeFromBytes(parts[0]) : null;
+
+    // Priority: trust non-octet-stream mimeType stored in meta, otherwise
+    // use magic-bytes result, finally fall back to filename extension.
     const mimeType = (meta.mimeType && meta.mimeType !== 'application/octet-stream')
       ? meta.mimeType
-      : _mimeFromName(meta.name) || 'application/octet-stream';
+      : (detected ? detected.mime : (_mimeFromName(meta.name) || 'application/octet-stream'));
+
     const fullBlob = new Blob(parts, { type: mimeType });
     const url      = URL.createObjectURL(fullBlob);
 
-    // Trigger browser download — link.download sets the saved filename
-    // (including the correct extension) so the OS knows how to open it.
+    // If the filename has no extension, append the detected one so the OS
+    // knows how to open the file (fixes "Unsupported file type" on Android).
+    let fileName = meta.name || 'download';
+    const hasExt = /\.[a-zA-Z0-9]{2,5}$/.test(fileName);
+    if (!hasExt && detected && detected.ext) {
+      fileName = fileName + detected.ext;
+    }
+
+    // Trigger browser download — link.download sets the saved filename.
     const link      = document.createElement('a');
     link.style.display = 'none';
     link.href          = url;
-    link.download      = meta.name;   // e.g. "Physics_Notes.pdf"
+    link.download      = fileName;   // e.g. "Class_9_Mathematics_English.pdf"
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     if (onProgress) onProgress(100);
 
-    // Keep blob URL alive for 5 minutes so "Open" in the browser's
-    // download bar still works after the download completes
+    // Keep blob URL alive for 5 minutes so "Open File" in the download bar
+    // still works after the download completes (blob has correct MIME type
+    // so the browser / OS opens it with the right app).
     setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
 
-    return { success: true, blobUrl: url };
+    return { success: true, blobUrl: url, fileName };
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -862,6 +878,50 @@
   ══════════════════════════════════════════════════════════════ */
   function _displayName(name) {
     return name.replace(/^\d+_/, '');
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     _detectTypeFromBytes
+     Reads the "magic bytes" (file signature) at the start of a
+     Uint8Array to identify the real file format regardless of what
+     the stored mimeType or filename says.
+     Returns { mime, ext } or null if unknown.
+  ────────────────────────────────────────────────────────────── */
+  function _detectTypeFromBytes(bytes) {
+    if (!bytes || bytes.length < 4) return null;
+    const b = bytes;
+
+    // PDF: %PDF (25 50 44 46)
+    if (b[0]===0x25&&b[1]===0x50&&b[2]===0x44&&b[3]===0x46)
+      return { mime:'application/pdf', ext:'.pdf' };
+
+    // JPEG: FF D8 FF
+    if (b[0]===0xFF&&b[1]===0xD8&&b[2]===0xFF)
+      return { mime:'image/jpeg', ext:'.jpg' };
+
+    // PNG: \x89PNG
+    if (b[0]===0x89&&b[1]===0x50&&b[2]===0x4E&&b[3]===0x47)
+      return { mime:'image/png', ext:'.png' };
+
+    // GIF: GIF8
+    if (b[0]===0x47&&b[1]===0x49&&b[2]===0x46&&b[3]===0x38)
+      return { mime:'image/gif', ext:'.gif' };
+
+    // ZIP-based Office (DOCX / XLSX / PPTX): PK\x03\x04
+    // We can't distinguish docx/xlsx/pptx without parsing the ZIP,
+    // so we use docx as default — still openable by Office / Drive.
+    if (b[0]===0x50&&b[1]===0x4B&&b[2]===0x03&&b[3]===0x04)
+      return { mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext:'.docx' };
+
+    // OLE2 compound (old .doc / .xls / .ppt): D0 CF 11 E0
+    if (b[0]===0xD0&&b[1]===0xCF&&b[2]===0x11&&b[3]===0xE0)
+      return { mime:'application/msword', ext:'.doc' };
+
+    // MP4 / MOV: ftyp box at offset 4 (66 74 79 70)
+    if (bytes.length >= 8&&b[4]===0x66&&b[5]===0x74&&b[6]===0x79&&b[7]===0x70)
+      return { mime:'video/mp4', ext:'.mp4' };
+
+    return null; // unknown — rely on mimeType / filename fallback
   }
 
   function _mimeFromName(name) {

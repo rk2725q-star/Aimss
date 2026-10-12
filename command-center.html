@@ -2259,7 +2259,7 @@
         ? `<button class="menu-item" onclick="closeActionMenu();handleDownload(${idx})">
              <span class="menu-icon">⬇️</span> Download
            </button>`
-        : `<a class="menu-item" href="${escAttr(DrDrive.getDownloadUrl(fileId))}" target="_blank" rel="noopener" onclick="closeActionMenu()" style="text-decoration:none;">
+        : `<a class="menu-item" href="${escAttr(DrDrive.getDownloadUrl(fileId, displayName))}" target="_blank" rel="noopener" onclick="closeActionMenu()" download="${escAttr(displayName)}" style="text-decoration:none;">
              <span class="menu-icon">⬇️</span> Download
            </a>`;
 

@@ -896,7 +896,7 @@
         const viewBtn = `<button class="file-btn file-btn-view" onclick="handleView(${idx})">👁 View</button>`;
         const dlBtn   = f.isChunked
           ? `<button class="file-btn file-btn-dl" onclick="handleDownload(${idx})">⬇ Download</button>`
-          : `<a class="file-btn file-btn-dl" href="${escAttr(DrDrive.getDownloadUrl(f.id))}" target="_blank" rel="noopener">⬇ Download</a>`;
+          : `<a class="file-btn file-btn-dl" href="${escAttr(DrDrive.getDownloadUrl(f.id, f.displayName))}" target="_blank" rel="noopener" download="${escAttr(f.displayName)}">⬇ Download</a>`;
         return `
         <div class="file-card">
           <div class="file-icon">${DrDrive.getIcon(f.mimeType)}</div>

@@ -610,16 +610,21 @@
 
     if (onProgress) onProgress(99); // almost done — building blob
 
-    // Assemble all parts into one single unified Blob
-    const mimeType = meta.mimeType || 'application/octet-stream';
+    // Assemble all parts into one single unified Blob.
+    // Always derive MIME from the real filename as a fallback so the blob is
+    // never treated as raw octet-stream when meta.mimeType is empty/missing.
+    const mimeType = (meta.mimeType && meta.mimeType !== 'application/octet-stream')
+      ? meta.mimeType
+      : _mimeFromName(meta.name) || 'application/octet-stream';
     const fullBlob = new Blob(parts, { type: mimeType });
     const url      = URL.createObjectURL(fullBlob);
 
-    // Trigger browser download
+    // Trigger browser download — link.download sets the saved filename
+    // (including the correct extension) so the OS knows how to open it.
     const link      = document.createElement('a');
     link.style.display = 'none';
     link.href          = url;
-    link.download      = meta.name;   // sets the saved filename
+    link.download      = meta.name;   // e.g. "Physics_Notes.pdf"
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -828,7 +833,7 @@
      For chunked files, these return a sentinel — the UI must call
      downloadChunkedFile() or getChunkedBlobUrl() instead.
   ══════════════════════════════════════════════════════════════ */
-  function getDownloadUrl(path) {
+  function getDownloadUrl(path, fileName) {
     // If this is a chunked group path, return a sentinel
     if (path.includes(`/${CHUNKS_FOLDER}/`)) {
       return '__chunked__:' + path;
@@ -836,7 +841,10 @@
     const client = getClient();
     if (!client) return '#';
     const { data } = client.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl + '?download=';
+    // Append the real filename to the download query so the browser saves
+    // the file with the correct name & extension (e.g. Notes.pdf, not a UUID).
+    const dlName = fileName || path.split('/').pop() || '';
+    return data.publicUrl + '?download=' + encodeURIComponent(dlName);
   }
 
   function getPreviewUrl(path) {

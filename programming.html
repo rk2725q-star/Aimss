@@ -861,7 +861,7 @@
         if (fileObj) showChunkDownload(fileObj, false);
         return;
       }
-      const url = DrDrive.getDownloadUrl(path);
+      const url = DrDrive.getDownloadUrl(path, name);
       const a = document.createElement('a'); a.href = url; a.download = name; a.click();
     }
 

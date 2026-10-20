@@ -409,11 +409,34 @@
     }
   }
 
+  /* ─── Read first N bytes from a File for magic-byte detection ─── */
+  function _readFirstBytes(file, n) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = (e) => resolve(new Uint8Array(e.target.result || []));
+      reader.onerror   = ()  => resolve(new Uint8Array());
+      reader.readAsArrayBuffer(file.slice(0, n));
+    });
+  }
+
   /* ─── Single file upload (≤ 6 MB) ─── */
   async function _uploadSingle(client, file, prefix, onProgress) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
+    // Detect real MIME type from magic bytes — fixes files uploaded without
+    // an extension (e.g. a PDF named "Class_9_Mathematics_English").
+    const firstBytes  = await _readFirstBytes(file, 16);
+    const detected    = _detectTypeFromBytes(firstBytes);
+    let   contentType = (file.type && file.type !== 'application/octet-stream')
+      ? file.type
+      : (detected ? detected.mime : (_mimeFromName(file.name) || 'application/octet-stream'));
+
+    // Append the correct extension to the stored filename if missing.
+    let   storedName = file.name;
+    if (detected && !/\.[a-zA-Z0-9]{2,5}$/.test(storedName)) {
+      storedName = storedName + detected.ext;
+    }
+
+    const safeName = storedName.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
     const filePath = prefix ? `${prefix}/${Date.now()}_${safeName}` : `${Date.now()}_${safeName}`;
-    const contentType = file.type || _mimeFromName(file.name) || 'application/octet-stream';
 
     if (onProgress) onProgress(15);
 
@@ -432,7 +455,7 @@
     const { data: urlData } = client.storage.from(BUCKET).getPublicUrl(filePath);
     return {
       success: true,
-      file: { id: filePath, name: file.name, mimeType: contentType, size: file.size, webViewLink: urlData.publicUrl, path: filePath }
+      file: { id: filePath, name: storedName, mimeType: contentType, size: file.size, webViewLink: urlData.publicUrl, path: filePath }
     };
   }
 
@@ -444,7 +467,20 @@
       : `${CHUNKS_FOLDER}/${chunkId}`;
 
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    const contentType = file.type || _mimeFromName(file.name) || 'application/octet-stream';
+
+    // Detect real MIME + fix filename BEFORE uploading so meta.json has
+    // correct values — this is the root-cause fix for "Unsupported file type".
+    const firstBytes  = await _readFirstBytes(file, 16);
+    const detected    = _detectTypeFromBytes(firstBytes);
+    let   contentType = (file.type && file.type !== 'application/octet-stream')
+      ? file.type
+      : (detected ? detected.mime : (_mimeFromName(file.name) || 'application/octet-stream'));
+
+    // Append correct extension to the filename stored in meta.json if missing.
+    let storedName = file.name;
+    if (detected && !/\.[a-zA-Z0-9]{2,5}$/.test(storedName)) {
+      storedName = storedName + detected.ext;
+    }
 
     if (onProgress) onProgress(2);
 
@@ -479,9 +515,10 @@
       }
     }
 
-    // Upload meta.json
+    // Upload meta.json — store the corrected name (with extension) and
+    // the detected mimeType so future downloads work without magic-byte re-detection.
     const meta = {
-      name:        file.name,
+      name:        storedName,
       mimeType:    contentType,
       size:        file.size,
       totalChunks,
@@ -507,7 +544,7 @@
       success: true,
       file: {
         id:         groupPath,
-        name:       file.name,
+        name:       storedName,
         mimeType:   contentType,
         size:       file.size,
         path:       groupPath,
@@ -690,7 +727,14 @@
 
     if (onProgress) onProgress(99);
 
-    const mimeType = meta.mimeType || 'application/octet-stream';
+    // Apply the same magic-bytes detection as downloadChunkedFile so the
+    // blob used for the "Open File" preview button has the correct MIME type.
+    // Without this, Chrome shows "Unsupported file type" when opening the blob.
+    const detected2  = parts.length > 0 ? _detectTypeFromBytes(parts[0]) : null;
+    const mimeType   = (meta.mimeType && meta.mimeType !== 'application/octet-stream')
+      ? meta.mimeType
+      : (detected2 ? detected2.mime : (_mimeFromName(meta.name) || 'application/octet-stream'));
+
     const fullBlob = new Blob(parts, { type: mimeType });
     if (onProgress) onProgress(100);
     return URL.createObjectURL(fullBlob);

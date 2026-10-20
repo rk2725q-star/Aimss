@@ -487,6 +487,7 @@ function initFloatingChat() {
           <option value="Stateboard">Stateboard</option>
           <option value="NEET">NEET</option>
           <option value="JEE">JEE</option>
+          <option value="TNPSC">TNPSC</option>
         </select>
       </div>
       <div id="ragStatusLine" class="cp-rag-status"></div>
@@ -1098,6 +1099,7 @@ Requirements:
               <option value="">Select board (optional)…</option>
               <option value="stateboard">Stateboard</option>
               <option value="cbse">CBSE</option>
+              <option value="tnpsc">TNPSC</option>
             </select>
             <button id="mcqChatUploadBtn" style="background:linear-gradient(135deg,#4ade80,#16a34a);border:none;border-radius:8px;padding:6px 14px;color:#000;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;">📤 Upload to Class</button>
             <span id="mcqChatUploadStatus" style="font-size:.78rem;color:var(--accent);"></span>
